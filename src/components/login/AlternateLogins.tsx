@@ -9,9 +9,8 @@ const AlternateLogins = () => {
         Or continue with
       </span>
       <div className="flex gap-3">
-        <button className="cursor-pointer rounded-full bg-none p-2 hover:bg-black hover:bg-opacity-5">
+        <button className="cursor-pointer rounded-full bg-none p-2 hover:bg-black hover:bg-opacity-5 dark:hover:bg-stone-50 dark:hover:bg-white dark:hover:bg-opacity-10">
           <a href={"http://localhost:3000/api/auth/callback/facebook"}>
-
             <Image
               src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/facebook/facebook-plain.svg"
               alt="login with facebook"
@@ -21,7 +20,7 @@ const AlternateLogins = () => {
             />
           </a>
         </button>
-        <button className="cursor-pointer rounded-full bg-none p-2 hover:bg-black hover:bg-opacity-5">
+        <button className="cursor-pointer rounded-full bg-none p-2 hover:bg-black hover:bg-opacity-5 dark:hover:bg-stone-50 dark:hover:bg-white dark:hover:bg-opacity-10">
           <a href={"http://localhost:3000/api/auth/callback/google"}>
             <Image
               src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"
@@ -32,15 +31,17 @@ const AlternateLogins = () => {
             />
           </a>
         </button>
-        <button className="cursor-pointer rounded-full bg-none p-2 hover:bg-black hover:bg-opacity-5">
+        <button className="cursor-pointer rounded-full bg-none p-2 hover:bg-black hover:bg-opacity-5 dark:hover:bg-stone-50 dark:hover:bg-white dark:hover:bg-opacity-10">
           <a href={"http://localhost:3000/api/auth/callback/github"}>
-            <Image
-              src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg"
-              alt="login with github"
-              className="w-10"
-              width={40}
-              height={40}
-            />
+            <div className="rounded-full dark:bg-stone-300">
+              <Image
+                src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg"
+                alt="login with github"
+                className="w-10"
+                width={40}
+                height={40}
+              />
+            </div>
           </a>
         </button>
       </div>

@@ -20,7 +20,7 @@ export default function Layout({
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div
-        className="flex min-h-screen flex-col items-center gap-4 bg-gradient-to-t from-neutral-900 to-stone-800 font-sans text-white
+        className="font-sans flex min-h-screen flex-col items-center gap-4 bg-neutral-50 bg-gradient-to-t text-stone-900 dark:bg-stone-950  dark:text-white 
       "
       >
         <Nav />

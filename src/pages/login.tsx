@@ -15,7 +15,7 @@ const Login = () => {
   return (
     <div
       className="flex h-screen items-center justify-center bg-neutral-100
-    bg-gradient-to-t from-neutral-900 to-stone-800"
+    bg-stone-950"
     >
       <Card className="w-[min(90vw,400px)] rounded-lg bg-white shadow-2xl">
         <CardHeader>

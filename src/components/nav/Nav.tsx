@@ -13,14 +13,14 @@ export default function Nav() {
         <div className="flex items-center gap-6">
           <a
             href="https://github.com/jackwatters45/team-send"
-            className="text-sm text-gray-100 opacity-60 hover:opacity-75"
+            className="text-sm text-stone-800 dark:text-stone-100  opacity-60 hover:opacity-75"
             target="_blank" 
             rel="noopener noreferrer" 
           >
             Github
           </a>
           <Link
-            className="text-sm text-gray-100 opacity-60 hover:opacity-75"
+            className="text-sm text-stone-800 dark:text-stone-100  opacity-60 hover:opacity-75"
             href={"/create-group"}
             type="button"
           >

@@ -1,5 +1,7 @@
 "use client";
 
+import { useState } from "react";
+import type { ChangeEvent } from "react";
 import {
   flexRender,
   getCoreRowModel,
@@ -14,8 +16,9 @@ import type {
   ColumnFiltersState,
   VisibilityState,
 } from "@tanstack/react-table";
-import { Input } from "@/components/ui/input";
 
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import {
   Table,
   TableBody,
@@ -24,17 +27,12 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-
-import { Button } from "@/components/ui/button";
 import {
   DropdownMenuCheckboxItem,
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-
-import { useState } from "react";
-import type { ChangeEvent } from "react";
 import { DataTablePagination } from "@/components/table/Pagination";
 
 interface GroupsTableProps<TData, TValue> {
@@ -69,18 +67,18 @@ export function GroupsTable<TData, TValue>({
       rowSelection,
     },
   });
+
   return (
     <div>
       <div className="flex items-center py-4">
         <Input
-          placeholder="Filter name..."
+          placeholder="Search by group name..."
           value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
           onChange={(event: ChangeEvent<HTMLInputElement>) =>
             table.getColumn("email")?.setFilterValue(event.target.value)
           }
           className="max-w-sm"
         />
-
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <Button variant="outline" className="ml-auto">
@@ -108,7 +106,7 @@ export function GroupsTable<TData, TValue>({
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
-      <div className="rounded-md border">
+      <div className="rounded-md border dark:border-stone-700">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
