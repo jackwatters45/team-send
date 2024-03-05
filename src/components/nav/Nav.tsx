@@ -12,7 +12,7 @@ export default function Nav() {
         </Link>
         <div className="flex items-center gap-6">
           <a
-            href="https://github.com/jackwatters45/team-sendbout"
+            href="https://github.com/jackwatters45/team-send"
             className="text-sm text-gray-100 opacity-60 hover:opacity-75"
             target="_blank" 
             rel="noopener noreferrer" 
