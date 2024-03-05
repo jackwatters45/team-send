@@ -65,6 +65,9 @@ export const authOptions: NextAuthOptions = {
       clientSecret: env.FACEBOOK_SECRET,
     }),
   ],
+  pages: {
+    signIn: "/login",
+  },
 };
 
 /**
