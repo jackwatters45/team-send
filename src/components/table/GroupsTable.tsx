@@ -34,6 +34,7 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { DataTablePagination } from "@/components/table/Pagination";
+import Link from "next/link";
 
 interface GroupsTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
@@ -133,14 +134,30 @@ export function GroupsTable<TData, TValue>({
                   key={row.id}
                   data-state={row.getIsSelected() && "selected"}
                 >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </TableCell>
-                  ))}
+                  {row.getVisibleCells().map((cell) => {
+                    const colId = cell.column.id;
+
+                    return colId !== "actions" && colId !== "select" ? (
+                      <TableCell key={cell.id}>
+                        <Link
+                          href={`/group/${row.getValue<string>("id")}`}
+                          className="block p-4"
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </Link>
+                      </TableCell>
+                    ) : (
+                      <TableCell key={cell.id} className="p-4">
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
+                        )}
+                      </TableCell>
+                    );
+                  })}
                 </TableRow>
               ))
             ) : (

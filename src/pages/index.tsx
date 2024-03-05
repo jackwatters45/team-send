@@ -41,32 +41,18 @@ export const columns: ColumnDef<GroupPreview>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="ID" />
     ),
-    cell: ({ row }) => {
-      const id = row.getValue<string>("id");
-      return <Link href={`/group/${id}`}>{id}</Link>;
-    },
   },
   {
     accessorKey: "name",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
     ),
-    cell: ({ row }) => {
-      const id = row.getValue<string>("id");
-      const name = row.getValue<string>("name");
-      return <Link href={`/group/${id}`}>{name}</Link>;
-    },
   },
   {
     accessorKey: "lastMessage",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Last Message" />
     ),
-    cell: ({ row }) => {
-      const id = row.getValue<string>("id");
-      const lastMessage = row.getValue<string>("lastMessage");
-      return <Link href={`/group/${id}`}>{lastMessage}</Link>;
-    },
   },
   {
     accessorKey: "lastMessageTime",
@@ -76,9 +62,7 @@ export const columns: ColumnDef<GroupPreview>[] = [
       );
     },
     cell: ({ row }) => {
-      const id = row.getValue<string>("id");
-      const date = row.getValue<Date>("lastMessageTime").toLocaleString();
-      return <Link href={`/group/${id}`}>{date}</Link>;
+      return row.getValue<Date>("lastMessageTime").toLocaleString();
     },
   },
   {

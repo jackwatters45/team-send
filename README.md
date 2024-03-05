@@ -8,3 +8,4 @@
   - chat part
   - connect twilio, email, etc
 - Next auth
+- profile settings
