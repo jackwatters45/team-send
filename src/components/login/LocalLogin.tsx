@@ -1,3 +1,5 @@
+"use client"
+
 import { useState } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
@@ -5,6 +7,9 @@ import { Button } from "@/components/ui/button";
 import * as z from "zod";
 import { useSession } from "next-auth/react";
 import { api } from "@/utils/api";
+
+
+
 
 const formSchema = z.object({
   username: z
@@ -52,13 +57,16 @@ const LocalLogin = () => {
     },
   });
 
+
   const onSubmit = handleSubmit((values: z.infer<typeof formSchema>) => {
     console.log(values);
   });
 
+
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4 text-neutral-500">
       <div className="relative rounded-lg border border-solid border-neutral-300 hover:border-neutral-400">
+
         <label htmlFor="username" className="absolute left-4 top-3 text-xs ">
           Email
         </label>
@@ -89,7 +97,7 @@ const LocalLogin = () => {
           {showPassword ? "Hide" : "Show"}
         </button>
       </div>
-      <Button className="bg-blue-500 hover:bg-blue-600" type="submit">
+      <Button className="" type="submit">
         Continue
       </Button>
     </form>

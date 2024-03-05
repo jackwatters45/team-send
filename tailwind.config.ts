@@ -10,6 +10,11 @@ const config = {
   ],
   prefix: "",
   theme: {
+    fontFamily: {
+      inter: ["Inter", "sans-serif"],
+      geist: ['Geist', "sans-serif"],
+
+    },
     container: {
       center: true,
       padding: "2rem",
