@@ -17,7 +17,7 @@ const formSchema = z.object({
     .max(30, {
       message: "Email must be at most 40 characters.",
     }),
-  // TODO
+
   password: z
     .string()
     .min(8, {
@@ -27,8 +27,6 @@ const formSchema = z.object({
 });
 
 type FormData = z.infer<typeof formSchema>;
-
-// TODO Autofill style, errors, functionality, zod
 
 const LocalLogin = () => {
   const { data: sessionData } = useSession();

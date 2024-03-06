@@ -13,7 +13,7 @@ type Recipient = {
   phone: string;
 };
 
-// TODO move these types??
+// TODO 
 export type GroupPreview = {
   id: string;
   name: string;
@@ -27,8 +27,8 @@ const groups: GroupPreview[] = [
   {
     id: "1",
     name: "Blue Ballers",
-    avatar: undefined,
-    lastMessage: "Some message .....",
+    avatar: "https://res.cloudinary.com/drheg5d7j/image/upload/v1704262668/ku0gvvqrrdro5p3nnuvj.png",
+    lastMessage: "Some message: Do this do that etc etc",
     lastMessageTime: new Date(),
     recipients: [],
   },

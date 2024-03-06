@@ -1,7 +1,6 @@
 import Image from "next/image";
 
-// TODO get working
-// TODO href
+// TODO 
 const AlternateLogins = () => {
   return (
     <div className="flex flex-col items-center gap-2 pt-8">
