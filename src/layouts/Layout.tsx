@@ -1,4 +1,5 @@
 import Nav from "@/components/nav/Nav";
+import { Toaster } from "@/components/ui/toaster";
 import Head from "next/head";
 
 interface LayoutProps {
@@ -27,6 +28,7 @@ export default function Layout({
         <main className="w-full max-w-screen-xl pt-14">
           <div className="px-24 py-6">{children}</div>
         </main>
+        <Toaster />
       </div>
     </>
   );
