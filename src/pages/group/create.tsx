@@ -6,7 +6,7 @@ export default function CreateGroup() {
       title={"Create New Group"}
       description={"Add recipients to your group and send them messages."}
     >
-      SOMETHING
+Create Group
     </PageLayout>
   );
 }

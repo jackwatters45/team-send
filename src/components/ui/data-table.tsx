@@ -228,7 +228,7 @@ function DataTableSelectedRowCount<TData>({
   table,
 }: DataTableSelectedRowCountProps<TData>) {
   return (
-    <div className="text-muted-foreground flex-1 text-sm text-gray-100 opacity-60">
+    <div className="text-muted-foreground flex-1 text-sm text-stone-400 dark:text-stone-400 ">
       {table.getFilteredSelectedRowModel().rows.length} of{" "}
       {table.getFilteredRowModel().rows.length} row(s) selected.
     </div>
@@ -244,7 +244,7 @@ function DataTablePagination<TData>({
   return (
     <div className="flex items-center space-x-6 lg:space-x-8">
       <div className="flex items-center space-x-2">
-        <p className="text-sm font-medium text-gray-100 opacity-60">
+        <p className="text-sm font-medium text-stone-400 dark:text-stone-400 ">
           Rows per page
         </p>
         <Select
@@ -265,7 +265,7 @@ function DataTablePagination<TData>({
           </SelectContent>
         </Select>
       </div>
-      <div className="flex w-[100px] items-center justify-center text-sm font-medium text-gray-100 opacity-60">
+      <div className="flex w-[100px] items-center justify-center text-sm font-medium text-stone-400 dark:text-stone-400 ">
         Page {table.getState().pagination.pageIndex + 1} of{" "}
         {table.getPageCount()}
       </div>
