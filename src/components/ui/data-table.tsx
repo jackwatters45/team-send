@@ -336,8 +336,11 @@ function DataTableSkeleton({
         )}
       </div>
       <Skeleton
-        className={`h-[${tableHeight}px] w-full border border-stone-200  bg-transparent dark:border-stone-800 dark:bg-transparent`}
-      />
+        className={`w-full border border-stone-200  bg-transparent dark:border-stone-800 dark:bg-transparent`}
+        style={{ height: tableHeight }}
+      >
+        <div style={{ height: "100%" }}></div>
+      </Skeleton>
       <div className="flex items-center justify-between px-2">
         {includeRowSelection && (
           <Skeleton className="h-8 w-[100px] border border-stone-200 bg-white dark:border-stone-800  dark:bg-stone-900" />
