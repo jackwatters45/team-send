@@ -3,6 +3,7 @@ import * as z from "zod";
 const formSchema = z
   .object({
     name: z.string().max(40),
+    description: z.string().max(100).optional(),
     isScheduled: z.enum(["no", "yes"]),
     scheduledDate: z.date().optional(),
     isRecurring: z.enum(["no", "yes"]),

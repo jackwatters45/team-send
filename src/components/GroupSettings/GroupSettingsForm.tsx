@@ -8,7 +8,7 @@ import {
   BooleanSelect,
   DateTimeInput,
   NumPeriodInputs,
-  TextInput,
+  FormInput,
 } from "../ui/form-inputs";
 
 export default function GroupSettingsForm() {
@@ -38,14 +38,18 @@ export default function GroupSettingsForm() {
         className="flex flex-col gap-8 sm:gap-6"
         ref={parent}
       >
-        <TextInput<typeof formSchema>
+        <FormInput<typeof formSchema>
           control={form.control}
           name="name"
           label="Name"
           placeholder="Enter a Group Name"
-          description="The unique name for this group"
         />
-
+        <FormInput<typeof formSchema>
+          control={form.control}
+          name="description"
+          label="Description"
+          placeholder="Enter a Group Description (optional)"
+        />
         <BooleanSelect<typeof formSchema>
           control={form.control}
           name="isScheduled"

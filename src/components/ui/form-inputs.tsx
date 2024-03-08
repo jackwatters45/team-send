@@ -24,20 +24,20 @@ export interface ISharedInputNoNameProps<T extends z.ZodType> {
   control: Control<z.infer<T>>;
   label: string;
   description?: string;
-  placeholder?: string;
 }
 
 export interface ISharedInputProps<T extends z.ZodType>
-  extends ISharedInputNoNameProps<T> {
+  extends ISharedInputNoNameProps<T>,
+  React.InputHTMLAttributes<HTMLInputElement> {
   name: Path<z.infer<T>>;
 }
 
-function TextInput<T extends z.ZodType>({
+function FormInput<T extends z.ZodType>({
   control,
   name,
   label,
-  placeholder,
   description,
+  ...inputProps
 }: ISharedInputProps<T>) {
   return (
     <FormField
@@ -47,7 +47,7 @@ function TextInput<T extends z.ZodType>({
         <FormItem>
           <FormLabel>{label}</FormLabel>
           <FormControl>
-            <Input placeholder={placeholder} {...field} />
+            <Input {...inputProps} {...field} />
           </FormControl>
           <FormDescription>{description}</FormDescription>
           <FormMessage />
@@ -206,4 +206,4 @@ function BooleanSelect<T extends z.ZodType>({
   );
 }
 
-export { TextInput, NumPeriodInputs, DateTimeInput, BooleanSelect };
+export { FormInput, NumPeriodInputs, DateTimeInput, BooleanSelect };

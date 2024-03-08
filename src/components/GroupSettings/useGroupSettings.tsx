@@ -19,6 +19,7 @@ const useGroupSettings = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
+      description: "",
       isScheduled: "no",
       scheduledDate: undefined,
       isRecurring: "no",
