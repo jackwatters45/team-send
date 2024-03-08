@@ -1,3 +1,4 @@
+import Footer from "@/components/footer/Footer";
 import Nav from "@/components/nav/Nav";
 import { Toaster } from "@/components/ui/toaster";
 import Head from "next/head";
@@ -21,15 +22,16 @@ export default function Layout({
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div
-        className="font-sans flex min-h-screen flex-col items-center gap-4 bg-neutral-50 bg-gradient-to-t text-stone-900 dark:bg-stone-950  dark:text-white 
+        className="font-sans flex min-h-screen flex-col items-center gap-4 bg-stone-50 bg-gradient-to-t text-stone-900 dark:bg-stone-950  dark:text-white 
       "
       >
         <Nav />
-        <main className="w-full max-w-screen-xl pt-14">
+        <main className="w-full max-w-screen-xl flex-1 pt-14">
           <div className="px-24 py-6">{children}</div>
         </main>
-        <Toaster />
+        <Footer />
       </div>
+        <Toaster />
     </>
   );
 }

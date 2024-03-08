@@ -14,7 +14,7 @@ const Login = () => {
 
   return (
     <div
-      className="flex h-screen items-center justify-center bg-neutral-100
+      className="flex h-screen items-center justify-center bg-stone-100
     bg-stone-950"
     >
       <Card className="w-[min(90vw,400px)] rounded-lg bg-white shadow-2xl">
