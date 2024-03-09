@@ -2,6 +2,7 @@ import type * as z from "zod";
 import { type Control, type Path } from "react-hook-form";
 
 import { Input } from "@/components/ui/input";
+import { Textarea, type TextareaProps } from "@/components/ui/textarea";
 import {
   FormControl,
   FormDescription,
@@ -28,7 +29,7 @@ export interface ISharedInputNoNameProps<T extends z.ZodType> {
 
 export interface ISharedInputProps<T extends z.ZodType>
   extends ISharedInputNoNameProps<T>,
-  React.InputHTMLAttributes<HTMLInputElement> {
+    React.InputHTMLAttributes<HTMLInputElement> {
   name: Path<z.infer<T>>;
 }
 
@@ -48,6 +49,36 @@ function FormInput<T extends z.ZodType>({
           {label && <FormLabel>{label}</FormLabel>}
           <FormControl>
             <Input {...inputProps} {...field} />
+          </FormControl>
+          {description && <FormDescription>{description}</FormDescription>}
+          <FormMessage />
+        </FormItem>
+      )}
+    />
+  );
+}
+
+export interface ISharedTextareaProps<T extends z.ZodType>
+  extends ISharedInputNoNameProps<T>,
+    TextareaProps {
+  name: Path<z.infer<T>>;
+}
+function FormTextarea<T extends z.ZodType>({
+  control,
+  name,
+  label,
+  description,
+  ...textareaProps
+}: ISharedTextareaProps<T>) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem>
+          {label && <FormLabel>{label}</FormLabel>}
+          <FormControl>
+            <Textarea autoSize={true} {...textareaProps} {...field} />
           </FormControl>
           {description && <FormDescription>{description}</FormDescription>}
           <FormMessage />
@@ -193,8 +224,8 @@ function BooleanSelect<T extends z.ZodType>({
             <SelectContent>
               <SelectGroup>
                 <SelectLabel hidden>{label}</SelectLabel>
-                <SelectItem value="yes">Yes</SelectItem>
-                <SelectItem value="no">No</SelectItem>
+                <SelectItem value={"yes"}>Yes</SelectItem>
+                <SelectItem value={"no"}>No</SelectItem>
               </SelectGroup>
             </SelectContent>
           </Select>
@@ -206,4 +237,10 @@ function BooleanSelect<T extends z.ZodType>({
   );
 }
 
-export { FormInput, NumPeriodInputs, DateTimeInput, BooleanSelect };
+export {
+  FormInput,
+  FormTextarea,
+  NumPeriodInputs,
+  DateTimeInput,
+  BooleanSelect,
+};
