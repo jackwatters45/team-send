@@ -11,7 +11,10 @@ import type { IUser } from "@/server/api/routers/user";
 import type { IGroupPreview } from "@/server/api/routers/group";
 import { api } from "@/utils/api";
 import createUser from "@/lib/createUser";
-import type { ICreateGroupSchema, createGroupSchema } from "./createGroupSchema";
+import type {
+  ICreateGroupSchema,
+  createGroupSchema,
+} from "./createGroupSchema";
 
 interface ICreateGroupRecentsProps {
   form: UseFormReturn<ICreateGroupSchema>;
@@ -22,24 +25,30 @@ export default function CreateGroupRecents({ form }: ICreateGroupRecentsProps) {
   const recentGroups = api.group.getLatest.useQuery(search);
 
   const [usersAdded, setUsersAdded] = useState<IUser[]>([]);
-  const handleClickContact = (user: IUser) => {
-    setUsersAdded((prev) => [...prev, user]);
-    form.setValue("users", [...form.getValues("users"), createUser(user)]);
-  };
+  const usersResults = recentUsers.data?.filter(
+    (user) => !usersAdded.some((u) => u.id === user.id),
+  );
 
   const [groupsAdded, setGroupsAdded] = useState<IGroupPreview[]>([]);
+  const groupsResults = recentGroups.data?.filter(
+    (group) => !groupsAdded.some((g) => g.id === group.id),
+  );
+
+  const handleClickContact = (user: IUser) => {
+    setUsersAdded((prev) => [...prev, user]);
+    form.setValue("members", [...form.getValues("members"), createUser(user)]);
+  };
+
   const handleClickGroup = (group: IGroupPreview) => {
     setGroupsAdded((prev) => [...prev, group]);
 
     const filteredMembers = group.members.filter((member) => {
-      return !usersAdded.some(
-        (existingUser) => existingUser.id === member.id,
-      );
+      return !usersAdded.some((existingUser) => existingUser.id === member.id);
     });
 
     setUsersAdded((prev) => [...prev, ...filteredMembers]);
-    form.setValue("users", [
-      ...form.getValues("users"),
+    form.setValue("members", [
+      ...form.getValues("members"),
       ...filteredMembers.map((user) => createUser(user)),
     ]);
   };
@@ -66,9 +75,8 @@ export default function CreateGroupRecents({ form }: ICreateGroupRecentsProps) {
       <div className="flex flex-col pt-2">
         <TabsContent value="contacts">
           <div className="flex flex-wrap">
-            {recentUsers.data
-              ?.filter((user) => !usersAdded.some((u) => u.id === user.id))
-              .map((user) => (
+            {usersResults ? (
+              usersResults.map((user) => (
                 <Button
                   key={user.id}
                   onClick={() => handleClickContact(user)}
@@ -93,14 +101,16 @@ export default function CreateGroupRecents({ form }: ICreateGroupRecentsProps) {
                     </div>
                   </div>
                 </Button>
-              ))}
+              ))
+            ) : (
+              <div>TODO add form type b</div>
+            )}
           </div>
         </TabsContent>
         <TabsContent value="groups">
           <div className="flex flex-wrap">
-            {recentGroups.data
-              ?.filter((group) => !groupsAdded.some((g) => g.id === group.id))
-              .map((group) => (
+            {groupsResults ? (
+              groupsResults.map((group) => (
                 <Button
                   key={group.id}
                   onClick={() => handleClickGroup(group)}
@@ -123,7 +133,12 @@ export default function CreateGroupRecents({ form }: ICreateGroupRecentsProps) {
                     )}
                   </div>
                 </Button>
-              ))}
+              ))
+            ) : (
+              <div>
+                No groups named &quot;{form.watch("recentsSearch")}&quot;
+              </div>
+            )}
           </div>
         </TabsContent>
       </div>

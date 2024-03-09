@@ -1,17 +1,19 @@
-import CreateGroupAddMembers from "@/components/create-group/CreateGroupAddMembers";
-import CreateGroupAddMembersHeader from "@/components/create-group/CreateGroupAddMembersHeader";
-import CreateGroupRecents from "@/components/create-group/CreateGroupRecents";
-import {
-  ICreateGroupSchema,
-  createGroupSchema,
-} from "@/components/create-group/createGroupSchema";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+
+import createUser from "@/lib/createUser";
+import { api } from "@/utils/api";
+
 import { Form } from "@/components/ui/form";
 import { toast } from "@/components/ui/use-toast";
 import { GroupLayout } from "@/layouts/GroupLayout";
-import createUser from "@/lib/createUser";
-import { api } from "@/utils/api";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
+import CreateGroupRecents from "@/components/create-group/CreateGroupRecents";
+import CreateGroupAddMembers from "@/components/create-group/CreateGroupAddMembers";
+import CreateGroupAddMembersHeader from "@/components/create-group/CreateGroupAddMembersHeader";
+import {
+  type ICreateGroupSchema,
+  createGroupSchema,
+} from "@/components/create-group/createGroupSchema";
 
 export default function GroupMembers() {
   const group = api.group.getGroupData.useQuery();
@@ -19,10 +21,10 @@ export default function GroupMembers() {
   const form = useForm<ICreateGroupSchema>({
     resolver: zodResolver(createGroupSchema),
     defaultValues: {
-      name: "Blue Ballers",
-      description: "",
-      avatar: "",
-      users: [createUser()],
+      name: group.data?.name ?? "",
+      description: group.data?.description ?? "",
+      avatar: group.data?.avatar ?? "",
+      members: group.data?.members.map(createUser) ?? [createUser()],
       recentsSearch: "",
     },
   });

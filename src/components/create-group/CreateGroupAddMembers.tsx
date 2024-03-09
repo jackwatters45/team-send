@@ -20,43 +20,43 @@ export default function CreateGroupAddMembers({
   const [parent] = useAutoAnimate();
 
   const handleAddUser = () => {
-    form.setValue("users", [...form.getValues("users"), createUser()]);
+    form.setValue("members", [...form.getValues("members"), createUser()]);
   };
 
   const handleRemoveUser = (index: number) => {
     form.setValue(
-      "users",
-      form.getValues("users").filter((_, i) => i !== index),
+      "members",
+      form.getValues("members").filter((_, i) => i !== index),
     );
   };
 
   return (
     <div className="flex flex-col gap-2 py-2" ref={parent}>
-      {form.watch("users")?.map((user, index) => (
+      {form.watch("members")?.map((user, index) => (
         <div key={index} className="flex gap-2">
           <div className="flex flex-1 flex-wrap items-start gap-2">
             <FormInput<typeof createGroupSchema>
               control={form.control}
-              name={`users.${index}.name`}
+              name={`members.${index}.name`}
               placeholder="Name"
             />
             <FormInput<typeof createGroupSchema>
               control={form.control}
-              name={`users.${index}.email`}
+              name={`members.${index}.email`}
               type="email"
               required={false}
               placeholder="Email"
             />
             <FormInput<typeof createGroupSchema>
               control={form.control}
-              name={`users.${index}.phone`}
+              name={`members.${index}.phone`}
               type="tel"
               placeholder="Phone"
             />
             <div className="lg:flex-1">
               <FormInput<typeof createGroupSchema>
                 control={form.control}
-                name={`users.${index}.notes`}
+                name={`members.${index}.notes`}
                 placeholder="Notes"
               />
             </div>

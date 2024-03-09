@@ -17,7 +17,7 @@ export interface IUser extends INewUser {
   id: string;
 }
 
-const users: IUser[] = [
+const members: IUser[] = [
   {
     id: "1",
     name: "Pedro Duarte",
@@ -38,6 +38,6 @@ export const userRouter = createTRPCRouter({
   getLatest: publicProcedure
     .input(z.string().optional())
     .query(() => {
-      return users;
+      return members;
     }),
 });

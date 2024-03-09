@@ -23,7 +23,7 @@ export default function CreateGroupForm() {
       name: "Blue Ballers",
       description: "",
       avatar: "",
-      users: [createUser()],
+      members: [createUser()],
       recentsSearch: "",
     },
   });

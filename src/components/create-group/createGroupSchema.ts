@@ -4,7 +4,7 @@ import { z } from "zod";
   name: z.string().max(40),
   description: z.string().max(100).optional(),
   avatar: z.string().optional(),
-  users: z.array(
+  members: z.array(
     z.object({
       id: z.string().optional(),
       name: z.string().max(40),

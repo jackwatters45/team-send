@@ -10,7 +10,7 @@ const getSidebarNavItems = (groupId: string) => [
   },
   {
     title: "Members",
-    href: `/group/${groupId}/member`,
+    href: `/group/${groupId}/members`,
   },
   {
     title: "History",
