@@ -22,7 +22,7 @@ import {
 
 export interface ISharedInputNoNameProps<T extends z.ZodType> {
   control: Control<z.infer<T>>;
-  label: string;
+  label?: string;
   description?: string;
 }
 
@@ -49,7 +49,7 @@ function FormInput<T extends z.ZodType>({
           <FormControl>
             <Input {...inputProps} {...field} />
           </FormControl>
-          <FormDescription>{description}</FormDescription>
+          {description && <FormDescription>{description}</FormDescription>}
           <FormMessage />
         </FormItem>
       )}

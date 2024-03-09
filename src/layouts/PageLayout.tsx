@@ -13,7 +13,7 @@ export default function PageLayout({
 }: GroupLayoutProps) {
   return (
     <Layout title={title}>
-      <div className="space-y-0.5 border-b border-stone-500 border-opacity-10 py-6">
+      <div className="space-y-0.5 border-b dark:border-stone-500 dark:border-opacity-20 py-6">
         <h2 className="text-2xl font-semibold">{title}</h2>
         <p className="text-stone-500 dark:text-stone-400">{description}</p>
       </div>
