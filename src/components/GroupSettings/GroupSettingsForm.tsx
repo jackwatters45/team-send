@@ -1,6 +1,6 @@
 import { TrashIcon } from "@radix-ui/react-icons";
 
-import type formSchema from "./groupSettingsSchema";
+import type { groupSettingsSchema } from "./groupSettingsSchema";
 import useGroupSettings from "./useGroupSettings";
 import { Button } from "../ui/button";
 import { Form, FormDescription, FormLabel } from "../ui/form";
@@ -12,18 +12,8 @@ import {
 } from "../ui/form-inputs";
 
 export default function GroupSettingsForm() {
-  const {
-    form,
-    onSubmit,
-    isScheduled,
-    isRecurring,
-    isReminders,
-    recurringNumGreaterThanOne,
-    reminders,
-    removeReminder,
-    addReminder,
-    parent,
-  } = useGroupSettings();
+  const { form, onSubmit, reminders, removeReminder, addReminder, parent } =
+    useGroupSettings();
 
   return (
     <Form {...form}>
@@ -38,61 +28,61 @@ export default function GroupSettingsForm() {
         className="flex flex-col gap-8 sm:gap-6"
         ref={parent}
       >
-        <FormInput<typeof formSchema>
+        <FormInput<typeof groupSettingsSchema>
           control={form.control}
           name="name"
           label="Name"
           placeholder="Enter a Group Name"
         />
-        <FormInput<typeof formSchema>
+        <FormInput<typeof groupSettingsSchema>
           control={form.control}
           name="description"
           label="Description"
           placeholder="Enter a Group Description (optional)"
         />
-        <BooleanSelect<typeof formSchema>
+        <BooleanSelect<typeof groupSettingsSchema>
           control={form.control}
           name="isScheduled"
           label="Scheduled"
           description="Schedule messages to be sent at a specific date and time"
         />
-        {isScheduled && (
-          <DateTimeInput<typeof formSchema>
+        {form.watch("isScheduled") && (
+          <DateTimeInput<typeof groupSettingsSchema>
             control={form.control}
             name="scheduledDate"
             label="Scheduled Date"
           />
         )}
-        <BooleanSelect<typeof formSchema>
+        <BooleanSelect<typeof groupSettingsSchema>
           control={form.control}
           name="isRecurring"
           label="Recurring"
           description="Set up automatic, recurring messages for consistent reminders"
         />
-        {isRecurring && (
+        {form.watch("isRecurring") && (
           <div className="flex flex-col gap-3">
             <FormLabel>Recurring every</FormLabel>
-            <NumPeriodInputs<typeof formSchema>
+            <NumPeriodInputs<typeof groupSettingsSchema>
               control={form.control}
               numName="recurringNum"
               periodName="recurringPeriod"
               label="Recurring every"
-              numGreaterThanOne={recurringNumGreaterThanOne}
+              numGreaterThanOne={Number(form.watch("recurringNum")) > 1}
             />
           </div>
         )}
-        <BooleanSelect<typeof formSchema>
+        <BooleanSelect<typeof groupSettingsSchema>
           control={form.control}
           name="isReminders"
           label="Reminders"
           description="Send reminders at set increments before the due date"
         />
-        {isReminders && (
+        {form.watch("isReminders") && (
           <div className="flex flex-col gap-3">
             <FormLabel>Remind before</FormLabel>
             {reminders.map((reminder, index) => (
               <div key={index} className="flex items-start gap-4">
-                <NumPeriodInputs<typeof formSchema>
+                <NumPeriodInputs<typeof groupSettingsSchema>
                   control={form.control}
                   numName={`reminders.${index}.num`}
                   periodName={`reminders.${index}.period`}

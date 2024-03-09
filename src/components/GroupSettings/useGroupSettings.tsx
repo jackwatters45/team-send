@@ -4,22 +4,27 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import type { z } from "zod";
 
 import { toast } from "../ui/use-toast";
-import formSchema from "./groupSettingsSchema";
+import { groupSettingsSchema } from "./groupSettingsSchema";
+import { useParams } from "next/navigation";
+import { api } from "@/utils/api";
 
 interface IReminder {
   num: number;
   period: "months" | "weeks" | "days";
 }
 
-
 const useGroupSettings = () => {
   const defaultReminder: IReminder = { num: 1, period: "weeks" };
 
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
+  const groupId = useParams().groupId as string;
+  const groupSettings = api.group.getGroupSettings.useQuery(groupId);
+
+  // TODO will need to be updated once figure out schema
+  const form = useForm<z.infer<typeof groupSettingsSchema>>({
+    resolver: zodResolver(groupSettingsSchema),
     defaultValues: {
-      name: "",
-      description: "",
+      name: groupSettings.data?.name ?? "",
+      description: groupSettings.data?.description ?? "",
       isScheduled: "no",
       scheduledDate: undefined,
       isRecurring: "no",
@@ -30,7 +35,7 @@ const useGroupSettings = () => {
     },
   });
 
-  const onSubmit = (data: z.infer<typeof formSchema>) => {
+  const onSubmit = (data: z.infer<typeof groupSettingsSchema>) => {
     toast({
       title: "You submitted the following values:",
       description: (
@@ -41,25 +46,16 @@ const useGroupSettings = () => {
     });
   };
 
-  const watch = form.watch;
-
-  const isScheduled = watch("isScheduled") === "yes";
-  const isRecurring = watch("isRecurring") === "yes";
-  const isReminders = watch("isReminders") === "yes";
-  const recurringNumGreaterThanOne = Number(watch("recurringNum")) > 1;
-  const reminders = watch("reminders") ?? [];
-
+  const reminders = form.watch("reminders") ?? [];
   const removeReminder = (index: number) => {
-    const currentReminders = form.getValues("reminders") ?? [];
-    if (currentReminders.length === 0) return;
-    currentReminders.splice(index);
-    form.setValue("reminders", currentReminders);
+    if (reminders.length === 0) return;
+    reminders.splice(index);
+    form.setValue("reminders", reminders);
   };
 
   const addReminder = () => {
-    const currentReminders = form.getValues("reminders") ?? [];
-    if (currentReminders.length >= 6) return;
-    const newReminders = [...currentReminders, defaultReminder];
+    if (reminders.length >= 6) return;
+    const newReminders = [...reminders, defaultReminder];
     form.setValue("reminders", newReminders);
   };
 
@@ -68,10 +64,6 @@ const useGroupSettings = () => {
   return {
     form,
     onSubmit,
-    isScheduled,
-    isRecurring,
-    isReminders,
-    recurringNumGreaterThanOne,
     reminders,
     removeReminder,
     addReminder,

@@ -1,6 +1,6 @@
 import * as z from "zod";
 
-const formSchema = z
+export const groupSettingsSchema = z
   .object({
     name: z.string().max(40),
     description: z.string().max(100).optional(),
@@ -47,4 +47,3 @@ const formSchema = z
     },
   );
 
-export default formSchema;
