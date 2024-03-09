@@ -15,7 +15,7 @@ export interface IGroupPreview {
   avatar: string | undefined;
   lastMessage: string;
   lastMessageTime: Date;
-  recipients: IUser[];
+  members: IUser[];
 }
 
 export interface IGroup extends IGroupPreview {
@@ -53,7 +53,7 @@ const groups: IGroupPreview[] = [
       "https://res.cloudinary.com/drheg5d7j/image/upload/v1704262668/ku0gvvqrrdro5p3nnuvj.png",
     lastMessage: "Some message: Do this do that etc etc",
     lastMessageTime: new Date(),
-    recipients: users,
+    members: users,
   },
   {
     id: "2",
@@ -62,7 +62,7 @@ const groups: IGroupPreview[] = [
     avatar: undefined,
     lastMessage: "Some other message .....",
     lastMessageTime: new Date(),
-    recipients: users,
+    members: users,
   },
 ];
 

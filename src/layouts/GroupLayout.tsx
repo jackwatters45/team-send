@@ -9,8 +9,8 @@ const getSidebarNavItems = (groupId: string) => [
     href: `/group/${groupId}`,
   },
   {
-    title: "Recipients",
-    href: `/group/${groupId}/recipients`,
+    title: "Members",
+    href: `/group/${groupId}/member`,
   },
   {
     title: "History",
@@ -36,7 +36,7 @@ export function GroupLayout({ children, groupData }: GroupLayoutProps) {
       <aside className="-ml-4 lg:w-1/5">
         <SidebarNav items={sidebarNavItems} />
       </aside>
-      <div className="flex-1 lg:max-w-2xl">{children}</div>
+      <div className="flex-1">{children}</div>
     </PageLayout>
   );
 }
