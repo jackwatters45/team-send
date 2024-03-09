@@ -81,10 +81,12 @@ export const groupRouter = createTRPCRouter({
   //     });
   //   }),
 
-  getLatest: publicProcedure
-  .input(z.string().optional())
-  .query(() => {
+  getLatest: publicProcedure.input(z.string().optional()).query(() => {
     return groups;
+  }),
+
+  getGroupSettings: publicProcedure.input(z.string()).query(({ input }) => {
+    return groups.find((group) => group.id === input);
   }),
 
   getGroupData: publicProcedure.query(() => {

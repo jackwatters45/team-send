@@ -103,7 +103,9 @@ export default function CreateGroupRecents({ form }: ICreateGroupRecentsProps) {
                 </Button>
               ))
             ) : (
-              <div>TODO add form type b</div>
+              <div>
+                No users named &quot;{form.watch("recentsSearch")}&quot;
+              </div>
             )}
           </div>
         </TabsContent>

@@ -20,7 +20,7 @@ export default function CreateGroupForm() {
   const form = useForm<ICreateGroupSchema>({
     resolver: zodResolver(createGroupSchema),
     defaultValues: {
-      name: "Blue Ballers",
+      name: "",
       description: "",
       avatar: "",
       members: [createUser()],
@@ -43,7 +43,7 @@ export default function CreateGroupForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
         <CreateGroupBasicForm form={form} />
-        <section className="flex flex-col gap-3 pt-20">
+        <section className="flex flex-col gap-3 pt-16">
           <CreateGroupAddMembersHeader title={"Add Members"} />
           <div className="flex flex-col gap-3">
             <CreateGroupAddMembers form={form} />
