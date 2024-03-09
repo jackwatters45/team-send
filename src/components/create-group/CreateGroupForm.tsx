@@ -4,6 +4,8 @@ import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRef, useState } from "react";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { PlusCircledIcon, MinusCircledIcon } from "@radix-ui/react-icons";
 
 import { Form, FormItem } from "../ui/form";
 import { FormInput } from "../ui/form-inputs";
@@ -11,8 +13,11 @@ import { toast } from "../ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
 import { Button } from "../ui/button";
+
+import { api } from "@/utils/api";
+import type { IUser } from "@/server/api/routers/user";
+import type { IGroupPreview } from "@/server/api/routers/group";
 import extractInitials from "@/lib/extractInitials";
-import { PlusCircledIcon, MinusCircledIcon } from "@radix-ui/react-icons";
 
 const formSchema = z.object({
   name: z.string().max(40),
@@ -20,25 +25,18 @@ const formSchema = z.object({
   avatar: z.string().optional(),
   users: z.array(
     z.object({
+      id: z.string().optional(),
       name: z.string().max(40),
       email: z.string().email().optional(),
       phone: z.string().optional(),
       notes: z.string().max(100).optional(),
     }),
   ),
+  recentsSearch: z.string().optional(),
 });
-
-interface IUser {
-  name: string;
-  email?: string;
-  phone?: string;
-  notes?: string;
-}
 
 function useCreateGroupForm() {
   const csvRef = useRef<HTMLInputElement>(null);
-
-  // const [users, setUsers] = useState<IUser[]>([]);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
@@ -54,8 +52,17 @@ function useCreateGroupForm() {
           notes: "",
         },
       ],
+      recentsSearch: "",
     },
   });
+
+  const recentUsers = api.user.getLatest.useQuery(form.watch("recentsSearch"));
+  const [usersAdded, setUsersAdded] = useState<IUser[]>([]);
+
+  const recentGroups = api.group.getLatest.useQuery(
+    form.watch("recentsSearch"),
+  );
+  const [groupsAdded, setGroupsAdded] = useState<IGroupPreview[]>([]);
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     toast({
@@ -87,12 +94,73 @@ function useCreateGroupForm() {
     );
   };
 
-  return { form, onSubmit, csvRef, handleAddUser, handleRemoveUser };
+  const handleClickContact = (user: IUser) => {
+    setUsersAdded((prev) => [...prev, user]);
+    form.setValue("users", [
+      ...form.getValues("users"),
+      {
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        notes: user.notes,
+      },
+    ]);
+  };
+
+  const handleClickGroup = (group: IGroupPreview) => {
+    setGroupsAdded((prev) => [...prev, group]);
+
+    const filteredRecipients = group.recipients.filter((recipient) => {
+      return !usersAdded.some(
+        (existingUser) => existingUser.id === recipient.id,
+      );
+    });
+
+    setUsersAdded((prev) => [...prev, ...filteredRecipients]);
+    form.setValue("users", [
+      ...form.getValues("users"),
+      ...filteredRecipients.map((user) => ({
+        name: user.name,
+        email: user.email,
+        phone: user.phone,
+        notes: user.notes,
+      })),
+    ]);
+  };
+
+  const [parent] = useAutoAnimate();
+
+  return {
+    recentGroups,
+    recentUsers,
+    form,
+    onSubmit,
+    csvRef,
+    handleAddUser,
+    handleRemoveUser,
+    handleClickContact,
+    handleClickGroup,
+    parent,
+    usersAdded,
+    groupsAdded,
+  };
 }
 
 export default function CreateGroupForm() {
-  const { form, onSubmit, csvRef, handleAddUser, handleRemoveUser } =
-    useCreateGroupForm();
+  const {
+    form,
+    onSubmit,
+    csvRef,
+    handleAddUser,
+    handleRemoveUser,
+    parent,
+    handleClickContact,
+    handleClickGroup,
+    recentGroups,
+    recentUsers,
+    usersAdded,
+    groupsAdded,
+  } = useCreateGroupForm();
 
   return (
     <Form {...form}>
@@ -150,119 +218,146 @@ export default function CreateGroupForm() {
               />
             </label>
           </div>
-          <div className="flex flex-col gap-2 py-2">
-            {form.watch("users")?.map((user, index) => (
-              <div key={index} className="flex gap-2">
-                <div className="flex flex-1 flex-wrap items-center gap-2">
-                  <FormInput<typeof formSchema>
-                    control={form.control}
-                    name={`users.${index}.name`}
-                    placeholder="Name"
-                  />
-                  <FormInput<typeof formSchema>
-                    control={form.control}
-                    name={`users.${index}.email`}
-                    type="email"
-                    placeholder="Email"
-                  />
-                  <FormInput<typeof formSchema>
-                    control={form.control}
-                    name={`users.${index}.phone`}
-                    type="tel"
-                    placeholder="Phone"
-                  />
-                  <div className="lg:flex-1">
+          <div className="pt-2">
+            <div className="flex flex-col gap-2 py-2" ref={parent}>
+              {form.watch("users")?.map((user, index) => (
+                <div key={index} className="flex gap-2">
+                  <div className="flex flex-1 flex-wrap items-start gap-2">
                     <FormInput<typeof formSchema>
                       control={form.control}
-                      name={`users.${index}.notes`}
-                      placeholder="Notes"
+                      name={`users.${index}.name`}
+                      placeholder="Name"
                     />
+                    <FormInput<typeof formSchema>
+                      control={form.control}
+                      name={`users.${index}.email`}
+                      type="email"
+                      required={false}
+                      placeholder="Email"
+                    />
+                    <FormInput<typeof formSchema>
+                      control={form.control}
+                      name={`users.${index}.phone`}
+                      type="tel"
+                      placeholder="Phone"
+                    />
+                    <div className="lg:flex-1">
+                      <FormInput<typeof formSchema>
+                        control={form.control}
+                        name={`users.${index}.notes`}
+                        placeholder="Notes"
+                      />
+                    </div>
                   </div>
+                  <FormItem>
+                    <Button
+                      variant="ghost"
+                      type="button"
+                      className="border dark:border-stone-800 dark:hover:bg-stone-200"
+                      onClick={() => handleRemoveUser(index)}
+                    >
+                      <MinusCircledIcon className="h-5 w-5" />
+                    </Button>
+                  </FormItem>
                 </div>
-                <FormItem>
-                  <Button
-                    variant="ghost"
-                    type="button"
-                    className="border border-stone-800 hover:bg-stone-200"
-                    onClick={() => handleRemoveUser(index)}
-                  >
-                    <MinusCircledIcon className="h-5 w-5" />
-                  </Button>
-                </FormItem>
-              </div>
-            ))}
-            <Button
-              type="button"
-              size={"sm"}
-              className="flex w-fit items-center gap-2 pl-2"
-              onClick={handleAddUser}
+              ))}
+              <Button
+                type="button"
+                size={"sm"}
+                className="flex w-fit items-center gap-2 pl-2"
+                onClick={handleAddUser}
+              >
+                <PlusCircledIcon className="h-5 w-5" />
+                Add New
+              </Button>
+            </div>
+            <Tabs
+              defaultValue="contacts"
+              className="border-t py-2 dark:border-stone-500 dark:border-opacity-20"
             >
-              <PlusCircledIcon className="h-5 w-5" />
-              Add New
-            </Button>
+              <div className="flex items-center justify-between">
+                <span className="text-lg font-semibold">Recents</span>
+                <TabsList className="grid w-full max-w-[300px] grid-cols-2">
+                  <TabsTrigger value="contacts">Contacts</TabsTrigger>
+                  <TabsTrigger value="groups">Groups</TabsTrigger>
+                </TabsList>
+              </div>
+              <div className="pt-4">
+                <FormInput<typeof formSchema>
+                  control={form.control}
+                  name={`recentsSearch`}
+                  placeholder="Search for recent contacts or groups"
+                />
+              </div>
+              <div className="flex flex-col pt-2">
+                <TabsContent value="contacts">
+                  <div className="flex flex-wrap">
+                    {recentUsers.data
+                      ?.filter(
+                        (user) => !usersAdded.some((u) => u.id === user.id),
+                      )
+                      .map((user) => (
+                        <Button
+                          key={user.id}
+                          onClick={() => handleClickContact(user)}
+                          type="button"
+                          variant={"ghost"}
+                          className="flex h-fit w-full items-center justify-start gap-2 p-2 lg:w-1/2
+                dark:hover:bg-stone-800 dark:hover:bg-opacity-20"
+                        >
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback className="">
+                              {extractInitials(user.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex flex-col items-start truncate">
+                            <div>{user.name}</div>
+                            <div className="flex text-sm text-stone-500 ">
+                              {user.email && <div>{user.email}</div>}
+                              {user.phone && user.email && (
+                                <div className="mx-1">•</div>
+                              )}
+                              {user.phone && <div>{user.phone}</div>}
+                            </div>
+                          </div>
+                        </Button>
+                      ))}
+                  </div>
+                </TabsContent>
+                <TabsContent value="groups">
+                  <div className="flex flex-wrap">
+                    {recentGroups.data
+                      ?.filter(
+                        (group) => !groupsAdded.some((g) => g.id === group.id),
+                      )
+                      .map((group) => (
+                        <Button
+                          key={group.id}
+                          onClick={() => handleClickGroup(group)}
+                          type="button"
+                          variant={"ghost"}
+                          className="flex h-fit w-full items-center justify-start gap-2 p-2 lg:w-1/2 dark:hover:bg-stone-800 dark:hover:bg-opacity-20"
+                        >
+                          <Avatar className="h-10 w-10">
+                            <AvatarFallback className="">
+                              {extractInitials(group.name)}
+                            </AvatarFallback>
+                          </Avatar>
+                          <div className="flex w-full flex-col items-start truncate">
+                            <div>{group.name}</div>
+                            {group.description && (
+                              <div className="text-sm text-stone-500">
+                                {group.description.slice(0, 60)}
+                              </div>
+                            )}
+                          </div>
+                        </Button>
+                      ))}
+                  </div>
+                </TabsContent>
+              </div>
+            </Tabs>
           </div>
-          <Tabs
-            defaultValue="contacts"
-            className="border-t py-2 dark:border-stone-500 dark:border-opacity-20"
-          >
-            <div className="flex items-center justify-between">
-              <span className="text-lg font-semibold">Recents</span>
-              <TabsList className="grid w-full max-w-[300px] grid-cols-2">
-                <TabsTrigger value="contacts">Contacts</TabsTrigger>
-                <TabsTrigger value="groups">Groups</TabsTrigger>
-              </TabsList>
-            </div>
-            <TabsContent value="contacts">
-              <div>in your other groups</div>
-
-              {/* <Card>
-          <CardHeader>
-            <CardTitle>Account</CardTitle>
-            <CardDescription>
-              Make changes to your account here. Click save when you're done.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="space-y-1">
-              <Label htmlFor="name">Name</Label>
-              <Input id="name" defaultValue="Pedro Duarte" />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="username">Username</Label>
-              <Input id="username" defaultValue="@peduarte" />
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button>Save changes</Button>
-          </CardFooter>
-        </Card> */}
-            </TabsContent>
-            <TabsContent value="groups">
-              <div>other groups (copy whole thing)</div>
-
-              {/* <Card>
-          <CardHeader>
-            <CardTitle>Password</CardTitle>
-            <CardDescription>
-              Change your password here. After saving, you'll be logged out.
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-2">
-            <div className="space-y-1">
-              <Label htmlFor="current">Current password</Label>
-              <Input id="current" type="password" />
-            </div>
-            <div className="space-y-1">
-              <Label htmlFor="new">New password</Label>
-              <Input id="new" type="password" />
-            </div>
-          </CardContent>
-          <CardFooter>
-            <Button>Save password</Button>
-          </CardFooter>
-        </Card> */}
-            </TabsContent>
-          </Tabs>
         </section>
       </form>
     </Form>

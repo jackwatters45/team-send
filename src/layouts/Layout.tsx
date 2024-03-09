@@ -27,11 +27,11 @@ export default function Layout({
       >
         <Nav />
         <main className="w-full max-w-screen-xl flex-1 pt-14">
-          <div className="px-24 py-6">{children}</div>
+          <div className="xs:px-12 px-6 py-6 sm:px-24">{children}</div>
         </main>
         <Footer />
       </div>
-        <Toaster />
+      <Toaster />
     </>
   );
 }

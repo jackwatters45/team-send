@@ -2,7 +2,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { Checkbox } from "@/components/ui/checkbox";
 
-import type { GroupPreview } from "@/server/api/routers/group";
+import type { IGroupPreview } from "@/server/api/routers/group";
 
 import {
   HoverCard,
@@ -19,7 +19,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 
-export const groupsColumns: ColumnDef<GroupPreview>[] = [
+export const groupsColumns: ColumnDef<IGroupPreview>[] = [
   {
     id: "select",
     header: ({ table }) => (
