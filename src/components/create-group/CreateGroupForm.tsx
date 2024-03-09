@@ -3,33 +3,59 @@
 import * as z from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useRef, useState } from "react";
 
-import { Form } from "../ui/form";
+import { Form, FormItem } from "../ui/form";
 import { FormInput } from "../ui/form-inputs";
 import { toast } from "../ui/use-toast";
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import extractInitials from "@/lib/extractInitials";
 import { Button } from "../ui/button";
-import { useRef } from "react";
+import extractInitials from "@/lib/extractInitials";
+import { PlusCircledIcon, MinusCircledIcon } from "@radix-ui/react-icons";
 
 const formSchema = z.object({
   name: z.string().max(40),
   description: z.string().max(100).optional(),
   avatar: z.string().optional(),
+  users: z.array(
+    z.object({
+      name: z.string().max(40),
+      email: z.string().email().optional(),
+      phone: z.string().optional(),
+      notes: z.string().max(100).optional(),
+    }),
+  ),
 });
 
+interface IUser {
+  name: string;
+  email?: string;
+  phone?: string;
+  notes?: string;
+}
+
 function useCreateGroupForm() {
+  const csvRef = useRef<HTMLInputElement>(null);
+
+  // const [users, setUsers] = useState<IUser[]>([]);
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "Blue Ballers",
       description: "",
       avatar: "",
+      users: [
+        {
+          name: "",
+          email: "",
+          phone: "",
+          notes: "",
+        },
+      ],
     },
   });
-
-  const csvRef = useRef<HTMLInputElement>(null);
 
   const onSubmit = (data: z.infer<typeof formSchema>) => {
     toast({
@@ -42,11 +68,31 @@ function useCreateGroupForm() {
     });
   };
 
-  return { form, onSubmit, csvRef };
+  const handleAddUser = () => {
+    form.setValue("users", [
+      ...form.getValues("users"),
+      {
+        name: "",
+        email: "",
+        phone: "",
+        notes: "",
+      },
+    ]);
+  };
+
+  const handleRemoveUser = (index: number) => {
+    form.setValue(
+      "users",
+      form.getValues("users").filter((_, i) => i !== index),
+    );
+  };
+
+  return { form, onSubmit, csvRef, handleAddUser, handleRemoveUser };
 }
 
 export default function CreateGroupForm() {
-  const { form, onSubmit, csvRef } = useCreateGroupForm();
+  const { form, onSubmit, csvRef, handleAddUser, handleRemoveUser } =
+    useCreateGroupForm();
 
   return (
     <Form {...form}>
@@ -82,11 +128,10 @@ export default function CreateGroupForm() {
             </Avatar>
           )}
         </section>
-
         <section className="flex flex-col gap-3 pt-20">
-          <div className="flex items-end justify-between border-b text-xl  font-semibold dark:border-stone-500 dark:border-opacity-20 ">
+          <div className="flex items-end justify-between border-b pb-1  text-xl font-semibold dark:border-stone-500 dark:border-opacity-20">
             <span>Add Members</span>
-            <label htmlFor="csv-file-input" className="mb-1 ">
+            <label htmlFor="csv-file-input" className="mb-1">
               <Button
                 type="button"
                 variant="secondary"
@@ -94,7 +139,7 @@ export default function CreateGroupForm() {
                 className="h-7"
                 onClick={() => csvRef.current?.click()}
               >
-                +Upload CSV
+                Upload CSV
               </Button>
               <input
                 id="csv-file-input"
@@ -105,14 +150,63 @@ export default function CreateGroupForm() {
               />
             </label>
           </div>
-          <FormInput<typeof formSchema>
-            control={form.control}
-            name="description"
-            placeholder="Enter a Group Description (optional)"
-          />
-          <Tabs defaultValue="contacts" className="pt-6">
+          <div className="flex flex-col gap-2 py-2">
+            {form.watch("users")?.map((user, index) => (
+              <div key={index} className="flex gap-2">
+                <div className="flex flex-1 flex-wrap items-center gap-2">
+                  <FormInput<typeof formSchema>
+                    control={form.control}
+                    name={`users.${index}.name`}
+                    placeholder="Name"
+                  />
+                  <FormInput<typeof formSchema>
+                    control={form.control}
+                    name={`users.${index}.email`}
+                    type="email"
+                    placeholder="Email"
+                  />
+                  <FormInput<typeof formSchema>
+                    control={form.control}
+                    name={`users.${index}.phone`}
+                    type="tel"
+                    placeholder="Phone"
+                  />
+                  <div className="lg:flex-1">
+                    <FormInput<typeof formSchema>
+                      control={form.control}
+                      name={`users.${index}.notes`}
+                      placeholder="Notes"
+                    />
+                  </div>
+                </div>
+                <FormItem>
+                  <Button
+                    variant="ghost"
+                    type="button"
+                    className="border border-stone-800 hover:bg-stone-200"
+                    onClick={() => handleRemoveUser(index)}
+                  >
+                    <MinusCircledIcon className="h-5 w-5" />
+                  </Button>
+                </FormItem>
+              </div>
+            ))}
+            <Button
+              type="button"
+              size={"sm"}
+              className="flex w-fit items-center gap-2 pl-2"
+              onClick={handleAddUser}
+            >
+              <PlusCircledIcon className="h-5 w-5" />
+              Add New
+            </Button>
+          </div>
+          <Tabs
+            defaultValue="contacts"
+            className="border-t py-2 dark:border-stone-500 dark:border-opacity-20"
+          >
             <div className="flex items-center justify-between">
-              <span className="text-lg">Recents</span>
+              <span className="text-lg font-semibold">Recents</span>
               <TabsList className="grid w-full max-w-[300px] grid-cols-2">
                 <TabsTrigger value="contacts">Contacts</TabsTrigger>
                 <TabsTrigger value="groups">Groups</TabsTrigger>

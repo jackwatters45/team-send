@@ -45,7 +45,7 @@ function FormInput<T extends z.ZodType>({
       name={name}
       render={({ field }) => (
         <FormItem>
-          <FormLabel>{label}</FormLabel>
+          {label && <FormLabel>{label}</FormLabel>}
           <FormControl>
             <Input {...inputProps} {...field} />
           </FormControl>
