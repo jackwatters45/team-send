@@ -35,9 +35,11 @@ const members: IUser[] = [
 ];
 
 export const userRouter = createTRPCRouter({
-  getLatest: publicProcedure
-    .input(z.string().optional())
-    .query(() => {
-      return members;
-    }),
+  getLatest: publicProcedure.input(z.string().optional()).query(({ input }) => {
+    return !!input
+      ? members.filter((member) =>
+          member.name.toLowerCase().includes(input.toLowerCase()),
+        )
+      : members;
+  }),
 });
