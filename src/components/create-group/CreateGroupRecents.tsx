@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
+import { useDebounce } from "use-debounce";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
@@ -20,19 +21,47 @@ interface ICreateGroupRecentsProps {
   form: UseFormReturn<ICreateGroupSchema>;
 }
 export default function CreateGroupRecents({ form }: ICreateGroupRecentsProps) {
-  const search = form.watch("recentsSearch");
+  const [search] = useDebounce(form.watch("recentsSearch"), 500);
   const recentUsers = api.user.getLatest.useQuery(search);
   const recentGroups = api.group.getLatest.useQuery(search);
 
   const [usersAdded, setUsersAdded] = useState<IUser[]>([]);
-  const usersResults = recentUsers.data?.filter(
-    (user) => !usersAdded.some((u) => u.id === user.id),
-  );
+  const [previousUsersResults, setPreviousUsersResults] = useState<IUser[]>([]);
+  const usersResults = recentUsers.isLoading
+    ? previousUsersResults
+    : recentUsers.data?.filter(
+        (user) => !usersAdded.some((u) => u.id === user.id),
+      ) ?? [];
+
+  useEffect(() => {
+    if (recentUsers.isSuccess) {
+      setPreviousUsersResults(
+        recentUsers.data?.filter(
+          (user) => !usersAdded.some((u) => u.id === user.id),
+        ) ?? [],
+      );
+    }
+  }, [recentUsers.isSuccess, recentUsers.data, usersAdded]);
 
   const [groupsAdded, setGroupsAdded] = useState<IGroupPreview[]>([]);
-  const groupsResults = recentGroups.data?.filter(
-    (group) => !groupsAdded.some((g) => g.id === group.id),
-  );
+  const [previousGroupsResults, setPreviousGroupsResults] = useState<
+    IGroupPreview[]
+  >([]);
+  const groupsResults = recentGroups.isLoading
+    ? previousGroupsResults
+    : recentGroups.data?.filter(
+        (group) => !groupsAdded.some((g) => g.id === group.id),
+      ) ?? [];
+
+  useEffect(() => {
+    if (recentGroups.isSuccess) {
+      setPreviousGroupsResults(
+        recentGroups.data?.filter(
+          (group) => !groupsAdded.some((g) => g.id === group.id),
+        ) ?? [],
+      );
+    }
+  }, [recentGroups.isSuccess, recentGroups.data, groupsAdded]);
 
   const handleClickContact = (user: IUser) => {
     setUsersAdded((prev) => [...prev, user]);

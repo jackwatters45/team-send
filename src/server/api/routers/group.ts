@@ -81,12 +81,20 @@ export const groupRouter = createTRPCRouter({
   //     });
   //   }),
 
-  getLatest: publicProcedure.input(z.string().optional()).query(() => {
-    return groups;
+  getLatest: publicProcedure.input(z.string().optional()).query(({ input }) => {
+    return !!input
+      ? groups.filter((group) =>
+          group.name.toLowerCase().includes(input.toLowerCase()),
+        )
+      : groups;
   }),
 
   getGroupSettings: publicProcedure.input(z.string()).query(({ input }) => {
     return groups.find((group) => group.id === input);
+  }),
+
+  getGroupMembers: publicProcedure.input(z.string()).query(({ input }) => {
+    return groups.find((group) => group.id === input)?.members ?? [];
   }),
 
   getGroupData: publicProcedure.query(() => {

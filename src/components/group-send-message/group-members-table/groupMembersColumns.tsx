@@ -2,7 +2,6 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { Checkbox } from "@/components/ui/checkbox";
 
-import type { IGroupPreview } from "@/server/api/routers/group";
 
 import {
   HoverCard,
@@ -20,7 +19,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import type { IUser } from "@/server/api/routers/user";
 
-export const groupsColumns: ColumnDef<IGroupPreview>[] = [
+export const groupMembersColumns: ColumnDef<IUser>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -56,51 +55,32 @@ export const groupsColumns: ColumnDef<IGroupPreview>[] = [
       <DataTableColumnHeader column={column} title="Name" />
     ),
   },
-  {
-    accessorKey: "lastMessage",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Last Message" />
-    ),
-    cell: ({ row }) => {
-      const value = row.getValue<string>("lastMessage");
-      return (
-        <HoverCard>
-          <HoverCardTrigger>{`${value.slice(0, 20)}...`}</HoverCardTrigger>
-          <HoverCardContent>{value}</HoverCardContent>
-        </HoverCard>
-      );
-    },
-  },
-  {
-    accessorKey: "lastMessageTime",
-    header: ({ column }) => {
-      return (
-        <DataTableColumnHeader column={column} title="Last Message Time" />
-      );
-    },
-    cell: ({ row }) => {
-      return row.getValue<Date>("lastMessageTime").toLocaleString();
-    },
-  },
-  {
-    accessorKey: "members",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Members" />
-    ),
-    cell: ({ row }) => {
-      const members = row.getValue<IUser[]>("members");
-      return (
-        <HoverCard>
-          <HoverCardTrigger>{`${members.length} members`}</HoverCardTrigger>
-          <HoverCardContent className="flex flex-wrap">
-            {members.map((member) => (
-              <div key={member.id}>{member.name}</div>
-            ))}
-          </HoverCardContent>
-        </HoverCard>
-      );
-    },
-  },
+  // {
+  //   accessorKey: "lastMessage",
+  //   header: ({ column }) => (
+  //     <DataTableColumnHeader column={column} title="Last Message" />
+  //   ),
+  //   cell: ({ row }) => {
+  //     const value = row.getValue<string>("lastMessage");
+  //     return (
+  //       <HoverCard>
+  //         <HoverCardTrigger>{`${value.slice(0, 20)}...`}</HoverCardTrigger>
+  //         <HoverCardContent>{value}</HoverCardContent>
+  //       </HoverCard>
+  //     );
+  //   },
+  // },
+  // {
+  //   accessorKey: "lastMessageTime",
+  //   header: ({ column }) => {
+  //     return (
+  //       <DataTableColumnHeader column={column} title="Last Message Time" />
+  //     );
+  //   },
+  //   cell: ({ row }) => {
+  //     return row.getValue<Date>("lastMessageTime").toLocaleString();
+  //   },
+  // },
   {
     id: "actions",
     cell: ({ row }) => (

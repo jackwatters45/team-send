@@ -11,10 +11,18 @@ import {
   FormTextarea,
   NumPeriodInputs,
 } from "../ui/form-inputs";
+import GroupMembersTable from "./group-members-table/GroupMembersTable";
 
 export default function GroupSendMessage() {
   const { form, onSubmit, reminders, removeReminder, addReminder, parent } =
     useGroupSendMessage();
+
+  // turn form into datatable editable?
+
+  // members
+  // add field to members -> send/not send
+  // needs save button
+  // to add send/not send to create??
 
   return (
     <Form {...form}>
@@ -114,6 +122,8 @@ export default function GroupSendMessage() {
             ? "Schedule Message"
             : "Send Message"}
         </Button>
+        <div className="border-b dark:border-stone-500 dark:border-opacity-20" />
+              <GroupMembersTable />
       </form>
     </Form>
   );

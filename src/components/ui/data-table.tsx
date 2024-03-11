@@ -1,19 +1,10 @@
-import { useState } from "react";
 import Link from "next/link";
 import { MoreHorizontal } from "lucide-react";
-import type { ChangeEvent } from "react";
+import type { ChangeEvent, InputHTMLAttributes } from "react";
 import {
-  useReactTable,
-  getCoreRowModel,
-  getFilteredRowModel,
-  getPaginationRowModel,
-  getSortedRowModel,
   flexRender,
   type Column,
   type ColumnDef,
-  type SortingState,
-  type ColumnFiltersState,
-  type VisibilityState,
   type Table as TableType,
 } from "@tanstack/react-table";
 import {
@@ -57,33 +48,39 @@ import { Input } from "./input";
 import { Skeleton } from "./skeleton";
 import { cn } from "@/lib/utils";
 
-interface DataTableFilterProps<TData> {
+interface DataTableFilterProps<TData>
+  extends InputHTMLAttributes<HTMLInputElement> {
   table: TableType<TData>;
 }
-function DataTableFilter<TData>({ table }: DataTableFilterProps<TData>) {
+function DataTableFilter<TData>({
+  table,
+  ...inputProps
+}: DataTableFilterProps<TData>) {
   return (
     <Input
-      placeholder="Search by group name..."
       value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
       onChange={(event: ChangeEvent<HTMLInputElement>) =>
         table.getColumn("name")?.setFilterValue(event.target.value)
       }
       className="max-w-sm"
+      {...inputProps}
     />
   );
 }
 
 interface DataTableColumnOptionsProps<TData> {
   table: TableType<TData>;
+  triggerName?: string;
 }
 function DataTableColumnOptions<TData>({
   table,
+  triggerName = "Columns",
 }: DataTableColumnOptionsProps<TData>) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="ml-auto">
-          Columns
+          {triggerName}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
@@ -357,122 +354,86 @@ function DataTableSkeleton({
   );
 }
 
-interface DataTableProps<TData, TValue> {
+interface DataTableContentProps<TData, TValue> {
+  table: TableType<TData>;
   columns: ColumnDef<TData, TValue>[];
-  data: TData[];
-  includeFilter?: boolean;
-  includeColumnOptions?: boolean;
-  includeRowSelection?: boolean;
-  includePagination?: boolean;
 }
-function DataTable<TData, TValue>({
+function DataTableContent<TData, TValue>({
+  table,
   columns,
-  data,
-  includeFilter = true,
-  includeColumnOptions = true,
-  includeRowSelection = true,
-  includePagination = true,
-}: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
+}: DataTableContentProps<TData, TValue>) {
+  return (
+    <Table>
+      <TableHeader>
+        {table.getHeaderGroups().map((headerGroup) => (
+          <TableRow key={headerGroup.id}>
+            {headerGroup.headers.map((header) => {
+              return (
+                <TableHead key={header.id}>
+                  {header.isPlaceholder
+                    ? null
+                    : flexRender(
+                        header.column.columnDef.header,
+                        header.getContext(),
+                      )}
+                </TableHead>
+              );
+            })}
+          </TableRow>
+        ))}
+      </TableHeader>
+      <TableBody>
+        {table.getRowModel().rows?.length ? (
+          table.getRowModel().rows.map((row) => (
+            <TableRow
+              key={row.id}
+              data-state={row.getIsSelected() && "selected"}
+            >
+              {row.getVisibleCells().map((cell) => {
+                const colId = cell.column.id;
+                return colId !== "actions" && colId !== "select" ? (
+                  <TableCell key={cell.id}>
+                    <Link
+                      href={`/group/${row.getValue<string>("id")}`}
+                      className="block p-4"
+                    >
+                      {flexRender(
+                        cell.column.columnDef.cell,
+                        cell.getContext(),
+                      )}
+                    </Link>
+                  </TableCell>
+                ) : (
+                  <TableCell key={cell.id} className="p-4">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                );
+              })}
+            </TableRow>
+          ))
+        ) : (
+          <TableRow>
+            <TableCell colSpan={columns.length} className="h-24 text-center">
+              No results.
+            </TableCell>
+          </TableRow>
+        )}
+      </TableBody>
+    </Table>
+  );
+}
 
-  const table = useReactTable({
-    data,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-    state: {
-      sorting,
-      columnFilters,
-      columnVisibility,
-      rowSelection,
-    },
-  });
-
+interface DataTableProps {
+  header: React.ReactNode;
+  content: React.ReactNode;
+  footer: React.ReactNode;
+}
+function DataTable({ header, content, footer }: DataTableProps) {
   return (
     <div>
-      <div className="flex items-center py-4">
-        {includeFilter && <DataTableFilter table={table} />}
-        {includeColumnOptions && <DataTableColumnOptions table={table} />}
-      </div>
-      <div className="rounded-md border dark:border-stone-700">
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => {
-                    const colId = cell.column.id;
-                    return colId !== "actions" && colId !== "select" ? (
-                      <TableCell key={cell.id}>
-                        <Link
-                          href={`/group/${row.getValue<string>("id")}`}
-                          className="block p-4"
-                        >
-                          {flexRender(
-                            cell.column.columnDef.cell,
-                            cell.getContext(),
-                          )}
-                        </Link>
-                      </TableCell>
-                    ) : (
-                      <TableCell key={cell.id} className="p-4">
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </TableCell>
-                    );
-                  })}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <div className="flex items-center justify-between p-2">
-        {includeRowSelection && <DataTableSelectedRowCount table={table} />}
-        {includePagination && <DataTablePagination table={table} />}
-      </div>
+      <div className="flex items-center py-4">{header}</div>
+      <div className="rounded-md border dark:border-stone-700">{content}</div>
+      <div className="flex items-center justify-between p-2">{footer}</div>
     </div>
   );
 }
@@ -486,5 +447,6 @@ export {
   DataTableSelectedRowCount,
   DataTablePagination,
   DataTableSkeleton,
+  DataTableContent,
   DataTable,
 };
