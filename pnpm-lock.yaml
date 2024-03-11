@@ -80,6 +80,9 @@ dependencies:
   geist:
     specifier: ^1.2.2
     version: 1.2.2(next@14.1.2)
+  libphonenumber-js:
+    specifier: ^1.10.58
+    version: 1.10.58
   lucide-react:
     specifier: ^0.344.0
     version: 0.344.0(react@18.2.0)
@@ -3071,6 +3074,10 @@ packages:
       prelude-ls: 1.2.1
       type-check: 0.4.0
     dev: true
+
+  /libphonenumber-js@1.10.58:
+    resolution: {integrity: sha512-53A0IpJFL9LdHbpeatwizf8KSwPICrqn9H0g3Y7WQ+Jgeu9cQ4Ew3WrRtrLBu/CX2lXd5+rgT01/tGlkbkzOjw==}
+    dev: false
 
   /lilconfig@2.1.0:
     resolution: {integrity: sha512-utWOt/GHzuUxnLKxB6dk81RoOeoNeHgbrXiuGk4yyF5qlRz+iIVWu56E2fqGHFrXz0QNUhLB/8nKqvRH66JKGQ==}

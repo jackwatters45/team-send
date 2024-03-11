@@ -2,21 +2,21 @@ import { MinusCircledIcon, PlusCircledIcon } from "@radix-ui/react-icons";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import type { UseFormReturn } from "react-hook-form";
 
-import { Button } from "../ui/button";
-import { FormInput } from "../ui/form-inputs";
-import { FormItem } from "../ui/form";
+import { Button } from "../../ui/button";
+import { FormInput } from "../../ui/form-inputs";
+import { FormItem } from "../../ui/form";
 import createUser from "@/lib/createUser";
 import type {
   ICreateGroupSchema,
   createGroupSchema,
-} from "./createGroupSchema";
+} from "../../create-group/createGroupSchema";
 
-interface ICreateGroupAddMembersProps {
+interface IGroupMemberListProps {
   form: UseFormReturn<ICreateGroupSchema>;
 }
-export default function CreateGroupAddMembers({
+export default function GroupMemberList({
   form,
-}: ICreateGroupAddMembersProps) {
+}: IGroupMemberListProps) {
   const [parent] = useAutoAnimate();
 
   const handleAddUser = () => {

@@ -7,13 +7,12 @@ import { api } from "@/utils/api";
 import { Form } from "@/components/ui/form";
 import { toast } from "@/components/ui/use-toast";
 import { GroupLayout } from "@/layouts/GroupLayout";
-import CreateGroupRecents from "@/components/create-group/CreateGroupRecents";
-import CreateGroupAddMembers from "@/components/create-group/CreateGroupAddMembers";
-import CreateGroupAddMembersHeader from "@/components/create-group/CreateGroupAddMembersHeader";
+
 import {
   type ICreateGroupSchema,
   createGroupSchema,
 } from "@/components/create-group/createGroupSchema";
+import GroupMembersFormContent from "../../../components/group/members-form/GroupMembersFormContent";
 
 export default function GroupMembers() {
   const group = api.group.getGroupData.useQuery();
@@ -49,13 +48,13 @@ export default function GroupMembers() {
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="flex w-full flex-col gap-3"
+          className="flex w-full flex-col gap-6"
         >
-          <CreateGroupAddMembersHeader title="Edit Members" />
-          <div className="flex flex-col gap-3">
-            <CreateGroupAddMembers form={form} />
-            <CreateGroupRecents form={form} />
-          </div>
+          <GroupMembersFormContent
+            title={"Edit Members"}
+            form={form}
+            submitText={"Save"}
+          />
         </form>
       </Form>
     </GroupLayout>

@@ -6,15 +6,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Form } from "../ui/form";
 import { toast } from "../ui/use-toast";
 
-import CreateGroupRecents from "./CreateGroupRecents";
-import CreateGroupAddMembers from "./CreateGroupAddMembers";
 import CreateGroupBasicForm from "./CreateGroupBasicInfo";
-import CreateGroupAddMembersHeader from "./CreateGroupAddMembersHeader";
 import createUser from "@/lib/createUser";
 import {
   createGroupSchema,
   type ICreateGroupSchema,
 } from "./createGroupSchema";
+import GroupMembersFormContent from "@/components/group/members-form/GroupMembersFormContent";
 
 export default function CreateGroupForm() {
   const form = useForm<ICreateGroupSchema>({
@@ -43,12 +41,12 @@ export default function CreateGroupForm() {
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="w-full">
         <CreateGroupBasicForm form={form} />
-        <section className="flex flex-col gap-3 pt-16">
-          <CreateGroupAddMembersHeader title={"Add Members"} />
-          <div className="flex flex-col gap-3">
-            <CreateGroupAddMembers form={form} />
-            <CreateGroupRecents form={form} />
-          </div>
+        <section className="flex flex-col gap-6 pt-16">
+          <GroupMembersFormContent
+            title={"Add Members"}
+            form={form}
+            submitText={"Create Group"}
+          />
         </section>
       </form>
     </Form>

@@ -17,19 +17,19 @@ export interface IUser extends INewUser {
   id: string;
 }
 
-const members: IUser[] = [
+export const members: IUser[] = [
   {
     id: "1",
     name: "Pedro Duarte",
     email: "pedro@gmail.com",
-    phone: "1234567890",
+    phone: "+12234567890",
     notes: "Some notes",
   },
   {
     id: "2",
     name: "John Doe",
     email: "",
-    phone: "9876543210",
+    phone: "+19876543210",
     notes: "",
   },
 ];

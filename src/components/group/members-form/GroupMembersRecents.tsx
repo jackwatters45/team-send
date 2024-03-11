@@ -1,11 +1,12 @@
 import { useEffect, useState } from "react";
 import type { UseFormReturn } from "react-hook-form";
 import { useDebounce } from "use-debounce";
+import parsePhoneNumber from "libphonenumber-js";
 
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../ui/tabs";
-import { FormInput } from "../ui/form-inputs";
-import { Button } from "../ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../ui/tabs";
+import { FormInput } from "../../ui/form-inputs";
+import { Button } from "../../ui/button";
 
 import extractInitials from "@/lib/extractInitials";
 import type { IUser } from "@/server/api/routers/user";
@@ -15,12 +16,12 @@ import createUser from "@/lib/createUser";
 import type {
   ICreateGroupSchema,
   createGroupSchema,
-} from "./createGroupSchema";
+} from "../../create-group/createGroupSchema";
 
-interface ICreateGroupRecentsProps {
+interface IGroupMembersRecentsProps {
   form: UseFormReturn<ICreateGroupSchema>;
 }
-export default function CreateGroupRecents({ form }: ICreateGroupRecentsProps) {
+export default function GroupMembersRecents({ form }: IGroupMembersRecentsProps) {
   const [search] = useDebounce(form.watch("recentsSearch"), 500);
   const recentUsers = api.user.getLatest.useQuery(search);
   const recentGroups = api.group.getLatest.useQuery(search);
@@ -105,32 +106,39 @@ export default function CreateGroupRecents({ form }: ICreateGroupRecentsProps) {
         <TabsContent value="contacts">
           <div className="flex flex-wrap">
             {usersResults ? (
-              usersResults.map((user) => (
-                <Button
-                  key={user.id}
-                  onClick={() => handleClickContact(user)}
-                  type="button"
-                  variant={"ghost"}
-                  className="flex h-fit w-full items-center justify-start gap-2 p-2 lg:w-1/2
+              usersResults.map((user) => {
+                const phoneNumber = user.phone
+                  ? parsePhoneNumber(user.phone)
+                  : null;
+                return (
+                  <Button
+                    key={user.id}
+                    onClick={() => handleClickContact(user)}
+                    type="button"
+                    variant={"ghost"}
+                    className="flex h-fit w-full items-center justify-start gap-2 p-2 lg:w-1/2
                 dark:hover:bg-stone-800 dark:hover:bg-opacity-20"
-                >
-                  <Avatar className="h-10 w-10">
-                    <AvatarFallback className="">
-                      {extractInitials(user.name)}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="flex flex-col items-start truncate">
-                    <div>{user.name}</div>
-                    <div className="flex text-sm text-stone-500 ">
-                      {user.email && <div>{user.email}</div>}
-                      {user.phone && user.email && (
-                        <div className="mx-1">•</div>
-                      )}
-                      {user.phone && <div>{user.phone}</div>}
+                  >
+                    <Avatar className="h-10 w-10">
+                      <AvatarFallback className="">
+                        {extractInitials(user.name)}
+                      </AvatarFallback>
+                    </Avatar>
+                    <div className="flex flex-col items-start truncate">
+                      <div>{user.name}</div>
+                      <div className="flex text-sm text-stone-500 ">
+                        {user.email && <div>{user.email}</div>}
+                        {phoneNumber && user.email && (
+                          <div className="mx-1">•</div>
+                        )}
+                        {phoneNumber && (
+                          <div>{phoneNumber.formatNational()}</div>
+                        )}
+                      </div>
                     </div>
-                  </div>
-                </Button>
-              ))
+                  </Button>
+                );
+              })
             ) : (
               <div>
                 No users named &quot;{form.watch("recentsSearch")}&quot;

@@ -1,4 +1,5 @@
 import type { ColumnDef, Row } from "@tanstack/react-table";
+import parsePhoneNumber from "libphonenumber-js";
 
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -66,6 +67,13 @@ export const groupMembersColumns: ColumnDef<IUser>[] = [
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Phone" />
     ),
+    cell: ({ row }) => {
+      const phoneNumber = parsePhoneNumber(row.getValue<string>("phone"));
+
+      return phoneNumber
+        ? phoneNumber.formatNational()
+        : row.getValue<string>("phone");
+    },
   },
   {
     accessorKey: "notes",

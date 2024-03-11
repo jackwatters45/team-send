@@ -1,5 +1,5 @@
 import type { IGroupPreview } from "@/server/api/routers/group";
-import { SidebarNav } from "@/components/Group/SidebarNav";
+import { GroupSidebarNav } from "@/components/group/GroupSidebarNav";
 import { useRouter } from "next/router";
 import PageLayout from "./PageLayout";
 
@@ -34,7 +34,7 @@ export function GroupLayout({ children, groupData }: GroupLayoutProps) {
   return (
     <PageLayout title={groupData.name} description={groupData.description}>
       <aside className="-ml-4 lg:w-1/5">
-        <SidebarNav items={sidebarNavItems} />
+        <GroupSidebarNav items={sidebarNavItems} />
       </aside>
       <div className="flex-1">{children}</div>
     </PageLayout>

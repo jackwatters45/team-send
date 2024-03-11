@@ -1,13 +1,13 @@
 import { useRef } from "react";
 
-import { Button } from "../ui/button";
+import { Button } from "../../ui/button";
 
-interface ICreateGroupAddMembersHeaderProps {
+interface IGroupMembersHeaderProps {
   title: string;
 }
-export default function CreateGroupAddMembersHeader({
+export default function GroupMembersHeader({
   title,
-}: ICreateGroupAddMembersHeaderProps) {
+}: IGroupMembersHeaderProps) {
   const csvRef = useRef<HTMLInputElement>(null);
 
   return (
