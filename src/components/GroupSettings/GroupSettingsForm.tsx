@@ -1,4 +1,4 @@
-import { TrashIcon } from "@radix-ui/react-icons";
+import { MinusCircledIcon } from "@radix-ui/react-icons";
 
 import type { groupSettingsSchema } from "./groupSettingsSchema";
 import useGroupSettings from "./useGroupSettings";
@@ -46,7 +46,7 @@ export default function GroupSettingsForm() {
           label="Scheduled"
           description="Schedule messages to be sent at a specific date and time"
         />
-        {form.watch("isScheduled") && (
+        {form.watch("isScheduled") === "yes" && (
           <DateTimeInput<typeof groupSettingsSchema>
             control={form.control}
             name="scheduledDate"
@@ -59,7 +59,7 @@ export default function GroupSettingsForm() {
           label="Recurring"
           description="Set up automatic, recurring messages for consistent reminders"
         />
-        {form.watch("isRecurring") && (
+        {form.watch("isRecurring") === "yes" && (
           <div className="flex flex-col gap-3">
             <FormLabel>Recurring every</FormLabel>
             <NumPeriodInputs<typeof groupSettingsSchema>
@@ -77,7 +77,7 @@ export default function GroupSettingsForm() {
           label="Reminders"
           description="Send reminders at set increments before the due date"
         />
-        {form.watch("isReminders") && (
+        {form.watch("isReminders") === "yes" && (
           <div className="flex flex-col gap-3">
             <FormLabel>Remind before</FormLabel>
             {reminders.map((reminder, index) => (
@@ -92,10 +92,13 @@ export default function GroupSettingsForm() {
                 <Button
                   variant="ghost"
                   type="button"
-                  className="px-1 hover:bg-stone-200"
+                  className="border 
+                  px-2 hover:bg-stone-100
+               dark:border-0 dark:hover:bg-stone-800
+                  "
                   onClick={() => removeReminder(index)}
                 >
-                  <TrashIcon className=" h-5 w-5" />
+                  <MinusCircledIcon className=" h-5 w-5" />
                 </Button>
               </div>
             ))}

@@ -91,7 +91,7 @@ export default function GroupSendMessage() {
                 <Button
                   variant="ghost"
                   type="button"
-                  className="px-1 hover:bg-stone-200"
+                  className="border px-2 hover:bg-stone-100 dark:border-0 dark:hover:bg-stone-800"
                   onClick={() => removeReminder(index)}
                 >
                   <MinusCircledIcon className=" h-5 w-5" />
@@ -123,7 +123,7 @@ export default function GroupSendMessage() {
             : "Send Message"}
         </Button>
         <div className="border-b dark:border-stone-500 dark:border-opacity-20" />
-              <GroupMembersTable />
+        <GroupMembersTable />
       </form>
     </Form>
   );

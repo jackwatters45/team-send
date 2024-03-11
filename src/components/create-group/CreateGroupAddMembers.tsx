@@ -65,7 +65,8 @@ export default function CreateGroupAddMembers({
             <Button
               variant="ghost"
               type="button"
-              className="border dark:border-stone-800 dark:hover:bg-stone-200"
+              className="border hover:bg-stone-100
+               dark:border-0 dark:hover:bg-stone-800"
               onClick={() => handleRemoveUser(index)}
             >
               <MinusCircledIcon className="h-5 w-5" />
