@@ -1,11 +1,12 @@
-import * as React from "react"
-import * as HoverCardPrimitive from "@radix-ui/react-hover-card"
+import * as React from "react";
+import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
+import { type Row } from "@tanstack/react-table";
 
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils";
 
-const HoverCard = HoverCardPrimitive.Root
+const HoverCard = HoverCardPrimitive.Root;
 
-const HoverCardTrigger = HoverCardPrimitive.Trigger
+const HoverCardTrigger = HoverCardPrimitive.Trigger;
 
 const HoverCardContent = React.forwardRef<
   React.ElementRef<typeof HoverCardPrimitive.Content>,
@@ -17,11 +18,36 @@ const HoverCardContent = React.forwardRef<
     sideOffset={sideOffset}
     className={cn(
       "z-50 w-64 rounded-md border border-stone-200 bg-white p-4 text-stone-950 shadow-md outline-none data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-95 data-[state=open]:zoom-in-95 data-[side=bottom]:slide-in-from-top-2 data-[side=left]:slide-in-from-right-2 data-[side=right]:slide-in-from-left-2 data-[side=top]:slide-in-from-bottom-2 dark:border-stone-800 dark:bg-stone-950 dark:text-stone-50",
-      className
+      className,
     )}
     {...props}
   />
-))
-HoverCardContent.displayName = HoverCardPrimitive.Content.displayName
+));
+HoverCardContent.displayName = HoverCardPrimitive.Content.displayName;
 
-export { HoverCard, HoverCardTrigger, HoverCardContent }
+interface HoverableCellProps<T> {
+  row: Row<T>;
+  accessorKey: string;
+  truncateLength?: number;
+}
+function HoverableCell<T>({
+  row,
+  accessorKey,
+  truncateLength = 20,
+}: HoverableCellProps<T>) {
+  const value = row.getValue<string>(accessorKey);
+
+  const triggerText =
+    value.length > truncateLength
+      ? `${value.slice(0, truncateLength)}...`
+      : value;
+
+  return (
+    <HoverCard>
+      <HoverCardTrigger>{triggerText}</HoverCardTrigger>
+      <HoverCardContent>{value}</HoverCardContent>
+    </HoverCard>
+  );
+}
+
+export { HoverCard, HoverCardTrigger, HoverCardContent, HoverableCell };

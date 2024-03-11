@@ -1,12 +1,12 @@
-import type { ColumnDef } from "@tanstack/react-table";
+import type { ColumnDef, Row } from "@tanstack/react-table";
 
 import { Checkbox } from "@/components/ui/checkbox";
-
 
 import {
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
+  HoverableCell,
 } from "@/components/ui/hover-card";
 import {
   DataTableColumnHeader,
@@ -55,32 +55,25 @@ export const groupMembersColumns: ColumnDef<IUser>[] = [
       <DataTableColumnHeader column={column} title="Name" />
     ),
   },
-  // {
-  //   accessorKey: "lastMessage",
-  //   header: ({ column }) => (
-  //     <DataTableColumnHeader column={column} title="Last Message" />
-  //   ),
-  //   cell: ({ row }) => {
-  //     const value = row.getValue<string>("lastMessage");
-  //     return (
-  //       <HoverCard>
-  //         <HoverCardTrigger>{`${value.slice(0, 20)}...`}</HoverCardTrigger>
-  //         <HoverCardContent>{value}</HoverCardContent>
-  //       </HoverCard>
-  //     );
-  //   },
-  // },
-  // {
-  //   accessorKey: "lastMessageTime",
-  //   header: ({ column }) => {
-  //     return (
-  //       <DataTableColumnHeader column={column} title="Last Message Time" />
-  //     );
-  //   },
-  //   cell: ({ row }) => {
-  //     return row.getValue<Date>("lastMessageTime").toLocaleString();
-  //   },
-  // },
+  {
+    accessorKey: "email",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Email" />
+    ),
+  },
+  {
+    accessorKey: "phone",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Phone" />
+    ),
+  },
+  {
+    accessorKey: "notes",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Notes" className="flex-1" />
+    ),
+    cell: ({ row }) => <HoverableCell row={row} accessorKey="notes" />,
+  },
   {
     id: "actions",
     cell: ({ row }) => (
@@ -91,11 +84,11 @@ export const groupMembersColumns: ColumnDef<IUser>[] = [
             navigator.clipboard.writeText(row.getValue<string>("id"))
           }
         >
-          Copy payment ID
+          Copy member ID
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>View customer</DropdownMenuItem>
-        <DropdownMenuItem>View payment details</DropdownMenuItem>
+        <DropdownMenuItem>View member details</DropdownMenuItem>
+        <DropdownMenuItem>Remove member from group</DropdownMenuItem>
       </DataTableRowActions>
     ),
   },
