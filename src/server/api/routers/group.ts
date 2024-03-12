@@ -1,13 +1,9 @@
 import { z } from "zod";
-
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-} from "@/server/api/trpc";
-import { type IContact, contacts } from "./contact";
-
 import { faker } from "@faker-js/faker";
+
+import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
+import { contacts, type IMember } from "./contact";
+import { type IUser } from "./auth";
 
 export interface IGroupBase {
   id: string;
@@ -19,7 +15,7 @@ export interface IGroupBase {
 export interface IGroupPreview extends IGroupBase {
   lastMessage: string;
   lastMessageTime: Date;
-  members: IContact[];
+  members: IMember[];
 }
 
 export interface IGroupSettings extends IGroupBase {
@@ -31,7 +27,8 @@ export interface IGroup extends IGroupPreview, IGroupSettings {
   messages: {
     id: string;
     content: string;
-    sender: IContact;
+    recipients: IMember[];
+    sender: IUser;
     time: Date;
   }[];
 }

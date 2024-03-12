@@ -39,7 +39,7 @@ export default function GroupSendMessage() {
             : "Send Message"}
         </Button>
         <div className="border-b dark:border-stone-500 dark:border-opacity-20" />
-        <GroupMembersTable />
+        <GroupMembersTable  />
       </form>
     </Form>
   );

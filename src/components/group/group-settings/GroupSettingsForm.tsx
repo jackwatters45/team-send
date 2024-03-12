@@ -1,5 +1,9 @@
 import type { GroupSettingsFormSchema } from "./groupSettingsSchema";
 import useGroupSettings from "./useGroupSettings";
+import extractInitials from "@/lib/extractInitials";
+import { cn } from "@/lib/utils";
+import { type IGroupSettings } from "@/server/api/routers/group";
+
 import { Button } from "../../ui/button";
 import {
   Form,
@@ -9,12 +13,11 @@ import {
   FormItem,
   FormLabel,
 } from "../../ui/form";
-import { FormInput } from "../../ui/form-inputs";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import extractInitials from "@/lib/extractInitials";
-import { type IGroupSettings } from "@/server/api/routers/group";
+import { FormInput } from "../../ui/form-inputs";
 import { Switch } from "@/components/ui/switch";
 import { Checkbox } from "@/components/ui/checkbox";
+import DangerZoneCard from "@/components/ui/danger-zone-card";
 
 interface IGroupSettingsFormProps {
   group: IGroupSettings;
@@ -69,79 +72,110 @@ export default function GroupSettingsForm({ group }: IGroupSettingsFormProps) {
           placeholder="Enter a Group Description (optional)"
         />
         <div className="pt-8">
-          <h3 className="border-b text-lg font-medium tracking-tight dark:border-stone-500 dark:border-opacity-20">
-            Connections
-          </h3>
-          <div className="flex flex-col gap-6 pt-6">
+          <div className="rounded-md border p-4 dark:border-stone-700">
+            <h3 className="border-b text-lg font-medium tracking-tight dark:border-stone-500 dark:border-opacity-20">
+              Connections
+            </h3>
+            <div className="flex flex-col gap-6 pt-6">
+              <FormField
+                control={form.control}
+                name="phone"
+                render={({ field }) => (
+                  <FormItem className="flex w-full flex-row items-center justify-between rounded-lg border p-4 dark:border-stone-800">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Phone</FormLabel>
+                      <FormDescription>
+                        Send texts from your twilio number to members of this
+                        group.
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+              <FormField
+                control={form.control}
+                name="email"
+                render={({ field }) => (
+                  <FormItem className="flex w-full flex-row items-center justify-between rounded-lg border p-4 dark:border-stone-800">
+                    <div className="space-y-0.5">
+                      <FormLabel className="text-base">Email</FormLabel>
+                      <FormDescription>
+                        Send emails via Nodemailer to members of this group.
+                      </FormDescription>
+                    </div>
+                    <FormControl>
+                      <Switch
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormItem>
+                )}
+              />
+            </div>
             <FormField
               control={form.control}
-              name="phone"
+              name="change-global"
               render={({ field }) => (
-                <FormItem className="flex w-full flex-row items-center justify-between rounded-lg border p-4 dark:border-stone-800">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Phone</FormLabel>
-                    <FormDescription>
-                      Send texts from your twilio number to members of this
-                      group.
-                    </FormDescription>
-                  </div>
+                <FormItem className="flex flex-row items-start space-x-3 space-y-0 pb-4 pt-10 ">
                   <FormControl>
-                    <Switch
+                    <Checkbox
                       checked={field.value}
                       onCheckedChange={field.onChange}
                     />
                   </FormControl>
-                </FormItem>
-              )}
-            />
-            <FormField
-              control={form.control}
-              name="email"
-              render={({ field }) => (
-                <FormItem className="flex w-full flex-row items-center justify-between rounded-lg border p-4 dark:border-stone-800">
-                  <div className="space-y-0.5">
-                    <FormLabel className="text-base">Email</FormLabel>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>Change settings for all groups</FormLabel>
                     <FormDescription>
-                      Send emails via Nodemailer to members of this group.
+                      Change the phone and email settings for all your groups.
                     </FormDescription>
                   </div>
-                  <FormControl>
-                    <Switch
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
                 </FormItem>
               )}
             />
           </div>
-          <FormField
-            control={form.control}
-            name="change-global"
-            render={({ field }) => (
-              <FormItem className="flex flex-row items-start space-x-3 space-y-0 pb-4 pt-10 ">
-                <FormControl>
-                  <Checkbox
-                    checked={field.value}
-                    onCheckedChange={field.onChange}
-                  />
-                </FormControl>
-                <div className="space-y-1 leading-none">
-                  <FormLabel>Change settings for all groups</FormLabel>
-                  <FormDescription>
-                    Change the phone and email settings for all your groups.
-                  </FormDescription>
-                </div>
-              </FormItem>
-            )}
-          />
         </div>
+
         <div>
           <Button type="submit" className="">
             Save changes
           </Button>
         </div>
       </form>
+      <div className="pt-8">
+        <div className="border-b border-red-300/80 dark:border-red-800/80">
+          <h3 className="text-xl font-semibold">Danger Zone</h3>
+        </div>
+        <div className="pt-6">
+          <div className="rounded-md border border-red-300/80 dark:border-red-800/80">
+            <DangerZoneCard
+              title="Transfer ownership"
+              description="Transfer ownership of this group to another account."
+              buttonTitle="Transfer"
+              onClick={() => {}}
+            />
+            <DangerZoneCard
+              title="Archive this group"
+              description="Archive this group and make read-only."
+              buttonTitle="Archive group"
+              onClick={() => {}}
+            />
+            <DangerZoneCard
+              title="Delete this group"
+              description="Deleting a group will erase all message history."
+              buttonTitle="Delete group"
+              onClick={() => {}}
+              isLast={true}
+            />
+          </div>
+        </div>
+      </div>
     </Form>
   );
 }

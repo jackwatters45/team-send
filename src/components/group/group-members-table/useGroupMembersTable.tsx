@@ -2,17 +2,19 @@ import { useParams } from "next/navigation";
 
 import { api } from "@/utils/api";
 import { useDataTable } from "@/hooks/useDataTable";
-import { groupMembersColumns } from "./groupMembersColumns";
+import { getGroupMembersColumns } from "./groupMembersColumns";
 
 export default function useGroupMembersTable() {
   const groupId = useParams().groupId as string;
   const groupMembers = api.group.getGroupMembers.useQuery(groupId);
 
   const table = useDataTable({
-    columns: groupMembersColumns,
+    columns: getGroupMembersColumns(),
     data: groupMembers.data ?? [],
-    includePagination: false,
   });
+
+  const selectedRows = table.getSelectedRowModel().flatRows ?? [];
+  const selectedRowIds = selectedRows.map((row) => row.original.id);
 
   return {
     groupMembers,

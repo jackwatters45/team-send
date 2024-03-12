@@ -17,13 +17,18 @@ export interface IContact extends INewContact {
   id: string;
 }
 
-export const contacts: IContact[] = [
+export interface IMember extends IContact {
+  isRecipient: boolean;
+}
+
+export const contacts: IMember[] = [
   {
     id: "1",
     name: "Pedro Duarte",
     email: "pedro@gmail.com",
     phone: "+12234567890",
     notes: "Some notes",
+    isRecipient: false,
   },
   {
     id: "2",
@@ -31,6 +36,7 @@ export const contacts: IContact[] = [
     email: "",
     phone: "+19876543210",
     notes: "",
+    isRecipient: true,
   },
   {
     id: "3",
@@ -38,6 +44,7 @@ export const contacts: IContact[] = [
     email: "sarah.williams@example.com",
     phone: "+15551239876",
     notes: "Marketing lead",
+    isRecipient: true,
   },
   {
     id: "4",
@@ -45,6 +52,7 @@ export const contacts: IContact[] = [
     email: "mjohnson@company.com",
     phone: "+14259875555",
     notes: "",
+    isRecipient: true,
   },
   {
     id: "5",
@@ -52,6 +60,7 @@ export const contacts: IContact[] = [
     email: "emilyb@domain.net",
     phone: "+16043219876",
     notes: "Product manager",
+    isRecipient: true,
   },
   {
     id: "6",
@@ -59,6 +68,7 @@ export const contacts: IContact[] = [
     email: "", // Optional email
     phone: "+18005551212",
     notes: "",
+    isRecipient: true,
   },
   {
     id: "7",
@@ -66,6 +76,7 @@ export const contacts: IContact[] = [
     email: "olivia.taylor@email.com",
     phone: "+13128765432",
     notes: "Sales representative",
+    isRecipient: true,
   },
   {
     id: "8",
@@ -73,6 +84,7 @@ export const contacts: IContact[] = [
     email: "a.thompson@provider.com",
     phone: "", // Optional phone
     notes: "Software developer",
+    isRecipient: true,
   },
   {
     id: "9",
@@ -80,6 +92,7 @@ export const contacts: IContact[] = [
     email: "jessdavis@email.org",
     phone: "+19735550123",
     notes: "",
+    isRecipient: true,
   },
   {
     id: "10",
@@ -87,6 +100,7 @@ export const contacts: IContact[] = [
     email: "chrissmith@email.com",
     phone: "+16505559876",
     notes: "Account manager",
+    isRecipient: true,
   },
 ];
 
