@@ -1,1 +1,3 @@
-# Create T3 App
+# Team Send
+
+Easily send targeted bulk SMS to groups
