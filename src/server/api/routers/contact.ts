@@ -6,18 +6,18 @@ import {
   publicProcedure,
 } from "@/server/api/trpc";
 
-export interface INewUser {
+export interface INewContact {
   name: string;
   email?: string;
   phone?: string;
   notes?: string;
 }
 
-export interface IUser extends INewUser {
+export interface IContact extends INewContact {
   id: string;
 }
 
-export const members: IUser[] = [
+export const contacts: IContact[] = [
   {
     id: "1",
     name: "Pedro Duarte",
@@ -90,12 +90,12 @@ export const members: IUser[] = [
   },
 ];
 
-export const userRouter = createTRPCRouter({
+export const contactRouter = createTRPCRouter({
   getLatest: publicProcedure.input(z.string().optional()).query(({ input }) => {
     return !!input
-      ? members.filter((member) =>
-          member.name.toLowerCase().includes(input.toLowerCase()),
+      ? contacts.filter((contact) =>
+          contact.name.toLowerCase().includes(input.toLowerCase()),
         )
-      : members;
+      : contacts;
   }),
 });
