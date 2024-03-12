@@ -7,7 +7,8 @@ import {
 } from "@/server/api/trpc";
 import { type IUser, members } from "./user";
 
-// TODO
+import { faker } from "@faker-js/faker";
+
 export interface IGroupPreview {
   id: string;
   name: string;
@@ -35,7 +36,7 @@ const groups: IGroupPreview[] = [
     avatar:
       "https://res.cloudinary.com/drheg5d7j/image/upload/v1704262668/ku0gvvqrrdro5p3nnuvj.png",
     lastMessage: "Some message: Do this do that etc etc",
-    lastMessageTime: new Date(),
+    lastMessageTime: faker.date.recent(),
     members,
   },
   {
@@ -44,7 +45,47 @@ const groups: IGroupPreview[] = [
     description: "A group of people who like to play basketball",
     avatar: undefined,
     lastMessage: "Some other message .....",
-    lastMessageTime: new Date(),
+    lastMessageTime: faker.date.recent(),
+    members,
+  },
+  {
+    id: "3",
+    name: "Tech Talk",
+    description: "Discussions about the latest tech trends",
+    avatar: "https://images.unsplash.com/photo-1491553892222-55e07d5d8b73", // Placeholder image
+    lastMessage: "What do you think about the new framework?",
+    lastMessageTime: faker.date.recent(),
+    members,
+  },
+  {
+    id: "4",
+    name: "Foodies Unite",
+    description: "Sharing recipes, restaurant tips, and food adventures",
+    avatar: "https://images.unsplash.com/photo-1504674900247-0877df9cc836", // Food-related image
+    lastMessage: "Anyone know a good sushi place?",
+    lastMessageTime: faker.date.recent(),
+    members,
+  },
+
+  // 5th Group
+  {
+    id: "5",
+    name: "Bookworms",
+    description: "Discussing our favorite books and authors",
+    avatar: "https://images.unsplash.com/photo-1550684376-efcbd6e3f03a", // Image of books
+    lastMessage: "What's everyone reading this month?",
+    lastMessageTime: faker.date.recent(),
+    members,
+  },
+
+  // 6th Group
+  {
+    id: "6",
+    name: "Travel Enthusiasts",
+    description: "Planning trips and sharing travel experiences",
+    avatar: "https://images.unsplash.com/photo-1470240731273-7821a6eebc7c", // Travel-themed image
+    lastMessage: "Dream destination ideas?",
+    lastMessageTime: faker.date.recent(),
     members,
   },
 ];

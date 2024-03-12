@@ -66,7 +66,7 @@ export const groupsColumns: ColumnDef<IGroupPreview>[] = [
       return (
         <HoverCard>
           <HoverCardTrigger>{`${value.slice(0, 20)}...`}</HoverCardTrigger>
-          <HoverCardContent>{value}</HoverCardContent>
+          <HoverCardContent className="text-xs">{value}</HoverCardContent>
         </HoverCard>
       );
     },
@@ -92,9 +92,12 @@ export const groupsColumns: ColumnDef<IGroupPreview>[] = [
       return (
         <HoverCard>
           <HoverCardTrigger>{`${members.length} members`}</HoverCardTrigger>
-          <HoverCardContent className="flex flex-wrap">
-            {members.map((member) => (
-              <div key={member.id}>{member.name}</div>
+          <HoverCardContent className="flex flex-wrap gap-1 text-xs">
+            {members.map((member, index) => (
+              <div key={member.id}>
+                {member.name}
+                {index !== members.length - 1 ? ", " : ""}
+              </div>
             ))}
           </HoverCardContent>
         </HoverCard>

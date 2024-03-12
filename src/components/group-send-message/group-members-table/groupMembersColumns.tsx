@@ -1,14 +1,9 @@
-import type { ColumnDef, Row } from "@tanstack/react-table";
+import type { ColumnDef } from "@tanstack/react-table";
 import parsePhoneNumber from "libphonenumber-js";
 
 import { Checkbox } from "@/components/ui/checkbox";
 
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-  HoverableCell,
-} from "@/components/ui/hover-card";
+import { HoverableCell } from "@/components/ui/hover-card";
 import {
   DataTableColumnHeader,
   DataTableRowActions,

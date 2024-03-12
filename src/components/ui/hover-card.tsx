@@ -45,7 +45,7 @@ function HoverableCell<T>({
   return (
     <HoverCard>
       <HoverCardTrigger>{triggerText}</HoverCardTrigger>
-      <HoverCardContent>{value}</HoverCardContent>
+      <HoverCardContent className="text-xs">{value}</HoverCardContent>
     </HoverCard>
   );
 }
