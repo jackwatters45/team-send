@@ -1,19 +1,27 @@
-import { MinusCircledIcon } from "@radix-ui/react-icons";
-
-import type { groupSettingsSchema } from "./groupSettingsSchema";
+import type { GroupSettingsFormSchema } from "./groupSettingsSchema";
 import useGroupSettings from "./useGroupSettings";
 import { Button } from "../../ui/button";
-import { Form, FormDescription, FormLabel } from "../../ui/form";
 import {
-  BooleanSelect,
-  DateTimeInput,
-  NumPeriodInputs,
-  FormInput,
-} from "../../ui/form-inputs";
+  Form,
+  FormControl,
+  FormDescription,
+  FormField,
+  FormItem,
+  FormLabel,
+} from "../../ui/form";
+import { FormInput } from "../../ui/form-inputs";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import extractInitials from "@/lib/extractInitials";
+import { type IGroupSettings } from "@/server/api/routers/group";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 
-export default function GroupSettingsForm() {
-  const { form, onSubmit, reminders, removeReminder, addReminder, parent } =
-    useGroupSettings();
+interface IGroupSettingsFormProps {
+  group: IGroupSettings;
+}
+
+export default function GroupSettingsForm({ group }: IGroupSettingsFormProps) {
+  const { form, onSubmit, parent } = useGroupSettings(group);
 
   return (
     <Form {...form}>
@@ -25,95 +33,109 @@ export default function GroupSettingsForm() {
       </div>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
-        className="flex flex-col gap-8 sm:gap-6"
+        className="flex flex-col gap-8 py-4 sm:gap-6"
         ref={parent}
       >
-        <FormInput<typeof groupSettingsSchema>
+        <div className="flex justify-between gap-12">
+          <div className="flex-1">
+            <FormInput<GroupSettingsFormSchema>
+              name="avatar-file"
+              label="Group Avatar"
+              type="file"
+              accept=".png, .jpg, .jpeg"
+              className="dark:file:text-white "
+              control={form.control}
+            />
+          </div>
+          {(form.watch("name") || form.watch("avatar")) && (
+            <Avatar className="h-20 w-20">
+              <AvatarImage src={form.watch("avatar")} alt="Group Avatar" />
+              <AvatarFallback className="text-4xl font-medium ">
+                {extractInitials(form.watch("name"))}
+              </AvatarFallback>
+            </Avatar>
+          )}
+        </div>
+        <FormInput<GroupSettingsFormSchema>
           control={form.control}
           name="name"
           label="Name"
           placeholder="Enter a Group Name"
         />
-        <FormInput<typeof groupSettingsSchema>
+        <FormInput<GroupSettingsFormSchema>
           control={form.control}
           name="description"
           label="Description"
           placeholder="Enter a Group Description (optional)"
         />
-        <BooleanSelect<typeof groupSettingsSchema>
-          control={form.control}
-          name="isScheduled"
-          label="Scheduled"
-          description="Schedule messages to be sent at a specific date and time"
-        />
-        {form.watch("isScheduled") === "yes" && (
-          <DateTimeInput<typeof groupSettingsSchema>
-            control={form.control}
-            name="scheduledDate"
-            label="Scheduled Date"
-          />
-        )}
-        <BooleanSelect<typeof groupSettingsSchema>
-          control={form.control}
-          name="isRecurring"
-          label="Recurring"
-          description="Set up automatic, recurring messages for consistent reminders"
-        />
-        {form.watch("isRecurring") === "yes" && (
-          <div className="flex flex-col gap-3">
-            <FormLabel>Recurring every</FormLabel>
-            <NumPeriodInputs<typeof groupSettingsSchema>
+        <div className="pt-8">
+          <h3 className="border-b text-lg font-medium tracking-tight dark:border-stone-500 dark:border-opacity-20">
+            Connections
+          </h3>
+          <div className="flex flex-col gap-6 pt-6">
+            <FormField
               control={form.control}
-              numName="recurringNum"
-              periodName="recurringPeriod"
-              label="Recurring every"
-              numGreaterThanOne={Number(form.watch("recurringNum")) > 1}
+              name="phone"
+              render={({ field }) => (
+                <FormItem className="flex w-full flex-row items-center justify-between rounded-lg border p-4 dark:border-stone-800">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Phone</FormLabel>
+                    <FormDescription>
+                      Send texts from your twilio number to members of this
+                      group.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
+            />
+            <FormField
+              control={form.control}
+              name="email"
+              render={({ field }) => (
+                <FormItem className="flex w-full flex-row items-center justify-between rounded-lg border p-4 dark:border-stone-800">
+                  <div className="space-y-0.5">
+                    <FormLabel className="text-base">Email</FormLabel>
+                    <FormDescription>
+                      Send emails via Nodemailer to members of this group.
+                    </FormDescription>
+                  </div>
+                  <FormControl>
+                    <Switch
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                </FormItem>
+              )}
             />
           </div>
-        )}
-        <BooleanSelect<typeof groupSettingsSchema>
-          control={form.control}
-          name="isReminders"
-          label="Reminders"
-          description="Send reminders at set increments before the due date"
-        />
-        {form.watch("isReminders") === "yes" && (
-          <div className="flex flex-col gap-3">
-            <FormLabel>Remind before</FormLabel>
-            {reminders.map((reminder, index) => (
-              <div key={index} className="flex items-start gap-4">
-                <NumPeriodInputs<typeof groupSettingsSchema>
-                  control={form.control}
-                  numName={`reminders.${index}.num`}
-                  periodName={`reminders.${index}.period`}
-                  label="Remind before"
-                  numGreaterThanOne={reminder.num > 1}
-                />
-                <Button
-                  variant="ghost"
-                  type="button"
-                  className="border 
-                  px-2 hover:bg-stone-100
-               dark:border-0 dark:hover:bg-stone-800
-                  "
-                  onClick={() => removeReminder(index)}
-                >
-                  <MinusCircledIcon className=" h-5 w-5" />
-                </Button>
-              </div>
-            ))}
-            {reminders.length < 6 && (
-              <Button
-                variant="ghost"
-                type="button"
-                className=""
-                onClick={addReminder}
-              >
-                + Add another reminder
-              </Button>
+          <FormField
+            control={form.control}
+            name="change-global"
+            render={({ field }) => (
+              <FormItem className="flex flex-row items-start space-x-3 space-y-0 pb-4 pt-10 ">
+                <FormControl>
+                  <Checkbox
+                    checked={field.value}
+                    onCheckedChange={field.onChange}
+                  />
+                </FormControl>
+                <div className="space-y-1 leading-none">
+                  <FormLabel>Change settings for all groups</FormLabel>
+                  <FormDescription>
+                    Change the phone and email settings for all your groups.
+                  </FormDescription>
+                </div>
+              </FormItem>
             )}
-          </div>
-        )}
+          />
+        </div>
         <div>
           <Button type="submit" className="">
             Save changes
