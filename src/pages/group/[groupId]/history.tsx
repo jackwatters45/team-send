@@ -8,5 +8,5 @@ export default function GroupHistory() {
     return null;
   }
 
-  return <GroupLayout groupData={group.data}>History</GroupLayout>;
+  return <GroupLayout group={group.data}>History</GroupLayout>;
 }

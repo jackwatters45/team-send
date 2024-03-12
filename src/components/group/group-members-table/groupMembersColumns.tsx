@@ -13,9 +13,9 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import type { IUser } from "@/server/api/routers/user";
+import type { IContact } from "@/server/api/routers/contact";
 
-export const groupMembersColumns: ColumnDef<IUser>[] = [
+export const groupMembersColumns: ColumnDef<IContact>[] = [
   {
     id: "select",
     header: ({ table }) => (

@@ -5,54 +5,44 @@ import type { UseFormReturn } from "react-hook-form";
 import { Button } from "../../ui/button";
 import { FormInput } from "../../ui/form-inputs";
 import { FormItem } from "../../ui/form";
-import createUser from "@/lib/createUser";
+import createContact from "@/lib/createContact";
 import type {
-  ICreateGroupSchema,
-  createGroupSchema,
-} from "../create-group/createGroupSchema";
+  GroupMembersFormType,
+  GroupMembersFormSchema,
+} from "./groupMembersSchema";
 
 interface IGroupMemberListProps {
-  form: UseFormReturn<ICreateGroupSchema>;
+  form: UseFormReturn<GroupMembersFormType>;
 }
+
 export default function GroupMemberList({ form }: IGroupMemberListProps) {
   const [parent] = useAutoAnimate();
 
-  const handleAddUser = () => {
-    form.setValue("members", [...form.getValues("members"), createUser()]);
-  };
-
-  const handleRemoveUser = (index: number) => {
-    form.setValue(
-      "members",
-      form.getValues("members").filter((_, i) => i !== index),
-    );
-  };
-
   return (
     <div className="flex flex-col gap-2 py-2" ref={parent}>
-      {form.watch("members")?.map((user, index) => (
+      {form.watch("members")?.map((_, index) => (
         <div key={index} className="flex gap-2">
           <div className="flex flex-1 flex-wrap items-start gap-2">
-            <FormInput<typeof createGroupSchema>
+            <FormInput<GroupMembersFormSchema>
               control={form.control}
               name={`members.${index}.name`}
               placeholder="Name"
             />
-            <FormInput<typeof createGroupSchema>
+            <FormInput<GroupMembersFormSchema>
               control={form.control}
               name={`members.${index}.email`}
               type="email"
               required={false}
               placeholder="Email"
             />
-            <FormInput<typeof createGroupSchema>
+            <FormInput<GroupMembersFormSchema>
               control={form.control}
               name={`members.${index}.phone`}
               type="tel"
               placeholder="Phone"
             />
             <div className="lg:flex-1">
-              <FormInput<typeof createGroupSchema>
+              <FormInput<GroupMembersFormSchema>
                 control={form.control}
                 name={`members.${index}.notes`}
                 placeholder="Notes"
@@ -65,7 +55,12 @@ export default function GroupMemberList({ form }: IGroupMemberListProps) {
               type="button"
               className="border hover:bg-stone-100
                dark:border-0 dark:hover:bg-stone-800"
-              onClick={() => handleRemoveUser(index)}
+              onClick={() => {
+                form.setValue(
+                  "members",
+                  form.getValues("members").filter((_, i) => i !== index),
+                );
+              }}
             >
               <MinusCircledIcon className="h-5 w-5" />
             </Button>
@@ -76,7 +71,12 @@ export default function GroupMemberList({ form }: IGroupMemberListProps) {
         type="button"
         size={"sm"}
         className="flex w-fit items-center gap-2 pl-2"
-        onClick={handleAddUser}
+        onClick={() => {
+          form.setValue("members", [
+            ...form.getValues("members"),
+            createContact(),
+          ]);
+        }}
       >
         <PlusCircledIcon className="h-5 w-5" />
         Add New

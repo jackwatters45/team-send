@@ -4,12 +4,12 @@ import extractInitials from "@/lib/extractInitials";
 import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
 import { FormInput } from "../../ui/form-inputs";
 import type {
-  ICreateGroupSchema,
-  createGroupSchema,
-} from "./createGroupSchema";
+  GroupMembersFormType,
+  GroupMembersFormSchema,
+} from "../group-members-form/groupMembersSchema";
 
 interface ICreateGroupBasicFormProps {
-  form: UseFormReturn<ICreateGroupSchema>;
+  form: UseFormReturn<GroupMembersFormType>;
 }
 export default function CreateGroupBasicInfo({
   form,
@@ -17,20 +17,21 @@ export default function CreateGroupBasicInfo({
   return (
     <section className="flex flex-col-reverse items-center lg:flex-row lg:justify-between lg:gap-12">
       <div className="flex w-full  flex-col gap-8 px-4 py-4  sm:px-0 lg:max-w-lg">
-        <FormInput<typeof createGroupSchema>
+        <FormInput<GroupMembersFormSchema>
           control={form.control}
           name="avatar"
           label="Group Avatar"
           type="file"
+          accept=".png, .jpg, .jpeg"
           className="dark:file:text-white"
         />
-        <FormInput<typeof createGroupSchema>
+        <FormInput<GroupMembersFormSchema>
           control={form.control}
           name="name"
           label="Name"
           placeholder="Enter a Group Name"
         />
-        <FormInput<typeof createGroupSchema>
+        <FormInput<GroupMembersFormSchema>
           control={form.control}
           name="description"
           label="Description"

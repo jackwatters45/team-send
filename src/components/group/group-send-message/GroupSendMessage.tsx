@@ -5,8 +5,9 @@ import { FormTextarea } from "../../ui/form-inputs";
 import { MessageSettings } from "./MessageSettings";
 import GroupMembersTable from "../group-members-table/GroupMembersTable";
 
+
 export default function GroupSendMessage() {
-  const { form, onSubmit, parent } = useGroupSendMessage();
+  const { form, onSubmit, parent } = useGroupSendMessage()
 
   return (
     <Form {...form}>

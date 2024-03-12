@@ -48,6 +48,6 @@ export const groupMessageSchema = z
     },
   );
 
-export type GroupMessage = z.infer<typeof groupMessageSchema>;
+export type GroupMessageType = z.infer<typeof groupMessageSchema>;
 
 export type GroupMessageSchema = typeof groupMessageSchema;

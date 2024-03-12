@@ -26,7 +26,7 @@ export default function Layout({
       "
       >
         <Nav />
-        <main className="w-full max-w-screen-xl flex-1 pt-14">
+        <main className="w-full max-w-screen-2xl flex-1 pt-14">
           <div className="xs:px-12 px-6 py-6 sm:px-24">{children}</div>
         </main>
         <Footer />

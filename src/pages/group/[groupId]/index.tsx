@@ -10,8 +10,8 @@ export default function Group() {
   }
 
   return (
-    <GroupLayout groupData={group.data}>
-      <GroupSendMessage />
+    <GroupLayout group={group.data}>
+      <GroupSendMessage  />
     </GroupLayout>
   );
 }

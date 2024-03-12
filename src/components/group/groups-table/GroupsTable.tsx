@@ -1,4 +1,3 @@
-import { useDataTable } from "@/hooks/useDataTable";
 import {
   DataTableColumnOptions,
   DataTableContent,
@@ -9,15 +8,10 @@ import {
 } from "../../ui/data-table";
 import { groupsColumns } from "./groupsColumns";
 import GroupsTablePlaceholder from "./GroupsTablePlaceholder";
-import { api } from "@/utils/api";
+import useGroupsTable from "./useGroupsTable";
 
 export default function GroupsTable() {
-  const groups = api.group.getLatest.useQuery();
-
-  const table = useDataTable({
-    columns: groupsColumns,
-    data: groups.data ?? [],
-  });
+  const { groups, table } = useGroupsTable();
 
   return !!groups.data || groups.status === "loading" ? (
     <>

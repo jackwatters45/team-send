@@ -4,7 +4,7 @@ import {
   NumPeriodInputs,
 } from "@/components/ui/form-inputs";
 import {
-  type GroupMessage,
+  type GroupMessageType,
   type GroupMessageSchema,
   defaultReminder,
 } from "./groupMessageSchema";
@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { MinusCircledIcon } from "@radix-ui/react-icons";
 
 interface IMessageSettingsProps {
-  form: UseFormReturn<GroupMessage>;
+  form: UseFormReturn<GroupMessageType>;
 }
 export function MessageSettings({ form }: IMessageSettingsProps) {
   const reminders = form.watch("reminders") ?? [];

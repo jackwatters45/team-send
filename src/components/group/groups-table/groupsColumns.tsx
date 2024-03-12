@@ -18,7 +18,7 @@ import {
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import type { IUser } from "@/server/api/routers/user";
+import type { IContact } from "@/server/api/routers/contact";
 
 export const groupsColumns: ColumnDef<IGroupPreview>[] = [
   {
@@ -88,7 +88,7 @@ export const groupsColumns: ColumnDef<IGroupPreview>[] = [
       <DataTableColumnHeader column={column} title="Members" />
     ),
     cell: ({ row }) => {
-      const members = row.getValue<IUser[]>("members");
+      const members = row.getValue<IContact[]>("members");
       return (
         <HoverCard>
           <HoverCardTrigger>{`${members.length} members`}</HoverCardTrigger>

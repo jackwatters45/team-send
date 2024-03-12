@@ -24,15 +24,16 @@ const getSidebarNavItems = (groupId: string) => [
 
 interface GroupLayoutProps {
   children: React.ReactNode;
-  groupData: IGroupPreview;
+  group: IGroupPreview;
 }
 
-export function GroupLayout({ children, groupData }: GroupLayoutProps) {
-  const router = useRouter();
-  const sidebarNavItems = getSidebarNavItems(router.query.groupId as string);
+export function GroupLayout({ children, group: group }: GroupLayoutProps) {
+  const sidebarNavItems = getSidebarNavItems(
+    useRouter().query.groupId as string,
+  );
 
   return (
-    <PageLayout title={groupData.name} description={groupData.description}>
+    <PageLayout title={group.name} description={group.description}>
       <aside className="-ml-4 lg:w-1/5">
         <GroupSidebarNav items={sidebarNavItems} />
       </aside>

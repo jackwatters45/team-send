@@ -2,23 +2,15 @@ import {
   DataTableColumnOptions,
   DataTableContent,
   DataTableFilter,
+  DataTablePagination,
   DataTableSelectedRowCount,
   DataTableSkeleton,
 } from "@/components/ui/data-table";
 import { groupMembersColumns } from "./groupMembersColumns";
-import { api } from "@/utils/api";
-import { useParams } from "next/navigation";
-import { useDataTable } from "@/hooks/useDataTable";
+import useGroupMembersTable from "./useGroupMembersTable";
 
 export default function GroupMembersTable() {
-  const groupId = useParams().groupId as string;
-  const groupMembers = api.group.getGroupMembers.useQuery(groupId);
-
-  const table = useDataTable({
-    columns: groupMembersColumns,
-    data: groupMembers.data ?? [],
-    includePagination: false,
-  });
+  const { groupMembers, table } = useGroupMembersTable();
 
   return (
     <div>
@@ -33,6 +25,7 @@ export default function GroupMembersTable() {
           </div>
           <div className="flex items-center justify-between p-2">
             <DataTableSelectedRowCount table={table} />
+            <DataTablePagination table={table} />
           </div>
         </div>
       ) : (
