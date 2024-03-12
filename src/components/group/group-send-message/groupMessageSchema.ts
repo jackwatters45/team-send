@@ -5,9 +5,14 @@ export const reminderSchema = z.object({
   period: z.enum(["months", "weeks", "days"]),
 });
 
+export const defaultReminder: z.infer<typeof reminderSchema> = {
+  num: 1,
+  period: "weeks",
+};
+
 export const groupMessageSchema = z
   .object({
-    message: z.string().max(500),
+    message: z.string().max(500).min(1),
     isScheduled: z.enum(["no", "yes"]),
     scheduledDate: z.date().optional(),
     isRecurring: z.enum(["no", "yes"]),
@@ -42,3 +47,7 @@ export const groupMessageSchema = z
       path: ["scheduledDate", "recurringNum", "recurringPeriod", "reminders"],
     },
   );
+
+export type GroupMessage = z.infer<typeof groupMessageSchema>;
+
+export type GroupMessageSchema = typeof groupMessageSchema;

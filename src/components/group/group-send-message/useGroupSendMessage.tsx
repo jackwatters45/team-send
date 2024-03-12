@@ -2,15 +2,23 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { type z } from "zod";
+import { useParams } from "next/navigation";
 
 import { toast } from "../../ui/use-toast";
-import { groupMessageSchema, type reminderSchema } from "./groupMessageSchema";
+import { defaultReminder, groupMessageSchema } from "./groupMessageSchema";
+import { useDataTable } from "@/hooks/useDataTable";
+import { api } from "@/utils/api";
+import { groupMembersColumns } from "../group-members-table/groupMembersColumns";
 
 export default function useGroupSendMessage() {
-  const defaultReminder: z.infer<typeof reminderSchema> = {
-    num: 1,
-    period: "weeks",
-  };
+  const groupId = useParams().groupId as string;
+  const groupMembers = api.group.getGroupMembers.useQuery(groupId);
+
+  const table = useDataTable({
+    columns: groupMembersColumns,
+    data: groupMembers.data ?? [],
+    includePagination: false,
+  });
 
   const form = useForm<z.infer<typeof groupMessageSchema>>({
     resolver: zodResolver(groupMessageSchema),
@@ -21,12 +29,17 @@ export default function useGroupSendMessage() {
       isRecurring: "no",
       recurringNum: 1,
       recurringPeriod: "months",
-      isReminders: "no",
+      isReminders: "yes",
       reminders: [defaultReminder],
     },
   });
 
+  // TODO definitely a lot more considerations here
   const onSubmit = (data: z.infer<typeof groupMessageSchema>) => {
+    if (data.isReminders === "yes" && data.reminders?.length === 0) {
+      form.setValue("isReminders", "no");
+    }
+
     toast({
       title: "You submitted the following values:",
       description: (
@@ -37,27 +50,14 @@ export default function useGroupSendMessage() {
     });
   };
 
-  const reminders = form.watch("reminders") ?? [];
-  const removeReminder = (index: number) => {
-    if (reminders.length === 0) return;
-    reminders.splice(index);
-    form.setValue("reminders", reminders);
-  };
-
-  const addReminder = () => {
-    if (reminders.length >= 6) return;
-    const newReminders = [...reminders, defaultReminder];
-    form.setValue("reminders", newReminders);
-  };
-
   const [parent] = useAutoAnimate();
 
   return {
+    table,
+    groupMembers,
     form,
     onSubmit,
-    reminders,
-    removeReminder,
-    addReminder,
+
     parent,
   };
 }
