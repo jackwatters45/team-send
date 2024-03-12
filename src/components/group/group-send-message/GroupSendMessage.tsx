@@ -1,28 +1,40 @@
 import { MinusCircledIcon } from "@radix-ui/react-icons";
+import { useParams } from "next/navigation";
 
 import type { groupMessageSchema } from "./groupMessageSchema";
 import useGroupSendMessage from "./useGroupSendMessage";
+import { api } from "@/utils/api";
+import { useDataTable } from "@/hooks/useDataTable";
+import { groupMembersColumns } from "../group-members-table/groupMembersColumns";
 
-import { Button } from "../ui/button";
-import { Form, FormDescription, FormLabel } from "../ui/form";
+import { Button } from "../../ui/button";
+import { Form, FormDescription, FormLabel } from "../../ui/form";
 import {
   BooleanSelect,
   DateTimeInput,
   FormTextarea,
   NumPeriodInputs,
-} from "../ui/form-inputs";
-import GroupMembersTable from "./group-members-table/GroupMembersTable";
+} from "../../ui/form-inputs";
+import {
+  DataTableColumnOptions,
+  DataTableContent,
+  DataTableFilter,
+  DataTableSelectedRowCount,
+  DataTableSkeleton,
+} from "@/components/ui/data-table";
 
 export default function GroupSendMessage() {
   const { form, onSubmit, reminders, removeReminder, addReminder, parent } =
     useGroupSendMessage();
 
-  // turn form into datatable editable?
+  const groupId = useParams().groupId as string;
+  const groupMembers = api.group.getGroupMembers.useQuery(groupId);
 
-  // members
-  // add field to members -> send/not send
-  // needs save button
-  // to add send/not send to create??
+  const table = useDataTable({
+    columns: groupMembersColumns,
+    data: groupMembers.data ?? [],
+    includePagination: false,
+  });
 
   return (
     <Form {...form}>
@@ -123,7 +135,24 @@ export default function GroupSendMessage() {
             : "Send Message"}
         </Button>
         <div className="border-b dark:border-stone-500 dark:border-opacity-20" />
-        <GroupMembersTable />
+        <div>
+          {groupMembers.data ? (
+            <div>
+              <div className="flex items-center py-4">
+                <DataTableFilter table={table} placeholder="Search members" />
+                <DataTableColumnOptions table={table} />
+              </div>
+              <div className="rounded-md border dark:border-stone-700">
+                <DataTableContent table={table} columns={groupMembersColumns} />
+              </div>
+              <div className="flex items-center justify-between p-2">
+                <DataTableSelectedRowCount table={table} />
+              </div>
+            </div>
+          ) : (
+            <DataTableSkeleton />
+          )}
+        </div>{" "}
       </form>
     </Form>
   );

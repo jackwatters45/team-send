@@ -2,14 +2,14 @@ import { MinusCircledIcon } from "@radix-ui/react-icons";
 
 import type { groupSettingsSchema } from "./groupSettingsSchema";
 import useGroupSettings from "./useGroupSettings";
-import { Button } from "../ui/button";
-import { Form, FormDescription, FormLabel } from "../ui/form";
+import { Button } from "../../ui/button";
+import { Form, FormDescription, FormLabel } from "../../ui/form";
 import {
   BooleanSelect,
   DateTimeInput,
   NumPeriodInputs,
   FormInput,
-} from "../ui/form-inputs";
+} from "../../ui/form-inputs";
 
 export default function GroupSettingsForm() {
   const { form, onSubmit, reminders, removeReminder, addReminder, parent } =

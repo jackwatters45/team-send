@@ -3,7 +3,7 @@ import { useForm } from "react-hook-form";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import type { z } from "zod";
 
-import { toast } from "../ui/use-toast";
+import { toast } from "../../ui/use-toast";
 import { groupSettingsSchema } from "./groupSettingsSchema";
 import { useParams } from "next/navigation";
 import { api } from "@/utils/api";

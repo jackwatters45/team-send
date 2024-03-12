@@ -11,7 +11,7 @@ import { GroupLayout } from "@/layouts/GroupLayout";
 import {
   type ICreateGroupSchema,
   createGroupSchema,
-} from "@/components/create-group/createGroupSchema";
+} from "@/components/group/create-group/createGroupSchema";
 import GroupMembersFormContent from "../../../components/group/members-form/GroupMembersFormContent";
 
 export default function GroupMembers() {

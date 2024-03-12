@@ -3,8 +3,8 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import { Form } from "../ui/form";
-import { toast } from "../ui/use-toast";
+import { Form } from "../../ui/form";
+import { toast } from "../../ui/use-toast";
 
 import CreateGroupBasicForm from "./CreateGroupBasicInfo";
 import createUser from "@/lib/createUser";

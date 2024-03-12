@@ -16,12 +16,14 @@ import createUser from "@/lib/createUser";
 import type {
   ICreateGroupSchema,
   createGroupSchema,
-} from "../../create-group/createGroupSchema";
+} from "../create-group/createGroupSchema";
 
 interface IGroupMembersRecentsProps {
   form: UseFormReturn<ICreateGroupSchema>;
 }
-export default function GroupMembersRecents({ form }: IGroupMembersRecentsProps) {
+export default function GroupMembersRecents({
+  form,
+}: IGroupMembersRecentsProps) {
   const [search] = useDebounce(form.watch("recentsSearch"), 500);
   const recentUsers = api.user.getLatest.useQuery(search);
   const recentGroups = api.group.getLatest.useQuery(search);

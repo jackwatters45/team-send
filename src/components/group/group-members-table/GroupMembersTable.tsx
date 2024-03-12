@@ -35,7 +35,6 @@ export default function GroupMembersTable() {
             <DataTableSelectedRowCount table={table} />
           </div>
         </div>
-      
       ) : (
         <DataTableSkeleton />
       )}

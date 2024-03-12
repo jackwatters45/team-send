@@ -9,14 +9,12 @@ import createUser from "@/lib/createUser";
 import type {
   ICreateGroupSchema,
   createGroupSchema,
-} from "../../create-group/createGroupSchema";
+} from "../create-group/createGroupSchema";
 
 interface IGroupMemberListProps {
   form: UseFormReturn<ICreateGroupSchema>;
 }
-export default function GroupMemberList({
-  form,
-}: IGroupMemberListProps) {
+export default function GroupMemberList({ form }: IGroupMemberListProps) {
   const [parent] = useAutoAnimate();
 
   const handleAddUser = () => {

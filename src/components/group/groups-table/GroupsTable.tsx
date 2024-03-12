@@ -6,7 +6,7 @@ import {
   DataTablePagination,
   DataTableSelectedRowCount,
   DataTableSkeleton,
-} from "../ui/data-table";
+} from "../../ui/data-table";
 import { groupsColumns } from "./groupsColumns";
 import GroupsTablePlaceholder from "./GroupsTablePlaceholder";
 import { api } from "@/utils/api";

@@ -1,4 +1,4 @@
-import GroupSettingsForm from "@/components/GroupSettings/GroupSettingsForm";
+import GroupSettingsForm from "@/components/group/group-settings/GroupSettingsForm";
 import { GroupLayout } from "@/layouts/GroupLayout";
 import { api } from "@/utils/api";
 
@@ -9,8 +9,9 @@ export default function GroupSettings() {
     return null;
   }
 
-  return <GroupLayout groupData={group.data}>
-    <GroupSettingsForm />
-
-  </GroupLayout>;
+  return (
+    <GroupLayout groupData={group.data}>
+      <GroupSettingsForm />
+    </GroupLayout>
+  );
 }

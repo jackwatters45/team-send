@@ -3,7 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { type z } from "zod";
 
-import { toast } from "../ui/use-toast";
+import { toast } from "../../ui/use-toast";
 import { groupMessageSchema, type reminderSchema } from "./groupMessageSchema";
 
 export default function useGroupSendMessage() {

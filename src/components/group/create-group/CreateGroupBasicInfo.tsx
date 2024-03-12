@@ -1,9 +1,12 @@
 import type { UseFormReturn } from "react-hook-form";
 
 import extractInitials from "@/lib/extractInitials";
-import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
-import { FormInput } from "../ui/form-inputs";
-import type { ICreateGroupSchema, createGroupSchema,  } from "./createGroupSchema";
+import { Avatar, AvatarFallback, AvatarImage } from "../../ui/avatar";
+import { FormInput } from "../../ui/form-inputs";
+import type {
+  ICreateGroupSchema,
+  createGroupSchema,
+} from "./createGroupSchema";
 
 interface ICreateGroupBasicFormProps {
   form: UseFormReturn<ICreateGroupSchema>;

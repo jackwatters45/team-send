@@ -1,6 +1,6 @@
 import type { UseFormReturn } from "react-hook-form";
 
-import type { ICreateGroupSchema } from "@/components/create-group/createGroupSchema";
+import type { ICreateGroupSchema } from "@/components/group/create-group/createGroupSchema";
 import GroupMemberList from "@/components/group/members-form/GroupMemberList";
 import GroupMembersHeader from "@/components/group/members-form/GroupMembersHeader";
 import GroupMembersRecents from "@/components/group/members-form/GroupMembersRecents";

@@ -1,4 +1,4 @@
-import CreateGroupForm from "@/components/create-group/CreateGroupForm";
+import CreateGroupForm from "@/components/group/create-group/CreateGroupForm";
 import PageLayout from "@/layouts/PageLayout";
 
 export default function CreateGroup() {
@@ -7,8 +7,7 @@ export default function CreateGroup() {
       title={"Create New Group"}
       description={"Add members to your group and send them messages."}
     >
-
-<CreateGroupForm />
+      <CreateGroupForm />
     </PageLayout>
   );
 }
