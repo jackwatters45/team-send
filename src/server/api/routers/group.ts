@@ -27,7 +27,7 @@ export interface IGroupSettings extends IGroupBase {
   email: boolean;
 }
 
-export interface IGroup extends IGroupPreview {
+export interface IGroup extends IGroupPreview, IGroupSettings {
   messages: {
     id: string;
     content: string;
@@ -36,7 +36,7 @@ export interface IGroup extends IGroupPreview {
   }[];
 }
 
-const groups: IGroupPreview[] = [
+const groups: IGroup[] = [
   {
     id: "1",
     name: "Blue Ballers",
@@ -46,6 +46,9 @@ const groups: IGroupPreview[] = [
     lastMessage: "Some message: Do this do that etc etc",
     lastMessageTime: faker.date.recent(),
     members: contacts,
+    phone: true,
+    email: true,
+    messages: [],
   },
   {
     id: "2",
@@ -55,6 +58,9 @@ const groups: IGroupPreview[] = [
     lastMessage: "Some other message .....",
     lastMessageTime: faker.date.recent(),
     members: contacts,
+    phone: true,
+    email: false,
+    messages: [],
   },
   {
     id: "3",
@@ -64,6 +70,9 @@ const groups: IGroupPreview[] = [
     lastMessage: "What do you think about the new framework?",
     lastMessageTime: faker.date.recent(),
     members: contacts,
+    phone: false,
+    email: true,
+    messages: [],
   },
   {
     id: "4",
@@ -73,6 +82,9 @@ const groups: IGroupPreview[] = [
     lastMessage: "Anyone know a good sushi place?",
     lastMessageTime: faker.date.recent(),
     members: contacts,
+    phone: false,
+    email: false,
+    messages: [],
   },
 
   // 5th Group
@@ -84,6 +96,9 @@ const groups: IGroupPreview[] = [
     lastMessage: "What's everyone reading this month?",
     lastMessageTime: faker.date.recent(),
     members: contacts,
+    phone: true,
+    email: true,
+    messages: [],
   },
 
   // 6th Group
@@ -95,6 +110,9 @@ const groups: IGroupPreview[] = [
     lastMessage: "Dream destination ideas?",
     lastMessageTime: faker.date.recent(),
     members: contacts,
+    phone: true,
+    email: false,
+    messages: [],
   },
 ];
 
