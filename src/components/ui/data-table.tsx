@@ -359,10 +359,12 @@ function DataTableSkeleton({
 interface DataTableContentProps<TData, TValue> {
   table: TableType<TData>;
   columns: ColumnDef<TData, TValue>[];
+  link?: { pre: string; field: string };
 }
 function DataTableContent<TData, TValue>({
   table,
   columns,
+  link,
 }: DataTableContentProps<TData, TValue>) {
   return (
     <Table>
@@ -393,10 +395,10 @@ function DataTableContent<TData, TValue>({
             >
               {row.getVisibleCells().map((cell) => {
                 const colId = cell.column.id;
-                return colId !== "actions" && colId !== "select" ? (
+                return link && colId !== "actions" && colId !== "select" ? (
                   <TableCell key={cell.id}>
                     <Link
-                      href={`/group/${row.getValue<string>("id")}`}
+                      href={`${link.pre}${row.getValue<string>(link.field)}`}
                       className="block p-4"
                     >
                       {flexRender(

@@ -108,6 +108,3 @@ export const historyTableColumns: ColumnDef<IMessage>[] = [
     ),
   },
 ];
-
-// TODO commits 
-// TODO links

@@ -12,7 +12,7 @@ import { groupMembersColumns } from "./groupMembersColumns";
 import useGroupMembersTable from "./useGroupMembersTable";
 
 export default function GroupMembersTable() {
-  const { groupMembers, table } = useGroupMembersTable();
+  const {  groupMembers, table } = useGroupMembersTable();
 
   return (
     <div>
@@ -23,7 +23,12 @@ export default function GroupMembersTable() {
             <DataTableColumnOptions table={table} />
           </div>
           <div className="rounded-md border dark:border-stone-700">
-            <DataTableContent table={table} columns={groupMembersColumns} />
+            <DataTableContent
+              table={table}
+              columns={groupMembersColumns}
+            // TODO uncomment once page is created
+              // link={{ pre: "/members", field: "id" }}
+            />
           </div>
           <div className="flex items-center justify-between p-2">
             <DataTableSelectedRowCount table={table} />

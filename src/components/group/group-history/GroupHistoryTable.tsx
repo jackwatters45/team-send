@@ -36,7 +36,10 @@ export default function GroupHistoryTable() {
             <DataTableColumnOptions table={table} />
           </div>
           <div className="rounded-md border dark:border-stone-700">
-            <DataTableContent table={table} columns={historyTableColumns} />
+            <DataTableContent table={table} columns={historyTableColumns}
+            // TODO uncomment once page is created
+            // link={{ pre: `/group/${groupId}/message/`, field: "id" }}
+            />
           </div>
           <div className="flex items-center justify-between p-2">
             <DataTableSelectedRowCount table={table} />
