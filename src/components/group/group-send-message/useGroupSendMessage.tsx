@@ -8,11 +8,13 @@ import { toast } from "../../ui/use-toast";
 import { defaultReminder, groupMessageSchema } from "./groupMessageSchema";
 import { useDataTable } from "@/hooks/useDataTable";
 import { api } from "@/utils/api";
-import { groupMembersColumns } from "../group-members-table/groupMembersColumns";
+import { getGroupMembersColumns } from "../group-members-table/groupMembersColumns";
 
 export default function useGroupSendMessage() {
   const groupId = useParams().groupId as string;
   const groupMembers = api.group.getGroupMembers.useQuery(groupId);
+
+  const groupMembersColumns = getGroupMembersColumns();
 
   const table = useDataTable({
     columns: groupMembersColumns,
