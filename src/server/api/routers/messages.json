@@ -1,0 +1,160 @@
+[
+  {
+    "id": "1",
+    "content": "Hello, how are you?",
+    "recipients": [
+      {
+        "id": "2",
+        "name": "John Doe",
+        "email": "",
+        "phone": "+19876543210",
+        "isRecipient": true
+      },
+      {
+        "id": "3",
+        "name": "Jane Doe",
+        "email": "",
+        "phone": "+19876543211",
+        "isRecipient": true
+      }
+    ],
+    "sender": {
+      "id": "1",
+      "name": "Jack Watters",
+      "avatar": "https://randomuser.me/api/portraits"
+    },
+    "time": "2021-01-01T00:00:00Z"
+  },
+  {
+    "id": "2",
+    "content": "Just wanted to follow up on our meeting from last week.",
+    "recipients": [
+      {
+        "id": "2",
+        "name": "John Doe",
+        "email": "",
+        "phone": "+19876543210",
+        "isRecipient": true
+      },
+      {
+        "id": "3",
+        "name": "Jane Doe",
+        "email": "",
+        "phone": "+19876543211",
+        "isRecipient": true
+      }
+    ],
+    "sender": {
+      "id": "1",
+      "name": "Jack Watters",
+      "avatar": "https://randomuser.me/api/portraits"
+    },
+    "time": "2024-03-13T12:30:00Z"
+  },
+  {
+    "id": "3",
+    "content": "Have you seen this article? Thought it might be interesting for you 👍",
+    "recipients": [
+      {
+        "id": "2",
+        "name": "John Doe",
+        "email": "",
+        "phone": "+19876543210",
+        "isRecipient": true
+      },
+      {
+        "id": "3",
+        "name": "Jane Doe",
+        "email": "",
+        "phone": "+19876543211",
+        "isRecipient": true
+      },
+      {
+        "id": "4",
+        "name": "John Smith",
+        "email": "",
+        "phone": "+19876543212",
+        "isRecipient": true
+      },
+      {
+        "id": "3",
+        "name": "Jane Smith",
+        "email": "",
+        "phone": "+19876543213",
+        "isRecipient": true
+      },
+      {
+        "id": "3",
+        "name": "Don Juan",
+        "email": "donjuan@gmail.com",
+        "phone": "+19876543214",
+        "isRecipient": true
+      },
+      {
+        "id": "3",
+        "name": "Donna Juana",
+        "email": "",
+        "phone": "+19876543215",
+        "isRecipient": true
+      }
+    ],
+    "sender": {
+      "id": "1",
+      "name": "Jack Watters",
+      "avatar": "https://randomuser.me/api/portraits"
+    },
+    "time": "2024-03-13T15:12:00Z"
+  },
+  {
+    "id": "4",
+    "content": "Quick reminder about the project deadline next Friday!",
+    "recipients": [
+      {
+        "id": "2",
+        "name": "John Doe",
+        "email": "",
+        "phone": "+19876543210",
+        "isRecipient": true
+      },
+      {
+        "id": "3",
+        "name": "Jane Doe",
+        "email": "",
+        "phone": "+19876543211",
+        "isRecipient": true
+      }
+    ],
+    "sender": {
+      "id": "1",
+      "name": "Jack Watters",
+      "avatar": "https://randomuser.me/api/portraits"
+    },
+    "time": "2024-03-14T09:45:00Z"
+  },
+  {
+    "id": "5",
+    "content": "Looking forward to catching up at lunch tomorrow! 😊",
+    "recipients": [
+      {
+        "id": "2",
+        "name": "John Doe",
+        "email": "",
+        "phone": "+19876543210",
+        "isRecipient": true
+      },
+      {
+        "id": "3",
+        "name": "Jane Doe",
+        "email": "",
+        "phone": "+19876543211",
+        "isRecipient": true
+      }
+    ],
+    "sender": {
+      "id": "1",
+      "name": "Jack Watters",
+      "avatar": "https://randomuser.me/api/portraits"
+    },
+    "time": "2024-03-14T18:20:00Z"
+  }
+]

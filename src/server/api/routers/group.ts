@@ -1,9 +1,18 @@
 import { z } from "zod";
 import { faker } from "@faker-js/faker";
 
+import sampleMessages from "./messages.json";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { contacts, type IMember } from "./contact";
 import { type IUser } from "./auth";
+
+export interface IMessage {
+  id: string;
+  content: string;
+  recipients: IMember[];
+  sender: IUser;
+  time: Date | string;
+}
 
 export interface IGroupBase {
   id: string;
@@ -14,8 +23,12 @@ export interface IGroupBase {
 
 export interface IGroupPreview extends IGroupBase {
   lastMessage: string;
-  lastMessageTime: Date;
+  lastMessageTime: Date | string;
   members: IMember[];
+}
+
+export interface IGroupHistory extends IGroupBase {
+  messages: IMessage[];
 }
 
 export interface IGroupSettings extends IGroupBase {
@@ -23,15 +36,9 @@ export interface IGroupSettings extends IGroupBase {
   email: boolean;
 }
 
-export interface IGroup extends IGroupPreview, IGroupSettings {
-  messages: {
-    id: string;
-    content: string;
-    recipients: IMember[];
-    sender: IUser;
-    time: Date;
-  }[];
-}
+export interface IGroup extends IGroupPreview, IGroupSettings, IGroupHistory {}
+
+const messages: IMessage[] = sampleMessages;
 
 const groups: IGroup[] = [
   {
@@ -45,7 +52,7 @@ const groups: IGroup[] = [
     members: contacts,
     phone: true,
     email: true,
-    messages: [],
+    messages,
   },
   {
     id: "2",
@@ -57,59 +64,55 @@ const groups: IGroup[] = [
     members: contacts,
     phone: true,
     email: false,
-    messages: [],
+    messages,
   },
   {
     id: "3",
     name: "Tech Talk",
     description: "Discussions about the latest tech trends",
-    avatar: "https://images.unsplash.com/photo-1491553892222-55e07d5d8b73", // Placeholder image
+    avatar: "https://images.unsplash.com/photo-1491553892222-55e07d5d8b73",
     lastMessage: "What do you think about the new framework?",
     lastMessageTime: faker.date.recent(),
     members: contacts,
     phone: false,
     email: true,
-    messages: [],
+    messages,
   },
   {
     id: "4",
     name: "Foodies Unite",
     description: "Sharing recipes, restaurant tips, and food adventures",
-    avatar: "https://images.unsplash.com/photo-1504674900247-0877df9cc836", // Food-related image
+    avatar: "https://images.unsplash.com/photo-1504674900247-0877df9cc836",
     lastMessage: "Anyone know a good sushi place?",
     lastMessageTime: faker.date.recent(),
     members: contacts,
     phone: false,
     email: false,
-    messages: [],
+    messages,
   },
-
-  // 5th Group
   {
     id: "5",
     name: "Bookworms",
     description: "Discussing our favorite books and authors",
-    avatar: "https://images.unsplash.com/photo-1550684376-efcbd6e3f03a", // Image of books
+    avatar: "https://images.unsplash.com/photo-1550684376-efcbd6e3f03a",
     lastMessage: "What's everyone reading this month?",
     lastMessageTime: faker.date.recent(),
     members: contacts,
     phone: true,
     email: true,
-    messages: [],
+    messages,
   },
-
-  // 6th Group
   {
     id: "6",
     name: "Travel Enthusiasts",
     description: "Planning trips and sharing travel experiences",
-    avatar: "https://images.unsplash.com/photo-1470240731273-7821a6eebc7c", // Travel-themed image
+    avatar: "https://images.unsplash.com/photo-1470240731273-7821a6eebc7c",
     lastMessage: "Dream destination ideas?",
     lastMessageTime: faker.date.recent(),
     members: contacts,
     phone: true,
     email: false,
-    messages: [],
+    messages,
   },
 ];
 
@@ -137,7 +140,11 @@ export const groupRouter = createTRPCRouter({
   }),
 
   getGroupSettings: publicProcedure.input(z.string()).query(({ input }) => {
-    return groups.find((group) => group.id === input);
+    return groups.find((group) => group.id === input) as IGroupSettings;
+  }),
+
+  getGroupHistory: publicProcedure.input(z.string()).query(({ input }) => {
+    return groups.find((group) => group.id === input) as IGroupHistory;
   }),
 
   getGroupMembers: publicProcedure.input(z.string()).query(({ input }) => {

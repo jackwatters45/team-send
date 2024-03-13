@@ -1,7 +1,6 @@
 import type { GroupSettingsFormSchema } from "./groupSettingsSchema";
 import useGroupSettings from "./useGroupSettings";
 import extractInitials from "@/lib/extractInitials";
-import { cn } from "@/lib/utils";
 import { type IGroupSettings } from "@/server/api/routers/group";
 
 import { Button } from "../../ui/button";
@@ -158,19 +157,19 @@ export default function GroupSettingsForm({ group }: IGroupSettingsFormProps) {
               title="Transfer ownership"
               description="Transfer ownership of this group to another account."
               buttonTitle="Transfer"
-              onClick={() => {}}
+              onClick={() => console.log("TODO")}
             />
             <DangerZoneCard
               title="Archive this group"
               description="Archive this group and make read-only."
               buttonTitle="Archive group"
-              onClick={() => {}}
+              onClick={() => console.log("TODO")}
             />
             <DangerZoneCard
               title="Delete this group"
               description="Deleting a group will erase all message history."
               buttonTitle="Delete group"
-              onClick={() => {}}
+              onClick={() => console.log("TODO")}
               isLast={true}
             />
           </div>

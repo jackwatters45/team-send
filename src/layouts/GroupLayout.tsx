@@ -1,4 +1,4 @@
-import type { IGroupPreview } from "@/server/api/routers/group";
+import type { IGroupBase } from "@/server/api/routers/group";
 import { GroupSidebarNav } from "@/components/group/GroupSidebarNav";
 import { useRouter } from "next/router";
 import PageLayout from "./PageLayout";
@@ -24,7 +24,7 @@ const getSidebarNavItems = (groupId: string) => [
 
 interface GroupLayoutProps {
   children: React.ReactNode;
-  group: IGroupPreview;
+  group: IGroupBase;
 }
 
 export function GroupLayout({ children, group: group }: GroupLayoutProps) {

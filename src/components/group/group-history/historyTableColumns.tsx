@@ -1,27 +1,26 @@
-import type { ColumnDef } from "@tanstack/react-table";
+import { type ColumnDef } from "@tanstack/react-table";
 
+import { type IMessage } from "@/server/api/routers/group";
 import { Checkbox } from "@/components/ui/checkbox";
-
-import type { IGroupPreview } from "@/server/api/routers/group";
-
-import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
-  HoverableCell,
-} from "@/components/ui/hover-card";
 import {
   DataTableColumnHeader,
   DataTableRowActions,
 } from "@/components/ui/data-table";
+import { type IUser } from "@/server/api/routers/auth";
+import { type IMember } from "@/server/api/routers/contact";
 import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
-import type { IContact } from "@/server/api/routers/contact";
+import {
+  DateHoverableCell,
+  HoverableCell,
+  MembersHoverableCell,
+  UserHoverableCell,
+} from "@/components/ui/hover-card";
 
-export const groupsColumns: ColumnDef<IGroupPreview>[] = [
+export const historyTableColumns: ColumnDef<IMessage>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -52,53 +51,44 @@ export const groupsColumns: ColumnDef<IGroupPreview>[] = [
     ),
   },
   {
-    accessorKey: "name",
+    accessorKey: "content",
     header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Name" />
-    ),
-  },
-  {
-    accessorKey: "lastMessage",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Last Message" />
+      <DataTableColumnHeader column={column} title="Content" />
     ),
     cell: ({ row }) => {
-      <HoverableCell row={row} accessorKey="lastMessage" />;
+      return <HoverableCell row={row} accessorKey="content" />;
     },
   },
   {
-    accessorKey: "lastMessageTime",
-    header: ({ column }) => {
+    accessorKey: "recipients",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Recipients" />
+    ),
+    cell: ({ row }) => {
       return (
-        <DataTableColumnHeader column={column} title="Last Message Time" />
-      );
-    },
-    cell: ({ row }) => {
-      return row.getValue<Date>("lastMessageTime").toLocaleString();
-    },
-  },
-  {
-    accessorKey: "members",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Members" />
-    ),
-    cell: ({ row }) => {
-      const members = row.getValue<IContact[]>("members");
-      return (
-        <HoverCard>
-          <HoverCardTrigger>{`${members.length} members`}</HoverCardTrigger>
-          <HoverCardContent className="flex flex-wrap gap-1 text-xs">
-            {members.map((member, index) => (
-              <div key={member.id}>
-                {member.name}
-                {index !== members.length - 1 ? ", " : ""}
-              </div>
-            ))}
-          </HoverCardContent>
-        </HoverCard>
+        <MembersHoverableCell members={row.getValue<IMember[]>("recipients")} />
       );
     },
   },
+  {
+    accessorKey: "sender",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Sender" />
+    ),
+    cell: ({ row }) => {
+      return <UserHoverableCell user={row.getValue<IUser>("sender")} />;
+    },
+  },
+  {
+    accessorKey: "time",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Time" />
+    ),
+    cell: ({ row }) => {
+      return <DateHoverableCell dateString={row.getValue<string>("time")} />;
+    },
+  },
+
   {
     id: "actions",
     cell: ({ row }) => (
@@ -118,3 +108,6 @@ export const groupsColumns: ColumnDef<IGroupPreview>[] = [
     ),
   },
 ];
+
+// TODO commits 
+// TODO links

@@ -51,16 +51,18 @@ import { cn } from "@/lib/utils";
 interface DataTableFilterProps<TData>
   extends InputHTMLAttributes<HTMLInputElement> {
   table: TableType<TData>;
+  field?: string;
 }
 function DataTableFilter<TData>({
   table,
+  field = "name",
   ...inputProps
 }: DataTableFilterProps<TData>) {
   return (
     <Input
-      value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+      value={(table.getColumn(field)?.getFilterValue() as string) ?? ""}
       onChange={(event: ChangeEvent<HTMLInputElement>) =>
-        table.getColumn("name")?.setFilterValue(event.target.value)
+        table.getColumn(field)?.setFilterValue(event.target.value)
       }
       className="max-w-sm"
       {...inputProps}

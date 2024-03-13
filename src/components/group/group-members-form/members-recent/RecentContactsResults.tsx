@@ -33,8 +33,7 @@ export default function RecentContactsResults({
                 onClick={() => handleClickContact(contact)}
                 type="button"
                 variant={"ghost"}
-                className="flex h-fit w-full items-center justify-start gap-2 p-2 lg:w-1/2
-      dark:hover:bg-stone-800 dark:hover:bg-opacity-20"
+                className="flex h-fit w-full items-center justify-start gap-2 p-2 lg:w-1/2 dark:hover:bg-stone-800 dark:hover:bg-opacity-20"
               >
                 <Avatar className="h-10 w-10">
                   <AvatarFallback className="">

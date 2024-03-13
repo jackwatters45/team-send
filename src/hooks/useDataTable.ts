@@ -8,8 +8,6 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-  TableOptions,
-  TableState,
 } from "@tanstack/react-table";
 import { useState } from "react";
 
