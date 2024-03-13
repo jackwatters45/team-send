@@ -1,7 +1,3 @@
-import { useParams } from "next/navigation";
-
-import { useDataTable } from "@/hooks/useDataTable";
-import { api } from "@/utils/api";
 import {
   DataTableColumnOptions,
   DataTableContent,
@@ -10,18 +6,10 @@ import {
   DataTableSelectedRowCount,
   DataTableSkeleton,
 } from "@/components/ui/data-table";
-import { historyTableColumns } from "./historyTableColumns";
+import useGroupHistoryTable from "./useGroupHistoryTable";
 
 export default function GroupHistoryTable() {
-  const groupId = useParams()?.groupId as string;
-  const groupHistory = api.group.getGroupHistory.useQuery(groupId, {
-    enabled: !!groupId,
-  });
-
-  const table = useDataTable({
-    columns: historyTableColumns,
-    data: groupHistory.data?.messages ?? [],
-  });
+  const { historyTableColumns, groupHistory, table } = useGroupHistoryTable();
 
   return !!groupHistory.data || groupHistory.status === "loading" ? (
     <div>
@@ -36,10 +24,7 @@ export default function GroupHistoryTable() {
             <DataTableColumnOptions table={table} />
           </div>
           <div className="rounded-md border dark:border-stone-700">
-            <DataTableContent table={table} columns={historyTableColumns}
-            // TODO uncomment once page is created
-            // link={{ pre: `/group/${groupId}/message/`, field: "id" }}
-            />
+            <DataTableContent table={table} columns={historyTableColumns} />
           </div>
           <div className="flex items-center justify-between p-2">
             <DataTableSelectedRowCount table={table} />

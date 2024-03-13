@@ -1,9 +1,10 @@
 import type { ColumnDef } from "@tanstack/react-table";
-
-import { Checkbox } from "@/components/ui/checkbox";
+import Link from "next/link";
 
 import type { IGroupPreview } from "@/server/api/routers/group";
+import type { IContact } from "@/server/api/routers/contact";
 
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   HoverCard,
   HoverCardContent,
@@ -18,8 +19,8 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
+  DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
-import type { IContact } from "@/server/api/routers/contact";
 
 export const groupsColumns: ColumnDef<IGroupPreview>[] = [
   {
@@ -63,7 +64,7 @@ export const groupsColumns: ColumnDef<IGroupPreview>[] = [
       <DataTableColumnHeader column={column} title="Last Message" />
     ),
     cell: ({ row }) => {
-      <HoverableCell row={row} accessorKey="lastMessage" />;
+      return <HoverableCell row={row} accessorKey="lastMessage" />;
     },
   },
   {
@@ -103,17 +104,42 @@ export const groupsColumns: ColumnDef<IGroupPreview>[] = [
     id: "actions",
     cell: ({ row }) => (
       <DataTableRowActions>
-        <DropdownMenuLabel>Actions</DropdownMenuLabel>
         <DropdownMenuItem
           onClick={() =>
             navigator.clipboard.writeText(row.getValue<string>("id"))
           }
+          className="w-48"
         >
-          Copy payment ID
+          Copy group ID
+          <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>View customer</DropdownMenuItem>
-        <DropdownMenuItem>View payment details</DropdownMenuItem>
+        <DropdownMenuLabel className="font-semibold">
+          View details
+        </DropdownMenuLabel>
+        <DropdownMenuItem>
+          <Link href={`/group/${row.getValue<string>("id")}`}>Details</Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Link href={`/group/${row.getValue<string>("id")}/members`}>
+            Members
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Link href={`/group/${row.getValue<string>("id")}/history`}>
+            History
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuItem>
+          <Link href={`/group/${row.getValue<string>("id")}/settings`}>
+            Settings
+          </Link>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <DropdownMenuItem>
+          Delete group
+          <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+        </DropdownMenuItem>
       </DataTableRowActions>
     ),
   },

@@ -8,8 +8,9 @@ export default function useGroupMembersTable() {
   const groupId = useParams().groupId as string;
   const groupMembers = api.group.getGroupMembers.useQuery(groupId);
 
+  const groupMembersColumns = getGroupMembersColumns();
   const table = useDataTable({
-    columns: getGroupMembersColumns(),
+    columns: groupMembersColumns,
     data: groupMembers.data ?? [],
   });
 
@@ -17,6 +18,7 @@ export default function useGroupMembersTable() {
   const selectedRowIds = selectedRows.map((row) => row.original.id);
 
   return {
+    groupMembersColumns,
     groupMembers,
     table,
   };
