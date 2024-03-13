@@ -23,7 +23,14 @@
       "name": "Jack Watters",
       "avatar": "https://randomuser.me/api/portraits"
     },
-    "time": "2021-01-01T00:00:00Z"
+    "time": "2021-01-01T00:00:00Z",
+    "isScheduled": false,
+    "isRecurring": false,
+    "isReminders": false,
+    "scheduledDate": null,
+    "recurringNum": null,
+    "recurringPeriod": null,
+    "reminders": null
   },
   {
     "id": "2",
@@ -49,7 +56,14 @@
       "name": "Jack Watters",
       "avatar": "https://randomuser.me/api/portraits"
     },
-    "time": "2024-03-13T12:30:00Z"
+    "time": "2024-03-13T12:30:00Z",
+    "isScheduled": false,
+    "isRecurring": false,
+    "isReminders": false,
+    "scheduledDate": null,
+    "recurringNum": null,
+    "recurringPeriod": null,
+    "reminders": null
   },
   {
     "id": "3",
@@ -103,7 +117,14 @@
       "name": "Jack Watters",
       "avatar": "https://randomuser.me/api/portraits"
     },
-    "time": "2024-03-13T15:12:00Z"
+    "time": "2024-03-13T15:12:00Z",
+    "isScheduled": false,
+    "isRecurring": false,
+    "isReminders": false,
+    "scheduledDate": null,
+    "recurringNum": null,
+    "recurringPeriod": null,
+    "reminders": null
   },
   {
     "id": "4",
@@ -129,7 +150,14 @@
       "name": "Jack Watters",
       "avatar": "https://randomuser.me/api/portraits"
     },
-    "time": "2024-03-14T09:45:00Z"
+    "time": "2024-03-14T09:45:00Z",
+    "isScheduled": false,
+    "isRecurring": false,
+    "isReminders": false,
+    "scheduledDate": null,
+    "recurringNum": null,
+    "recurringPeriod": null,
+    "reminders": null
   },
   {
     "id": "5",
@@ -155,6 +183,13 @@
       "name": "Jack Watters",
       "avatar": "https://randomuser.me/api/portraits"
     },
-    "time": "2024-03-14T18:20:00Z"
+    "time": "2024-03-14T18:20:00Z",
+    "isScheduled": false,
+    "isRecurring": false,
+    "isReminders": false,
+    "scheduledDate": null,
+    "recurringNum": null,
+    "recurringPeriod": null,
+    "reminders": null
   }
 ]

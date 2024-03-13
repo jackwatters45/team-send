@@ -4,16 +4,8 @@ import { faker } from "@faker-js/faker";
 import sampleMessages from "./messages.json";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { contacts, type IMember } from "./contact";
-import { type IUser } from "./auth";
 import { mockAsyncFetch } from "@/lib/mockAsyncFetch";
-
-export interface IMessage {
-  id: string;
-  content: string;
-  recipients: IMember[];
-  sender: IUser;
-  time: Date | string;
-}
+import { type IMessage } from "./message";
 
 export interface IGroupBase {
   id: string;
@@ -137,8 +129,6 @@ const groups: IGroup[] = [
     addedContacts: [],
   },
 ];
-
-
 
 export const groupRouter = createTRPCRouter({
   // create: protectedProcedure
