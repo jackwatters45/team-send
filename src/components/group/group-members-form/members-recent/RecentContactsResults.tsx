@@ -20,7 +20,7 @@ export default function RecentContactsResults({
   handleClickContact,
 }: IRecentContactsResultsProps) {
   return (
-    <TabsContent value="groups">
+    <TabsContent value="contacts">
       <div className="flex flex-wrap">
         {contactsResults ? (
           contactsResults.map((contact) => {

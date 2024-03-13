@@ -4,6 +4,7 @@ export interface IUser {
   id: string;
   name: string;
   avatar: string;
+  username?: string;
 }
 
 export const authRouter = createTRPCRouter({
@@ -12,6 +13,7 @@ export const authRouter = createTRPCRouter({
       id: "1",
       name: "Jack Watters",
       avatar: "https://randomuser.me/api/portraits",
+      username: "jackwatters",
     };
   }),
 });

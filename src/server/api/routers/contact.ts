@@ -1,10 +1,7 @@
 import { z } from "zod";
 
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-} from "@/server/api/trpc";
+import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
+import { mockAsyncFetch } from "@/lib/mockAsyncFetch";
 
 export interface INewContact {
   name: string;
@@ -112,4 +109,15 @@ export const contactRouter = createTRPCRouter({
         )
       : contacts;
   }),
+  getRecentContacts: publicProcedure
+    .input(z.string().optional())
+    .query(async ({ input }) => {
+      await mockAsyncFetch(contacts, 1000);
+
+      return !!input
+        ? contacts.filter((contact) =>
+            contact.name.toLowerCase().includes(input.toLowerCase()),
+          )
+        : contacts;
+    }),
 });

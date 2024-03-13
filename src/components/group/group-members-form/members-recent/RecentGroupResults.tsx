@@ -18,6 +18,7 @@ export default function RecentGroupResults({
   form,
   handleClickGroup,
 }: IRecentGroupResultsProps) {
+
   return (
     <TabsContent value="groups">
       <div className="flex flex-wrap">

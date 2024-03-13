@@ -5,6 +5,7 @@ import sampleMessages from "./messages.json";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { contacts, type IMember } from "./contact";
 import { type IUser } from "./auth";
+import { mockAsyncFetch } from "@/lib/mockAsyncFetch";
 
 export interface IMessage {
   id: string;
@@ -36,7 +37,16 @@ export interface IGroupSettings extends IGroupBase {
   email: boolean;
 }
 
-export interface IGroup extends IGroupPreview, IGroupSettings, IGroupHistory {}
+export interface IGroupMetaDetails {
+  addedGroups: string[];
+  addedContacts: string[];
+}
+
+export interface IGroup
+  extends IGroupPreview,
+    IGroupSettings,
+    IGroupHistory,
+    IGroupMetaDetails {}
 
 const messages: IMessage[] = sampleMessages;
 
@@ -53,6 +63,8 @@ const groups: IGroup[] = [
     phone: true,
     email: true,
     messages,
+    addedGroups: [],
+    addedContacts: [],
   },
   {
     id: "2",
@@ -65,6 +77,8 @@ const groups: IGroup[] = [
     phone: true,
     email: false,
     messages,
+    addedGroups: [],
+    addedContacts: [],
   },
   {
     id: "3",
@@ -77,6 +91,8 @@ const groups: IGroup[] = [
     phone: false,
     email: true,
     messages,
+    addedGroups: [],
+    addedContacts: [],
   },
   {
     id: "4",
@@ -89,6 +105,8 @@ const groups: IGroup[] = [
     phone: false,
     email: false,
     messages,
+    addedGroups: [],
+    addedContacts: [],
   },
   {
     id: "5",
@@ -101,6 +119,8 @@ const groups: IGroup[] = [
     phone: true,
     email: true,
     messages,
+    addedGroups: [],
+    addedContacts: [],
   },
   {
     id: "6",
@@ -113,8 +133,12 @@ const groups: IGroup[] = [
     phone: true,
     email: false,
     messages,
+    addedGroups: [],
+    addedContacts: [],
   },
 ];
+
+
 
 export const groupRouter = createTRPCRouter({
   // create: protectedProcedure
@@ -138,6 +162,18 @@ export const groupRouter = createTRPCRouter({
         )
       : groups;
   }),
+
+  getRecentGroups: publicProcedure
+    .input(z.string().optional())
+    .query(async ({ input }) => {
+      await mockAsyncFetch(groups, 1000);
+      // TODO needs to filter out groups that have already been added but will be done in query
+      return !!input
+        ? groups.filter((group) =>
+            group.name.toLowerCase().includes(input.toLowerCase()),
+          )
+        : groups;
+    }),
 
   getGroupSettings: publicProcedure.input(z.string()).query(({ input }) => {
     return groups.find((group) => group.id === input) as IGroupSettings;
