@@ -47,6 +47,7 @@ import {
 import { Input } from "./input";
 import { Skeleton } from "./skeleton";
 import { cn } from "@/lib/utils";
+import React from "react";
 
 interface DataTableFilterProps<TData>
   extends InputHTMLAttributes<HTMLInputElement> {
@@ -72,20 +73,27 @@ function DataTableFilter<TData>({
 
 interface DataTableColumnOptionsProps<TData> {
   table: TableType<TData>;
-  triggerName?: string;
+  trigger?: React.ReactNode;
 }
 function DataTableColumnOptions<TData>({
   table,
-  triggerName = "Columns",
+  trigger = (
+    <>
+      <MixerHorizontalIcon className="mr-2 h-4 w-4" />
+      View
+    </>
+  ),
 }: DataTableColumnOptionsProps<TData>) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger asChild>
         <Button variant="outline" className="ml-auto">
-          {triggerName}
+          {trigger}
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align="end">
+        <DropdownMenuLabel>Toggle columns</DropdownMenuLabel>
+        <DropdownMenuSeparator className="w-40" />
         {table
           .getAllColumns()
           .filter((column) => column.getCanHide())
