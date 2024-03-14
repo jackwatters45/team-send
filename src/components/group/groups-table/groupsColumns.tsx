@@ -33,6 +33,7 @@ export const groupsColumns: ColumnDef<IGroupPreview>[] = [
         }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
+        name="select-all"
       />
     ),
     cell: ({ row }) => (
@@ -40,6 +41,7 @@ export const groupsColumns: ColumnDef<IGroupPreview>[] = [
         checked={row.getIsSelected()}
         onCheckedChange={(value) => row.toggleSelected(!!value)}
         aria-label="Select row"
+        name="select-row"
       />
     ),
     enableSorting: false,

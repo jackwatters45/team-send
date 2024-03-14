@@ -109,10 +109,13 @@ function NumPeriodInputs<T extends z.ZodType>({
         name={numName}
         render={({ field }) => (
           <FormItem className="flex-1">
-            <FormLabel hidden>{label}</FormLabel>
+            <FormLabel hidden htmlFor={numName}>
+              {label}
+            </FormLabel>
             <Input
               placeholder="Number"
               type="number"
+              id={numName}
               {...field}
               onChange={(e) =>
                 field.onChange(parseInt(e.target.value, 10) || undefined)
@@ -128,7 +131,11 @@ function NumPeriodInputs<T extends z.ZodType>({
         render={({ field }) => (
           <FormItem className="flex-1 space-y-0">
             <FormLabel className="hidden">{label}</FormLabel>
-            <Select onValueChange={field.onChange} defaultValue={field.value}>
+            <Select
+              onValueChange={field.onChange}
+              defaultValue={field.value}
+              name={periodName}
+            >
               <FormControl>
                 <SelectTrigger>
                   <SelectValue placeholder="Time Period" />
@@ -215,6 +222,7 @@ function BooleanSelect<T extends z.ZodType>({
           <Select
             onValueChange={field.onChange}
             defaultValue={field.value as string}
+            name={name}
           >
             <FormControl>
               <SelectTrigger>

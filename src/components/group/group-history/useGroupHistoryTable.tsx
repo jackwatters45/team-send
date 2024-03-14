@@ -1,6 +1,6 @@
 import { useParams } from "next/navigation";
 
-import { useDataTable } from "@/hooks/useDataTable";
+import useDataTable from "@/hooks/useDataTable";
 import { api } from "@/utils/api";
 import { getHistoryTableColumns } from "./historyTableColumns";
 
@@ -12,7 +12,7 @@ export default function useGroupHistoryTable() {
 
   const historyTableColumns = getHistoryTableColumns(groupId);
 
-  const table = useDataTable({
+  const { table } = useDataTable({
     columns: historyTableColumns,
     data: groupHistory.data?.messages ?? [],
   });

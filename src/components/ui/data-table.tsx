@@ -65,6 +65,7 @@ function DataTableFilter<TData>({
       onChange={(event: ChangeEvent<HTMLInputElement>) =>
         table.getColumn(field)?.setFilterValue(event.target.value)
       }
+      name={`filter-${field}`}
       className="max-w-sm"
       {...inputProps}
     />
@@ -259,6 +260,7 @@ function DataTablePagination<TData>({
           onValueChange={(value: string) => {
             table.setPageSize(Number(value));
           }}
+          name="rows-per-page"
         >
           <SelectTrigger className="h-8 w-[70px]">
             <SelectValue placeholder={table.getState().pagination.pageSize} />

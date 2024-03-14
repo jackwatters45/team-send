@@ -1,6 +1,6 @@
 import { type ColumnDef } from "@tanstack/react-table";
 
-import { type IMessage } from "@/server/api/routers/group";
+import { type IMessage } from "@/server/api/routers/message";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DataTableColumnHeader,
@@ -33,6 +33,7 @@ export function getHistoryTableColumns(groupId: string): ColumnDef<IMessage>[] {
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
+          name="select-all-rows"
         />
       ),
       cell: ({ row }) => (
@@ -40,6 +41,7 @@ export function getHistoryTableColumns(groupId: string): ColumnDef<IMessage>[] {
           checked={row.getIsSelected()}
           onCheckedChange={(value) => row.toggleSelected(!!value)}
           aria-label="Select row"
+          name="select-row"
         />
       ),
       enableSorting: false,
