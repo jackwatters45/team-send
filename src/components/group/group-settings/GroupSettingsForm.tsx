@@ -13,9 +13,8 @@ import {
   FormLabel,
 } from "../../ui/form";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { FormInput } from "../../ui/form-inputs";
+import { CheckboxInput, FormInput } from "../../ui/form-inputs";
 import { Switch } from "@/components/ui/switch";
-import { Checkbox } from "@/components/ui/checkbox";
 import DangerZoneCard from "@/components/ui/danger-zone-card";
 
 interface IGroupSettingsFormProps {
@@ -118,25 +117,11 @@ export default function GroupSettingsForm({ group }: IGroupSettingsFormProps) {
                 )}
               />
             </div>
-            <FormField
-              control={form.control}
+            <CheckboxInput
               name="change-global"
-              render={({ field }) => (
-                <FormItem className="flex flex-row items-start space-x-3 space-y-0 pb-4 pt-10 ">
-                  <FormControl>
-                    <Checkbox
-                      checked={field.value}
-                      onCheckedChange={field.onChange}
-                    />
-                  </FormControl>
-                  <div className="space-y-1 leading-none">
-                    <FormLabel>Change settings for all groups</FormLabel>
-                    <FormDescription>
-                      Change the phone and email settings for all your groups.
-                    </FormDescription>
-                  </div>
-                </FormItem>
-              )}
+              label="Change settings for all groups"
+              description="Change the phone and email settings for all your groups."
+              control={form.control}
             />
           </div>
         </div>

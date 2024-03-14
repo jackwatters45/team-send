@@ -14,6 +14,7 @@ import {
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 import type { IContact } from "@/server/api/routers/contact";
+import Link from "next/link";
 
 export const getGroupMembersColumns = (): ColumnDef<IContact>[] => {
   return [
@@ -100,7 +101,9 @@ export const getGroupMembersColumns = (): ColumnDef<IContact>[] => {
             <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <DropdownMenuItem>View member details</DropdownMenuItem>
+          <Link href={`/member/${row.getValue<string>("id")}`}>
+            <DropdownMenuItem>View member details</DropdownMenuItem>
+          </Link>
           <DropdownMenuItem>
             Remove from group
             <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>

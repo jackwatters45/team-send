@@ -2,14 +2,13 @@ import type { ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 
 import type { IGroupPreview } from "@/server/api/routers/group";
-import type { IContact } from "@/server/api/routers/contact";
+import type { IMember } from "@/server/api/routers/contact";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import {
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
+  DateHoverableCell,
   HoverableCell,
+  MembersHoverableCell,
 } from "@/components/ui/hover-card";
 import {
   DataTableColumnHeader,
@@ -77,7 +76,11 @@ export const groupsColumns: ColumnDef<IGroupPreview>[] = [
       );
     },
     cell: ({ row }) => {
-      return row.getValue<Date>("lastMessageTime").toLocaleString();
+      return (
+        <DateHoverableCell
+          dateString={row.getValue<string>("lastMessageTime")}
+        />
+      );
     },
   },
   {
@@ -86,19 +89,8 @@ export const groupsColumns: ColumnDef<IGroupPreview>[] = [
       <DataTableColumnHeader column={column} title="Members" />
     ),
     cell: ({ row }) => {
-      const members = row.getValue<IContact[]>("members");
       return (
-        <HoverCard>
-          <HoverCardTrigger>{`${members.length} members`}</HoverCardTrigger>
-          <HoverCardContent className="flex flex-wrap gap-1 text-xs">
-            {members.map((member, index) => (
-              <div key={member.id}>
-                {member.name}
-                {index !== members.length - 1 ? ", " : ""}
-              </div>
-            ))}
-          </HoverCardContent>
-        </HoverCard>
+        <MembersHoverableCell members={row.getValue<IMember[]>("members")} />
       );
     },
   },

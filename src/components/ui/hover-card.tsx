@@ -11,6 +11,7 @@ import { Separator } from "./separator";
 import { ScrollArea } from "./scroll-area";
 import { type IMember } from "@/server/api/routers/contact";
 import { formatRelativeDateAndTime } from "@/lib/dateHelpers";
+import Link from "next/link";
 
 const HoverCard = HoverCardPrimitive.Root;
 
@@ -91,7 +92,7 @@ function MembersHoverableCell({ members }: IMemberHoverableCellProps) {
   return (
     <HoverCard>
       <HoverCardTrigger>{`${members.length} members`}</HoverCardTrigger>
-      <HoverCardContent className="p-2">
+      <HoverCardContent className="p-2 w-96">
         <ScrollArea
           className="data-[member-count=true]:h-[220px]"
           data-member-count={members.length > 3}
@@ -103,7 +104,7 @@ function MembersHoverableCell({ members }: IMemberHoverableCellProps) {
 
             return (
               <React.Fragment key={member.id}>
-                <div className="flex items-center gap-2 rounded-md p-2">
+                <Link href={`/member/${member.id}`} className="flex items-center gap-2 rounded-md p-2">
                   <Avatar>
                     <AvatarFallback>
                       {extractInitials(member.name)}
@@ -119,7 +120,7 @@ function MembersHoverableCell({ members }: IMemberHoverableCellProps) {
                       {phoneNumber && <div>{phoneNumber.formatNational()}</div>}
                     </div>
                   </div>
-                </div>
+                </Link >
                 {i !== members.length - 1 && <Separator />}
               </React.Fragment>
             );

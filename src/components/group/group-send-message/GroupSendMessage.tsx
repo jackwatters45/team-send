@@ -1,10 +1,10 @@
 import useGroupSendMessage from "./useGroupSendMessage";
 import { Button } from "../../ui/button";
 import { Form, FormDescription } from "../../ui/form";
-import { FormTextarea } from "../../ui/form-inputs";
+import { CheckboxInput, FormTextarea } from "../../ui/form-inputs";
 import { MessageSettings } from "./MessageSettings";
 import GroupMembersTable from "../group-members-table/GroupMembersTable";
-
+import { type GroupMessageSchema } from "./groupMessageSchema";
 
 export default function GroupSendMessage() {
   const { table, groupMembers, form, onSubmit, parent } = useGroupSendMessage();
@@ -39,7 +39,24 @@ export default function GroupSendMessage() {
             : "Send Message"}
         </Button>
         <div className="border-b dark:border-stone-500 dark:border-opacity-20" />
-        <GroupMembersTable  table={table} groupMembers={groupMembers} />
+        <div>
+          <div>
+            <h3 className="text-medium text-lg">Message Recipients</h3>
+            <p className="text-sm text-stone-500 dark:text-stone-400">
+              Selected users will receive this message. You can change
+              recipients by selecting or deselecting users using the checkboxes
+              below.
+            </p>
+          </div>
+          {/* TODO better text */}
+          <CheckboxInput<GroupMessageSchema>
+            name="recipientsOnlyThisMessage"
+            label="Change group recipients for just this message"
+            description="This will not change the group's recipients. It will only change the recipients for this message."
+            control={form.control}
+          />
+          <GroupMembersTable table={table} groupMembers={groupMembers} />
+        </div>
       </form>
     </Form>
   );

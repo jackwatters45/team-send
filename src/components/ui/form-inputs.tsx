@@ -20,6 +20,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Checkbox } from "./checkbox";
 
 export interface ISharedInputNoNameProps<T extends z.ZodType> {
   control: Control<z.infer<T>>;
@@ -245,10 +246,36 @@ function BooleanSelect<T extends z.ZodType>({
   );
 }
 
+function CheckboxInput<T extends z.ZodType>({
+  control,
+  description,
+  name,
+  label,
+}: ISharedInputProps<T>) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className="flex flex-row items-start space-x-3 space-y-0 px-4 pb-4 pt-8">
+          <FormControl>
+            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+          </FormControl>
+          <div className="space-y-1 leading-none">
+            <FormLabel>{label}</FormLabel>
+            <FormDescription>{description}</FormDescription>
+          </div>
+        </FormItem>
+      )}
+    />
+  );
+}
+
 export {
   FormInput,
   FormTextarea,
   NumPeriodInputs,
   DateTimeInput,
   BooleanSelect,
+  CheckboxInput,
 };

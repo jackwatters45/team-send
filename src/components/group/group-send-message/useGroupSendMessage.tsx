@@ -22,7 +22,7 @@ export default function useGroupSendMessage() {
       recurringPeriod: "months",
       isReminders: "yes",
       reminders: [defaultReminder],
-      saveSelectedMembers: true,
+      recipientsOnlyThisMessage: true,
       selectedMembers: rowSelection ?? {},
     },
   });
