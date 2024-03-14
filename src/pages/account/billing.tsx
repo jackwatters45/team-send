@@ -3,11 +3,10 @@ import { AccountLayout } from "@/layouts/AccountLayout";
 export default function AccountProfile() {
   return (
     <AccountLayout
-      title="User Profile"
-      description={"Manage your account information"}
+      title="User Billing"
+      description={"Update your payment methods and manage your subscriptions."}
     >
-      
-      <div>Profile</div>
+      <div>Billing</div>
     </AccountLayout>
   );
 }

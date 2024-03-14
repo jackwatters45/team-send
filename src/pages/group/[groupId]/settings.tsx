@@ -15,7 +15,7 @@ export default function GroupSettings() {
 
   return (
     <GroupLayout group={groupSettings.data}>
-      <GroupSettingsForm  group={groupSettings.data} />
+      <GroupSettingsForm group={groupSettings.data} />
     </GroupLayout>
   );
 }

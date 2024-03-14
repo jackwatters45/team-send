@@ -1,12 +1,12 @@
-import PageLayout from "@/layouts/PageLayout";
+import { AccountLayout } from "@/layouts/AccountLayout";
 
-export default function UserSettings() {
+export default function AccountSettings() {
   return (
-    <PageLayout
+    <AccountLayout
       title="User Settings"
       description={"View and edit your settings."}
     >
       Settings
-    </PageLayout>
+    </AccountLayout>
   );
 }

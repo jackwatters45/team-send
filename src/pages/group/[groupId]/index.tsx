@@ -11,7 +11,7 @@ export default function Group() {
 
   return (
     <GroupLayout group={group.data}>
-      <GroupSendMessage  />
+      <GroupSendMessage />
     </GroupLayout>
   );
 }

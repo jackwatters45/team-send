@@ -12,6 +12,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import extractInitials from "@/lib/extractInitials";
 import { api } from "@/utils/api";
+import Link from "next/link";
 
 export default function UserNav() {
   const user = api.auth.getCurrentUser.useQuery().data;
@@ -40,19 +41,24 @@ export default function UserNav() {
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
         <DropdownMenuGroup>
-          <DropdownMenuItem>
-            Profile
-            <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
-          </DropdownMenuItem>
-          {/* <DropdownMenuItem>
-            Billing
-            <DropdownMenuShortcut>⌘B</DropdownMenuShortcut>
-          </DropdownMenuItem> */}
-          <DropdownMenuItem>
-            Settings
-            <DropdownMenuShortcut>⌘S</DropdownMenuShortcut>
-          </DropdownMenuItem>
-          {/* <DropdownMenuItem>New Team</DropdownMenuItem> */}
+          <Link href="/account/profile">
+            <DropdownMenuItem>
+              Profile
+              <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+            </DropdownMenuItem>
+          </Link>
+          <Link href="/account/billing">
+            <DropdownMenuItem>
+              Billing
+              <DropdownMenuShortcut>⇧⌘B</DropdownMenuShortcut>
+            </DropdownMenuItem>
+          </Link>
+          <Link href="/account/settings">
+            <DropdownMenuItem>
+              Settings
+              <DropdownMenuShortcut>⇧⌘S</DropdownMenuShortcut>
+            </DropdownMenuItem>
+          </Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
