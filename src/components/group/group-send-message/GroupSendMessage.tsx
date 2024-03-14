@@ -7,7 +7,7 @@ import GroupMembersTable from "../group-members-table/GroupMembersTable";
 
 
 export default function GroupSendMessage() {
-  const { form, onSubmit, parent } = useGroupSendMessage()
+  const { table, groupMembers, form, onSubmit, parent } = useGroupSendMessage();
 
   return (
     <Form {...form}>
@@ -39,7 +39,7 @@ export default function GroupSendMessage() {
             : "Send Message"}
         </Button>
         <div className="border-b dark:border-stone-500 dark:border-opacity-20" />
-        <GroupMembersTable  />
+        <GroupMembersTable  table={table} groupMembers={groupMembers} />
       </form>
     </Form>
   );

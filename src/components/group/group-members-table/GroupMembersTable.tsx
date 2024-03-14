@@ -1,4 +1,5 @@
 "use client";
+import { type Table } from "@tanstack/react-table";
 
 import {
   DataTableColumnOptions,
@@ -9,11 +10,19 @@ import {
   DataTableSkeleton,
 } from "@/components/ui/data-table";
 
-import useGroupMembersTable from "./useGroupMembersTable";
+import { type api } from "@/utils/api";
+import { getGroupMembersColumns } from "./groupMembersColumns";
+import { type IContact } from "@/server/api/routers/contact";
 
-export default function GroupMembersTable() {
-  const { groupMembersColumns, groupMembers, table } = useGroupMembersTable();
+interface IGroupMembersTableProps {
+  table: Table<IContact>;
+  groupMembers: ReturnType<typeof api.group.getGroupMembers.useQuery>;
+}
 
+export default function GroupMembersTable({
+  table,
+  groupMembers,
+}: IGroupMembersTableProps) {
   return (
     <div>
       {groupMembers.data ? (
@@ -23,7 +32,10 @@ export default function GroupMembersTable() {
             <DataTableColumnOptions table={table} />
           </div>
           <div className="rounded-md border dark:border-stone-700">
-            <DataTableContent table={table} columns={groupMembersColumns} />
+            <DataTableContent
+              table={table}
+              columns={getGroupMembersColumns()}
+            />
           </div>
           <div className="flex items-center justify-between p-2">
             <DataTableSelectedRowCount table={table} />

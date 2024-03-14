@@ -14,20 +14,8 @@ import {
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 import type { IContact } from "@/server/api/routers/contact";
-import {
-  Controller,
-  type FieldValues,
-  type Path,
-  type UseFormReturn,
-} from "react-hook-form";
 
-type IGroupMembersFormShape = FieldValues & {
-  selected: Record<string, boolean>;
-};
-
-export const getGroupMembersColumns = <T extends IGroupMembersFormShape>(
-  form?: UseFormReturn<T>,
-): ColumnDef<IContact>[] => {
+export const getGroupMembersColumns = (): ColumnDef<IContact>[] => {
   return [
     {
       id: "select",
@@ -39,29 +27,16 @@ export const getGroupMembersColumns = <T extends IGroupMembersFormShape>(
           }
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
+          name="select-all"
         />
       ),
       cell: ({ row }) => {
-        return form ? (
-          <Controller
-            control={form.control}
-            // TODO wrong but tired
-            name={`selected.${row.id}` as Path<T>}
-            render={({ field }) => (
-              <Checkbox
-                checked={field.value || false}
-                onChange={(e) =>
-                  field.onChange((e.target as HTMLInputElement).checked)
-                }
-                aria-label="Select row"
-              />
-            )}
-          />
-        ) : (
+        return (
           <Checkbox
             checked={row.getIsSelected()}
             onCheckedChange={(value) => row.toggleSelected(!!value)}
             aria-label="Select row"
+            name="select-row"
           />
         );
       },

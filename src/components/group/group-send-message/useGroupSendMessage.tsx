@@ -2,25 +2,14 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { type z } from "zod";
-import { useParams } from "next/navigation";
+import { useEffect } from "react";
 
 import { toast } from "../../ui/use-toast";
 import { defaultReminder, groupMessageSchema } from "./groupMessageSchema";
-import { useDataTable } from "@/hooks/useDataTable";
-import { api } from "@/utils/api";
-import { getGroupMembersColumns } from "../group-members-table/groupMembersColumns";
+import useGroupMembersTable from "../group-members-table/useGroupMembersTable";
 
 export default function useGroupSendMessage() {
-  const groupId = useParams().groupId as string;
-  const groupMembers = api.group.getGroupMembers.useQuery(groupId);
-
-  const groupMembersColumns = getGroupMembersColumns();
-
-  const table = useDataTable({
-    columns: groupMembersColumns,
-    data: groupMembers.data ?? [],
-    includePagination: false,
-  });
+  const { table, rowSelection, groupMembers } = useGroupMembersTable();
 
   const form = useForm<z.infer<typeof groupMessageSchema>>({
     resolver: zodResolver(groupMessageSchema),
@@ -33,8 +22,15 @@ export default function useGroupSendMessage() {
       recurringPeriod: "months",
       isReminders: "yes",
       reminders: [defaultReminder],
+      saveSelectedMembers: true,
+      selectedMembers: rowSelection ?? {},
     },
   });
+
+  useEffect(() => {
+    if (!rowSelection || !form) return;
+    form.setValue("selectedMembers", rowSelection);
+  }, [rowSelection, form]);
 
   // TODO definitely a lot more considerations here
   const onSubmit = (data: z.infer<typeof groupMessageSchema>) => {
@@ -59,7 +55,6 @@ export default function useGroupSendMessage() {
     groupMembers,
     form,
     onSubmit,
-
     parent,
   };
 }

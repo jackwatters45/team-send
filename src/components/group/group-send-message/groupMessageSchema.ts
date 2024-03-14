@@ -20,6 +20,8 @@ export const groupMessageSchema = z
     recurringPeriod: z.enum(["years", "months", "weeks", "days"]).optional(),
     isReminders: z.enum(["no", "yes"]),
     reminders: z.array(reminderSchema).max(6).optional(),
+    saveSelectedMembers: z.boolean(),
+    selectedMembers: z.record(z.string(), z.boolean()),
   })
   .refine(
     (data) => {

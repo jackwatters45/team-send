@@ -9,7 +9,6 @@ import {
   defaultReminder,
 } from "./groupMessageSchema";
 import { type UseFormReturn } from "react-hook-form";
-import { FormLabel } from "@/components/ui/form";
 import { Button } from "@/components/ui/button";
 import { MinusCircledIcon } from "@radix-ui/react-icons";
 
@@ -42,7 +41,9 @@ export function MessageSettings({ form }: IMessageSettingsProps) {
       />
       {form.watch("isRecurring") === "yes" && (
         <div className="flex flex-col gap-3">
-          <FormLabel>Recurring every</FormLabel>
+          <div className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            Recurring every
+          </div>
           <NumPeriodInputs<GroupMessageSchema>
             control={form.control}
             numName="recurringNum"
@@ -60,7 +61,9 @@ export function MessageSettings({ form }: IMessageSettingsProps) {
       />
       {form.watch("isReminders") === "yes" && (
         <div className="flex flex-col gap-3">
-          <FormLabel>Remind before</FormLabel>
+          <div className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+            Remind before
+          </div>
           {reminders.map((reminder, index) => (
             <div key={index} className="flex items-start gap-4">
               <NumPeriodInputs<GroupMessageSchema>
