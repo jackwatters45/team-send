@@ -24,13 +24,22 @@
       "avatar": "https://randomuser.me/api/portraits"
     },
     "time": "2021-01-01T00:00:00Z",
-    "isScheduled": false,
-    "isRecurring": false,
-    "isReminders": false,
-    "scheduledDate": null,
-    "recurringNum": null,
-    "recurringPeriod": null,
-    "reminders": null
+    "isScheduled": true,
+    "isRecurring": true,
+    "isReminders": true,
+    "scheduledDate": "2024-03-13T09:00:00Z",
+    "recurringNum": 1,
+    "recurringPeriod": "week",
+    "reminders": [
+      {
+        "num": "1",
+        "period": "day"
+      },
+      {
+        "num": "1",
+        "period": "week"
+      }
+    ]
   },
   {
     "id": "2",

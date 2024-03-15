@@ -1,5 +1,8 @@
+import { z } from "zod";
+import { createTRPCRouter, publicProcedure } from "../trpc";
 import { type IUser } from "./auth";
 import { type IMember } from "./contact";
+import messages from "./messages.json";
 
 export interface IReminder {
   num: number;
@@ -26,3 +29,11 @@ export interface IMessage extends IMessageInput {
   sender: IUser;
   time: Date | string;
 }
+
+export const messageRouter = createTRPCRouter({
+  getMessageData: publicProcedure
+    .input(z.string().optional())
+    .query(({ input }) => {
+      return messages.find((message) => message.id === input) as IMessage;
+    }),
+});
