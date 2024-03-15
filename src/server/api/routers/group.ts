@@ -40,7 +40,7 @@ export interface IGroup
     IGroupHistory,
     IGroupMetaDetails {}
 
-const messages: IMessage[] = sampleMessages;
+const messages: IMessage[] = sampleMessages as IMessage[];
 
 const groups: IGroup[] = [
   {

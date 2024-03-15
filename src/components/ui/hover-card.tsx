@@ -104,7 +104,7 @@ function MembersHoverableCell({ members }: IMemberHoverableCellProps) {
 
             return (
               <React.Fragment key={member.id}>
-                <Link href={`/member/${member.id}`} className="flex items-center gap-2 rounded-md p-2">
+                <Link href={`/contact/${member.id}`} className="flex items-center gap-2 rounded-md p-2">
                   <Avatar>
                     <AvatarFallback>
                       {extractInitials(member.name)}

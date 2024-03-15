@@ -101,7 +101,7 @@ export const getGroupMembersColumns = (): ColumnDef<IContact>[] => {
             <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <Link href={`/member/${row.getValue<string>("id")}`}>
+          <Link href={`/contact/${row.getValue<string>("id")}`}>
             <DropdownMenuItem>View member details</DropdownMenuItem>
           </Link>
           <DropdownMenuItem>

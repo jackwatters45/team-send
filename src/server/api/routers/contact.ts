@@ -12,6 +12,7 @@ export interface INewContact {
 
 export interface IContact extends INewContact {
   id: string;
+  groups?: string[];
 }
 
 export interface IMember extends IContact {
@@ -26,6 +27,7 @@ export const contacts: IMember[] = [
     phone: "+12234567890",
     notes: "Some notes",
     isRecipient: false,
+    groups: ["1", "2"],
   },
   {
     id: "2",
@@ -33,6 +35,7 @@ export const contacts: IMember[] = [
     email: "",
     phone: "+19876543210",
     notes: "",
+    groups: ["1", "2"],
     isRecipient: true,
   },
   {
@@ -41,6 +44,7 @@ export const contacts: IMember[] = [
     email: "sarah.williams@example.com",
     phone: "+15551239876",
     notes: "Marketing lead",
+    groups: ["1", "2"],
     isRecipient: true,
   },
   {
@@ -49,6 +53,7 @@ export const contacts: IMember[] = [
     email: "mjohnson@company.com",
     phone: "+14259875555",
     notes: "",
+    groups: ["1", "2"],
     isRecipient: true,
   },
   {
@@ -57,6 +62,7 @@ export const contacts: IMember[] = [
     email: "emilyb@domain.net",
     phone: "+16043219876",
     notes: "Product manager",
+    groups: ["1", "2"],
     isRecipient: true,
   },
   {
@@ -65,6 +71,7 @@ export const contacts: IMember[] = [
     email: "", // Optional email
     phone: "+18005551212",
     notes: "",
+    groups: ["1", "2"],
     isRecipient: true,
   },
   {
@@ -73,6 +80,7 @@ export const contacts: IMember[] = [
     email: "olivia.taylor@email.com",
     phone: "+13128765432",
     notes: "Sales representative",
+    groups: ["1", "2"],
     isRecipient: true,
   },
   {
@@ -81,6 +89,7 @@ export const contacts: IMember[] = [
     email: "a.thompson@provider.com",
     phone: "", // Optional phone
     notes: "Software developer",
+    groups: ["1", "2"],
     isRecipient: true,
   },
   {
@@ -89,6 +98,7 @@ export const contacts: IMember[] = [
     email: "jessdavis@email.org",
     phone: "+19735550123",
     notes: "",
+    groups: ["1", "2"],
     isRecipient: true,
   },
   {
@@ -97,6 +107,7 @@ export const contacts: IMember[] = [
     email: "chrissmith@email.com",
     phone: "+16505559876",
     notes: "Account manager",
+    groups: ["1", "2"],
     isRecipient: true,
   },
 ];
@@ -120,4 +131,8 @@ export const contactRouter = createTRPCRouter({
           )
         : contacts;
     }),
+
+  getContactData: publicProcedure.input(z.string()).query(({ input }) => {
+    return contacts.find((contact) => contact.id === input) as IContact;
+  }),
 });

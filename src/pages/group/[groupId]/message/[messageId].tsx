@@ -22,7 +22,6 @@ export default function MessageDetails() {
   const messageData = api.message.getMessageData.useQuery(messageId)?.data;
   const messageDate = formatRelativeDateAndTime(messageData?.time as string);
 
-  console.log(messageData);
   return messageData ? (
     <PageLayout
       title={`Message ${messageId}`}
@@ -40,12 +39,12 @@ export default function MessageDetails() {
             {messageDate.date} at {messageDate.time}
           </div>
         </div>
-        <div className="border-b dark:border-stone-500 dark:border-opacity-20 " />
+        <div className="border-b dark:border-stone-500 dark:border-opacity-20" />
         <div className="space-y-1">
           <div className="text-lg font-semibold">Content</div>
           <div className="text-sm">{messageData.content}</div>
         </div>
-        <div className="border-b dark:border-stone-500 dark:border-opacity-20 " />
+        <div className="border-b dark:border-stone-500 dark:border-opacity-20" />
         <div className="space-y-3">
           <div className="font-semibold">Recipients</div>
           <div className="flex flex-wrap gap-3">
