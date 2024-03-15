@@ -22,7 +22,7 @@ export default function Layout({
         <link rel="icon" href="/favicon.ico" />
       </Head>
       <div
-        className="font-sans flex min-h-screen flex-col items-center gap-4 bg-stone-50 bg-gradient-to-t text-stone-900 dark:bg-stone-950  dark:text-white 
+        className="font-sans flex min-h-screen flex-col items-center gap-4 bg-stone-50 text-stone-900 dark:bg-stone-950  dark:text-white 
       "
       >
         <Nav />

@@ -6,7 +6,7 @@ import SearchButton from "./SearchButton";
 
 export default function Nav() {
   return (
-    <nav className="fixed flex h-14  w-full justify-center border-b px-8 dark:border-stone-500 dark:border-opacity-20">
+    <nav className="fixed z-50 flex h-14 w-full justify-center border-b bg-stone-50 bg-opacity-90 px-8 dark:border-stone-500 dark:border-opacity-20 dark:bg-stone-950 dark:bg-opacity-80">
       <div className="flex w-full max-w-screen-xl items-center justify-between">
         <Link href="/" className="flex items-center gap-3">
           <Image src="/favicon.ico" alt="Company Logo" width={20} height={20} />
