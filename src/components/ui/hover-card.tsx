@@ -47,7 +47,7 @@ function HoverableCell<T>({
   const value = row.getValue<string>(accessorKey);
 
   const triggerText =
-    value.length > truncateLength
+    value?.length > truncateLength
       ? `${value.slice(0, truncateLength)}...`
       : value;
 
@@ -92,7 +92,7 @@ function MembersHoverableCell({ members }: IMemberHoverableCellProps) {
   return (
     <HoverCard>
       <HoverCardTrigger>{`${members.length} members`}</HoverCardTrigger>
-      <HoverCardContent className="p-2 w-96">
+      <HoverCardContent className="w-96 p-2">
         <ScrollArea
           className="data-[member-count=true]:h-[220px]"
           data-member-count={members.length > 3}
@@ -104,7 +104,10 @@ function MembersHoverableCell({ members }: IMemberHoverableCellProps) {
 
             return (
               <React.Fragment key={member.id}>
-                <Link href={`/contact/${member.id}`} className="flex items-center gap-2 rounded-md p-2">
+                <Link
+                  href={`/contact/${member.id}`}
+                  className="flex items-center gap-2 rounded-md p-2"
+                >
                   <Avatar>
                     <AvatarFallback>
                       {extractInitials(member.name)}
@@ -120,7 +123,7 @@ function MembersHoverableCell({ members }: IMemberHoverableCellProps) {
                       {phoneNumber && <div>{phoneNumber.formatNational()}</div>}
                     </div>
                   </div>
-                </Link >
+                </Link>
                 {i !== members.length - 1 && <Separator />}
               </React.Fragment>
             );

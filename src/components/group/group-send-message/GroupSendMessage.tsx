@@ -55,7 +55,7 @@ export default function GroupSendMessage() {
             description="This will not change the group's recipients. It will only change the recipients for this message."
             control={form.control}
           />
-          <GroupMembersTable table={table} groupMembers={groupMembers} />
+          <GroupMembersTable table={table} isLoading={!!groupMembers} />
         </div>
       </form>
     </Form>

@@ -29,6 +29,5 @@ export default function useGroupMembersTable() {
     table,
     rowSelection,
     setRowSelection,
-    // initialSelectedMembers,
   };
 }
