@@ -109,6 +109,10 @@ export function getHistoryTableColumns(groupId: string): ColumnDef<IMessage>[] {
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuItem>
+            Duplicate message
+            <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuItem>
             <Link
               href={`/group/${groupId}/message/${row.getValue<string>("id")}`}
               className="w-48"
