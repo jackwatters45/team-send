@@ -48,9 +48,14 @@ export default function GroupSettingsForm({ group }: IGroupSettingsFormProps) {
               control={form.control}
             />
           </div>
-          {(form.watch("name") || form.watch("avatar")) && (
+          {(form.watch("name") ??
+            form.watch("avatar") ??
+            form.watch("avatar-file")) && (
             <Avatar className="h-20 w-20">
-              <AvatarImage src={form.watch("avatar")} alt="Group Avatar" />
+              <AvatarImage
+                src={form.watch("avatar-file") ?? form.watch("avatar")}
+                alt="Group Avatar"
+              />
               <AvatarFallback className="text-4xl font-medium ">
                 {extractInitials(form.watch("name"))}
               </AvatarFallback>

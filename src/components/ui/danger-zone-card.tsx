@@ -19,7 +19,7 @@ export default function DangerZoneCard({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-2 space-y-2  border-red-300/80 p-4 dark:border-red-900/60",
+        "flex items-center justify-between gap-2 border-red-300/80  p-4 dark:border-red-900/60",
         isLast ? "" : "border-b",
       )}
     >
@@ -29,11 +29,9 @@ export default function DangerZoneCard({
           {description}
         </div>
       </div>
-      <div>
-        <Button type="button" variant="destructive" onClick={onClick}>
-          {buttonTitle}
-        </Button>
-      </div>
+      <Button type="button" variant="destructive" onClick={onClick}>
+        {buttonTitle}
+      </Button>
     </div>
   );
 }
