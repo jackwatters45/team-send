@@ -1,4 +1,4 @@
-import Router from "next/router";
+import { useRouter } from "next/router";
 
 import { api } from "@/utils/api";
 
@@ -7,7 +7,7 @@ import ContactForm from "@/components/contact/ContactForm";
 import ContactGroupCards from "@/components/contact/ContactGroupCards";
 
 export default function Contact() {
-  const contactId = Router.query.contactId as string;
+  const contactId = useRouter().query.contactId as string;
   const contact = api.contact.getContactData.useQuery(contactId)?.data;
 
   // obviously this is not the right way to do this
