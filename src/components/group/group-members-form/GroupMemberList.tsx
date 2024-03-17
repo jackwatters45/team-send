@@ -4,12 +4,13 @@ import type { UseFormReturn } from "react-hook-form";
 
 import { Button } from "../../ui/button";
 import { FormInput } from "../../ui/form-inputs";
-import { FormItem } from "../../ui/form";
+import { FormControl, FormField, FormItem, FormLabel } from "../../ui/form";
 import createContact from "@/lib/createContact";
 import type {
   GroupMembersFormType,
   GroupMembersFormSchema,
 } from "./groupMembersSchema";
+import { Checkbox } from "@/components/ui/checkbox";
 
 interface IGroupMemberListProps {
   form: UseFormReturn<GroupMembersFormType>;
@@ -23,6 +24,22 @@ export default function GroupMemberList({ form }: IGroupMemberListProps) {
       {form.watch("members")?.map((_, index) => (
         <div key={index} className="flex gap-2">
           <div className="flex flex-1 flex-wrap items-start gap-2">
+            <FormField
+              control={form.control}
+              name={`members.${index}.isRecipient`}
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel className="flex h-10 cursor-pointer rounded-md border border-stone-200 bg-white px-3 py-2 text-sm dark:border-stone-800 dark:bg-stone-900">
+                    <FormControl>
+                      <Checkbox
+                        checked={field.value}
+                        onCheckedChange={field.onChange}
+                      />
+                    </FormControl>
+                  </FormLabel>
+                </FormItem>
+              )}
+            />
             <FormInput<GroupMembersFormSchema>
               control={form.control}
               name={`members.${index}.name`}

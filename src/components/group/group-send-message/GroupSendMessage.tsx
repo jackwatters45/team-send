@@ -48,11 +48,10 @@ export default function GroupSendMessage() {
               below.
             </p>
           </div>
-          {/* TODO better text */}
           <CheckboxInput<GroupMessageSchema>
             name="recipientsOnlyThisMessage"
-            label="Change group recipients for just this message"
-            description="This will not change the group's recipients. It will only change the recipients for this message."
+            label="Save recipient state for group"
+            description="Recipients you choose for this message will become the new default for this group."
             control={form.control}
           />
           <GroupMembersTable table={table} isLoading={!groupMembers} />

@@ -3,16 +3,20 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { mockAsyncFetch } from "@/lib/mockAsyncFetch";
 
-export interface INewContact {
+export interface IContactBase {
   name: string;
   email?: string;
   phone?: string;
   notes?: string;
 }
 
-export interface IContact extends INewContact {
+export interface IContact extends IContactBase {
   id: string;
   groups?: string[];
+}
+
+export interface INewMember extends IContactBase {
+  isRecipient: boolean;
 }
 
 export interface IMember extends IContact {

@@ -5,6 +5,7 @@ const memberSchema = z.object({
   email: z.string().email().optional(),
   phone: z.string().optional(),
   notes: z.string().max(100).optional(),
+  isRecipient: z.boolean(),
 });
 
 export const groupMembersFormSchema = z.object({
