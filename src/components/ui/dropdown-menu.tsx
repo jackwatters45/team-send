@@ -3,6 +3,7 @@ import * as DropdownMenuPrimitive from "@radix-ui/react-dropdown-menu";
 import { Check, ChevronRight, Circle } from "lucide-react";
 
 import { cn } from "@/lib/utils";
+import Link from "next/link";
 
 const DropdownMenu = DropdownMenuPrimitive.Root;
 
@@ -89,6 +90,31 @@ const DropdownMenuItem = React.forwardRef<
   />
 ));
 DropdownMenuItem.displayName = DropdownMenuPrimitive.Item.displayName;
+
+interface DropdownMenuLinkItemProps
+  extends React.ComponentPropsWithoutRef<typeof Link> {
+  inset?: boolean;
+}
+
+const DropdownMenuLinkItem = React.forwardRef<
+  React.ElementRef<typeof Link>,
+  DropdownMenuLinkItemProps
+>(({ className, inset, ...props }, ref) => (
+  <Link
+    className={cn(
+      "relative flex cursor-default cursor-pointer select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-stone-100 focus:bg-stone-100 focus:text-stone-900 data-[disabled]:pointer-events-none data-[disabled]:opacity-50 dark:hover:bg-stone-800 dark:hover:text-stone-50 dark:focus:bg-stone-800 dark:focus:text-stone-50",
+      inset && "pl-8",
+      className,
+    )}
+    role="menuitem"
+    tabIndex={-1}
+    ref={ref}
+    {...props}
+  >
+    {props.children}
+  </Link>
+));
+DropdownMenuLinkItem.displayName = "DropdownMenuLinkItem";
 
 const DropdownMenuCheckboxItem = React.forwardRef<
   React.ElementRef<typeof DropdownMenuPrimitive.CheckboxItem>,
@@ -184,6 +210,7 @@ export {
   DropdownMenuTrigger,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuLinkItem,
   DropdownMenuCheckboxItem,
   DropdownMenuRadioItem,
   DropdownMenuLabel,

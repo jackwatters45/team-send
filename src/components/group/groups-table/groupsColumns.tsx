@@ -1,5 +1,4 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import Link from "next/link";
 
 import type { IGroupPreview } from "@/server/api/routers/group";
 import type { IMember } from "@/server/api/routers/contact";
@@ -17,6 +16,7 @@ import {
 import {
   DropdownMenuItem,
   DropdownMenuLabel,
+  DropdownMenuLinkItem,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
@@ -111,24 +111,24 @@ export const groupsColumns: ColumnDef<IGroupPreview>[] = [
         <DropdownMenuLabel className="font-semibold">
           View details
         </DropdownMenuLabel>
-        <DropdownMenuItem>
-          <Link href={`/group/${row.getValue<string>("id")}`}>Details</Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Link href={`/group/${row.getValue<string>("id")}/members`}>
-            Members
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Link href={`/group/${row.getValue<string>("id")}/history`}>
-            History
-          </Link>
-        </DropdownMenuItem>
-        <DropdownMenuItem>
-          <Link href={`/group/${row.getValue<string>("id")}/settings`}>
-            Settings
-          </Link>
-        </DropdownMenuItem>
+        <DropdownMenuLinkItem href={`/group/${row.getValue<string>("id")}`}>
+          Details
+        </DropdownMenuLinkItem>
+        <DropdownMenuLinkItem
+          href={`/group/${row.getValue<string>("id")}/members`}
+        >
+          Members
+        </DropdownMenuLinkItem>
+        <DropdownMenuLinkItem
+          href={`/group/${row.getValue<string>("id")}/history`}
+        >
+          History
+        </DropdownMenuLinkItem>
+        <DropdownMenuLinkItem
+          href={`/group/${row.getValue<string>("id")}/settings`}
+        >
+          Settings
+        </DropdownMenuLinkItem>
         <DropdownMenuSeparator />
         <DropdownMenuItem>
           Delete group
