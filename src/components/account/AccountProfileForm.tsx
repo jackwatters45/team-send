@@ -58,9 +58,9 @@ export default function AccountProfileForm({
     <Form {...form}>
       <div className="flex flex-col pb-4 pt-3">
         <h2 className="text-xl font-semibold tracking-tight">
-          Edit Group Settings
+          Edit Account
         </h2>
-        <FormDescription>Make changes to group settings here.</FormDescription>
+        <FormDescription>Make changes to your profile here.</FormDescription>
       </div>
       <form
         onSubmit={form.handleSubmit(onSubmit)}
