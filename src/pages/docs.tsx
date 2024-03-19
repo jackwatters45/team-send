@@ -1,5 +1,5 @@
 import Layout from "@/layouts/Layout";
 
-export default function Home() {
+export default function Docs() {
   return <Layout>Docs</Layout>;
 }
