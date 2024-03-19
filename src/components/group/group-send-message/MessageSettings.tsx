@@ -33,6 +33,63 @@ export function MessageSettings({ form }: IMessageSettingsProps) {
           label="Scheduled Date"
         />
       )}
+      {form.watch("isScheduled") === "yes" && form.watch("scheduledDate") && (
+        <>
+          <BooleanSelect<GroupMessageSchema>
+            control={form.control}
+            name="isReminders"
+            label="Reminders"
+            description="Send reminders at set increments before the due date"
+          />
+          {form.watch("isReminders") === "yes" && (
+            <div className="flex flex-col gap-3">
+              <div className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Remind before
+              </div>
+              {reminders.map((reminder, index) => (
+                <div key={index} className="flex items-start gap-4">
+                  <NumPeriodInputs<GroupMessageSchema>
+                    control={form.control}
+                    numName={`reminders.${index}.num`}
+                    periodName={`reminders.${index}.period`}
+                    label={`Remind before ${index + 1}`}
+                    numGreaterThanOne={reminder.num > 1}
+                  />
+                  <Button
+                    variant="outline"
+                    type="button"
+                    className="border px-3 hover:bg-stone-100 dark:border-0 dark:hover:bg-stone-800"
+                    onClick={() => {
+                      if (reminders.length === 0) return;
+                      reminders.splice(index);
+                      form.setValue("reminders", reminders);
+                    }}
+                  >
+                    <MinusCircledIcon className=" h-5 w-5" />
+                  </Button>
+                </div>
+              ))}
+              {reminders.length < 6 && (
+                <Button
+                  variant="ghost"
+                  type="button"
+                  className=""
+                  onClick={() => {
+                    if (reminders.length < 4) {
+                      form.setValue("reminders", [
+                        ...reminders,
+                        defaultReminder,
+                      ]);
+                    }
+                  }}
+                >
+                  + Add another reminder
+                </Button>
+              )}
+            </div>
+          )}
+        </>
+      )}
       <BooleanSelect<GroupMessageSchema>
         control={form.control}
         name="isRecurring"
@@ -51,56 +108,6 @@ export function MessageSettings({ form }: IMessageSettingsProps) {
             label="Recurring every"
             numGreaterThanOne={Number(form.watch("recurringNum")) > 1}
           />
-        </div>
-      )}
-      <BooleanSelect<GroupMessageSchema>
-        control={form.control}
-        name="isReminders"
-        label="Reminders"
-        description="Send reminders at set increments before the due date"
-      />
-      {form.watch("isReminders") === "yes" && (
-        <div className="flex flex-col gap-3">
-          <div className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-            Remind before
-          </div>
-          {reminders.map((reminder, index) => (
-            <div key={index} className="flex items-start gap-4">
-              <NumPeriodInputs<GroupMessageSchema>
-                control={form.control}
-                numName={`reminders.${index}.num`}
-                periodName={`reminders.${index}.period`}
-                label={`Remind before ${index + 1}`}
-                numGreaterThanOne={reminder.num > 1}
-              />
-              <Button
-                variant="ghost"
-                type="button"
-                className="border px-2 hover:bg-stone-100 dark:border-0 dark:hover:bg-stone-800"
-                onClick={() => {
-                  if (reminders.length === 0) return;
-                  reminders.splice(index);
-                  form.setValue("reminders", reminders);
-                }}
-              >
-                <MinusCircledIcon className=" h-5 w-5" />
-              </Button>
-            </div>
-          ))}
-          {reminders.length < 6 && (
-            <Button
-              variant="ghost"
-              type="button"
-              className=""
-              onClick={() => {
-                if (reminders.length < 4) {
-                  form.setValue("reminders", [...reminders, defaultReminder]);
-                }
-              }}
-            >
-              + Add another reminder
-            </Button>
-          )}
         </div>
       )}
     </>

@@ -13,6 +13,8 @@ import GroupMembersTable from "@/components/group/group-members-table/GroupMembe
 import { getGroupMembersColumns } from "@/components/group/group-members-table/groupMembersColumns";
 import { Separator } from "@/components/ui/separator";
 import { Fragment } from "react";
+import { Button } from "@/components/ui/button";
+import Link from "next/link";
 
 function useMessageDetails() {
   const messageId = useRouter().query.messageId as string;
@@ -30,12 +32,27 @@ function useMessageDetails() {
   return { messageDate, messageData, table };
 }
 
+function EditMessageButton() {
+  const messageId = useRouter().query.messageId as string;
+  const groupId = useRouter().query.groupId as string;
+
+  return (
+    <Link
+      href={`/group/${groupId}/message/${messageId}/edit`}
+      className="block"
+    >
+      <Button variant={"secondary"}>Edit</Button>
+    </Link>
+  );
+}
+
 export default function MessageDetails() {
   const { messageData, messageDate, table } = useMessageDetails();
   return messageData ? (
     <PageLayout
       title={`Message ${messageData.id}`}
       description={`Last edited ${formatShortRelativeDate(messageData.time)}`}
+      rightSidebar={<EditMessageButton />}
     >
       <div className="flex w-full flex-col gap-8">
         <div className="space-y-1">

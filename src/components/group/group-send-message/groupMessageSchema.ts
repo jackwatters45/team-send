@@ -12,7 +12,7 @@ export const defaultReminder: z.infer<typeof reminderSchema> = {
 
 export const groupMessageSchema = z
   .object({
-    message: z.string().max(500).min(1),
+    content: z.string().max(500).min(1),
     isScheduled: z.enum(["no", "yes"]),
     scheduledDate: z.date().optional(),
     isRecurring: z.enum(["no", "yes"]),

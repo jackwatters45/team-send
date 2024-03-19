@@ -1,20 +1,23 @@
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { type z } from "zod";
 import { useEffect } from "react";
 
 import { toast } from "../../ui/use-toast";
-import { defaultReminder, groupMessageSchema } from "./groupMessageSchema";
+import {
+  type GroupMessageType,
+  defaultReminder,
+  groupMessageSchema,
+} from "./groupMessageSchema";
 import useGroupMembersTable from "../group-members-table/useGroupMembersTable";
 
 export default function useGroupSendMessage() {
   const { table, rowSelection, groupMembers } = useGroupMembersTable();
 
-  const form = useForm<z.infer<typeof groupMessageSchema>>({
+  const form = useForm<GroupMessageType>({
     resolver: zodResolver(groupMessageSchema),
     defaultValues: {
-      message: "",
+      content: "",
       isScheduled: "no",
       scheduledDate: undefined,
       isRecurring: "no",
@@ -33,7 +36,7 @@ export default function useGroupSendMessage() {
   }, [rowSelection, form]);
 
   // TODO definitely a lot more considerations here
-  const onSubmit = (data: z.infer<typeof groupMessageSchema>) => {
+  const onSubmit = (data: GroupMessageType) => {
     if (data.isReminders === "yes" && data.reminders?.length === 0) {
       form.setValue("isReminders", "no");
     }

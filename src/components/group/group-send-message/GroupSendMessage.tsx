@@ -18,7 +18,7 @@ export default function GroupSendMessage() {
         <FormDescription>
           Send a message to all selected group members.
         </FormDescription>
-      </div>
+      </div>  
       <form
         onSubmit={form.handleSubmit(onSubmit)}
         className="flex flex-col gap-8 sm:gap-6"

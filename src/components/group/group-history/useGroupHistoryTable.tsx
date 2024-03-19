@@ -15,6 +15,7 @@ export default function useGroupHistoryTable() {
   const { table } = useDataTable({
     columns: historyTableColumns,
     data: groupHistory.data?.messages ?? [],
+    
   });
 
   return { historyTableColumns, groupHistory, table };

@@ -22,12 +22,14 @@ export interface IMessageScheduling {
 export interface IMessageInput extends IMessageScheduling {
   content: string;
   recipients: IMember[];
+  groupId: string;
 }
 
 export interface IMessage extends IMessageInput {
   id: string;
   sender: IUser;
   time: Date | string;
+  status: "draft" | "sent" | "scheduled" | "failed";
 }
 
 export const messageRouter = createTRPCRouter({

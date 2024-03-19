@@ -55,6 +55,25 @@ export function getHistoryTableColumns(groupId: string): ColumnDef<IMessage>[] {
       ),
     },
     {
+      accessorKey: "status",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Status" />
+      ),
+      cell: ({ row }) => {
+        const status = row.getValue<string>("status");
+        return status?.[0]?.toUpperCase() + status?.slice(1);
+      },
+    },
+    {
+      accessorKey: "time",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Time" />
+      ),
+      cell: ({ row }) => {
+        return <DateHoverableCell dateString={row.getValue<string>("time")} />;
+      },
+    },
+    {
       accessorKey: "content",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Content" />
@@ -85,47 +104,53 @@ export function getHistoryTableColumns(groupId: string): ColumnDef<IMessage>[] {
         return <UserHoverableCell user={row.getValue<IUser>("sender")} />;
       },
     },
-    {
-      accessorKey: "time",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Time" />
-      ),
-      cell: ({ row }) => {
-        return <DateHoverableCell dateString={row.getValue<string>("time")} />;
-      },
-    },
 
     {
       id: "actions",
-      cell: ({ row }) => (
-        <DataTableRowActions>
-          <DropdownMenuItem
-            onClick={() =>
-              navigator.clipboard.writeText(row.getValue<string>("id"))
-            }
-          >
-            Copy message ID
-            <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem>
-            Duplicate message
-            <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <Link
-              href={`/group/${groupId}/message/${row.getValue<string>("id")}`}
-              className="w-48"
+      enableSorting: false,
+      enableHiding: false,
+      cell: ({ row }) => {
+        console.log(row.getValue<string>("status"));
+        return (
+          <DataTableRowActions>
+            <DropdownMenuItem
+              onClick={() =>
+                navigator.clipboard.writeText(row.getValue<string>("id"))
+              }
             >
-              View message details
-            </Link>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            Delete message
-            <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-          </DropdownMenuItem>
-        </DataTableRowActions>
-      ),
+              Copy message ID
+              <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem>
+              Duplicate message
+              <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
+            </DropdownMenuItem>
+            <DropdownMenuItem>
+              <Link
+                href={`/group/${groupId}/message/${row.getValue<string>("id")}`}
+                className="w-48"
+              >
+                View message details
+              </Link>
+            </DropdownMenuItem>
+            {row.getValue<string>("status") !== "sent" && (
+              <DropdownMenuItem>
+                <Link
+                  href={`/group/${groupId}/message/${row.getValue<string>("id")}/edit`}
+                  className="w-48"
+                >
+                  Edit message
+                </Link>
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuItem>
+              Delete message
+              <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+            </DropdownMenuItem>
+          </DataTableRowActions>
+        );
+      },
     },
   ];
 }

@@ -1,15 +1,14 @@
-import { useParams } from "next/navigation";
+import { useEffect } from "react";
+import { useRouter } from "next/router";
 
 import { api } from "@/utils/api";
 import useDataTable from "@/hooks/useDataTable";
 import { getGroupMembersColumns } from "./groupMembersColumns";
 import { type IContact } from "@/server/api/routers/contact";
-
-import { useEffect } from "react";
 import getInitialSelectedMembers from "@/lib/getInitialSelectedMembers";
 
 export default function useGroupMembersTable() {
-  const groupId = useParams().groupId as string;
+  const groupId = useRouter().query.groupId as string;
   const groupMembers = api.group.getGroupMembers.useQuery(groupId);
 
   const { table, rowSelection, setRowSelection } = useDataTable({

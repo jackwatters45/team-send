@@ -29,15 +29,17 @@
     "isReminders": true,
     "scheduledDate": "2024-03-13T09:00:00Z",
     "recurringNum": 1,
-    "recurringPeriod": "week",
+    "recurringPeriod": "weeks",
+    "status": "scheduled",
+    "groupId": "1",
     "reminders": [
       {
         "num": "1",
-        "period": "day"
+        "period": "days"
       },
       {
         "num": "1",
-        "period": "week"
+        "period": "weeks"
       }
     ]
   },
@@ -72,6 +74,8 @@
     "scheduledDate": null,
     "recurringNum": null,
     "recurringPeriod": null,
+    "status": "sent",
+    "groupId": "1",
     "reminders": null
   },
   {
@@ -133,6 +137,8 @@
     "scheduledDate": null,
     "recurringNum": null,
     "recurringPeriod": null,
+    "status": "scheduled",
+    "groupId": "1",
     "reminders": null
   },
   {
@@ -166,7 +172,9 @@
     "scheduledDate": null,
     "recurringNum": null,
     "recurringPeriod": null,
-    "reminders": null
+    "reminders": null,
+    "status": "draft",
+    "groupId": "1"
   },
   {
     "id": "5",
@@ -199,6 +207,8 @@
     "scheduledDate": null,
     "recurringNum": null,
     "recurringPeriod": null,
-    "reminders": null
+    "reminders": null,
+    "status": "failed",
+    "groupId": "1"
   }
 ]
