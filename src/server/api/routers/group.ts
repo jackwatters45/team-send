@@ -1,8 +1,8 @@
 import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
-import { contacts, type IMember } from "./contact";
-import { mockAsyncFetch } from "@/lib/mockAsyncFetch";
+import { type IMember } from "./contact";
+
 import { type IMessage } from "./message";
 
 export interface IGroupBase {

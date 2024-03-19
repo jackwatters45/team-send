@@ -84,6 +84,8 @@ interface IMemberHoverableCellProps {
 }
 function MembersHoverableCell({ members }: IMemberHoverableCellProps) {
   if (!members) return null;
+
+  console.log(members);
   return (
     <HoverCard>
       <HoverCardTrigger>{`${members?.length} members`}</HoverCardTrigger>

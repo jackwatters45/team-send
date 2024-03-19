@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,37 +7,27 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// export interface IReminder {
-//   num: number;
-//   period: "months" | "weeks" | "days";
-// }
+model Group {
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  avatar      String?
 
-// export interface IMessageScheduling {
-//   isScheduled: boolean;
-//   scheduledDate: Date | string | null;
-//   isRecurring: boolean;
-//   recurringNum: number | null;
-//   recurringPeriod: "years" | "months" | "weeks" | "days" | null;
-//   isReminders: boolean;
-//   reminders: IReminder[] | null;
-// }
+  members  Contact[]
+  messages Message[]
 
-// export interface IMessageInput extends IMessageScheduling {
-//   content: string;
-//   recipients: IMember[];
-//   groupId: string;
-// }
+  phone Boolean @default(true)
+  email Boolean @default(true)
 
-// export interface IMessage extends IMessageInput {
-//   id: string;
-//   sender: IUser;
-//   time: Date | string;
-//   status: "draft" | "sent" | "scheduled" | "failed";
-// }
+  addedGroups   String[]
+  addedContacts String[]
 
-//     export interface IReminder {
-//   num: number;
-//   period: "months" | "weeks" | "days";
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String
+}
 
 model Contact {
   id        String   @id @default(cuid())
@@ -57,105 +44,70 @@ model Contact {
   messageId String?
 }
 
+model Reminder {
+  id        String  @id @default(cuid())
+  num       Int
+  period    String // "months", "weeks", "days"
+  message   Message @relation(fields: [messageId], references: [id])
+  messageId String
+}
+
 model Message {
   id      String @id @default(cuid())
   content String
   group   Group  @relation(fields: [groupId], references: [id])
   groupId String
 
-  sentAt    DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  sentAt   DateTime @default(now())
+  sentBy   User     @relation(name: "SentBy", fields: [sentById], references: [id])
+  sentById String
 
-  createdBy   User   @relation(fields: [createdById], references: [id])
+  updatedAt       DateTime @updatedAt
+  lastUpdatedBy   User     @relation(name: "LastUpdatedBy", fields: [lastUpdatedById], references: [id])
+  lastUpdatedById String
+
+  createdAt   DateTime @default(now())
+  createdBy   User     @relation(name: "CreatedBy", fields: [createdById], references: [id])
   createdById String
 
-  isScheduled     Boolean   @default(false)
+  isScheduled     Boolean    @default(false)
   scheduledDate   DateTime?
-  isRecurring     Boolean   @default(false)
+  isRecurring     Boolean    @default(false)
   recurringNum    Int?
   recurringPeriod String?
-  isReminders     Boolean   @default(false)
-  reminders       String?
+  isReminders     Boolean    @default(false)
+  reminders       Reminder[]
 
   recipients Contact[]
   status     String    @default("draft")
 }
 
-// export interface IGroupBase {
-//   id: string;
-//   name: string;
-//   description: string | undefined;
-//   avatar: string | undefined;
-// }
+// Necessary for Next auth
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? // @db.Text
+  access_token      String? // @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? // @db.Text
+  session_state     String?
+  user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-// export interface IGroupPreview extends IGroupBase {
-//   lastMessage: string;
-//   lastMessageTime: Date | string;
-//   members: IMember[];
-// }
-
-// export interface IGroupHistory extends IGroupBase {
-//   messages: IMessage[];
-// }
-
-// export interface IGroupSettings extends IGroupBase {
-//   phone: boolean;
-//   email: boolean;
-// }
-
-// export interface IGroupMetaDetails {
-//   addedGroups: string[];
-//   addedContacts: string[];
-// }
-
-// export interface IGroup
-//   extends IGroupPreview,
-//     IGroupSettings,
-//     IGroupHistory,
-//     IGroupMetaDetails {}
-
-model Group {
-  id          String  @id @default(cuid())
-  name        String
-  description String?
-  avatar      String?
-
-  members   Contact[]
-  messages  Message[]
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-
-  createdBy   User   @relation(fields: [createdById], references: [id])
-  createdById String
+  @@unique([provider, providerAccountId])
 }
 
-// Necessary for Next auth
-// model Account {
-//     id                String  @id @default(cuid())
-//     userId            String
-//     type              String
-//     provider          String
-//     providerAccountId String
-//     refresh_token     String? // @db.Text
-//     access_token      String? // @db.Text
-//     expires_at        Int?
-//     token_type        String?
-//     scope             String?
-//     id_token          String? // @db.Text
-//     session_state     String?
-//     user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-//     @@unique([provider, providerAccountId])
-// }
-
-// model Session {
-//     id           String   @id @default(cuid())
-//     sessionToken String   @unique
-//     userId       String
-//     expires      DateTime
-//     user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-// }
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
 
 model User {
   id       String  @id @default(cuid())
@@ -163,14 +115,19 @@ model User {
   username String? @unique
   phone    String? @unique
   email    String? @unique
-
   // emailVerified DateTime?
-  avatar String?
+  avatar   String?
 
-  // accounts Account[]
-  // sessions Session[]
-  messages Message[]
+  nodeMailer String?
+  twilio     String?
+
+  accounts Account[]
+  sessions Session[]
   groups   Group[]
+
+  messagesSent     Message[] @relation(name: "SentBy")
+  messagesReceived Message[] @relation(name: "CreatedBy")
+  messagesUpdated  Message[] @relation(name: "LastUpdatedBy")
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
