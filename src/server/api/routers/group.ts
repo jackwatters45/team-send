@@ -16,7 +16,7 @@ export interface IGroupBase {
 
 export interface IGroupPreview extends IGroupBase {
   lastMessage: string;
-  lastMessageTime: Date | string;
+  lastMessageTime: Date;
   members: IMember[];
 }
 
@@ -144,6 +144,11 @@ export const groupRouter = createTRPCRouter({
   //       },
   //     });
   //   }),
+  getAll: publicProcedure.query(async ({ ctx }) => {
+    return await ctx.db.group.findMany({
+      include: { members: true },
+    });
+  }),
 
   getLatest: publicProcedure.input(z.string().optional()).query(({ input }) => {
     return !!input

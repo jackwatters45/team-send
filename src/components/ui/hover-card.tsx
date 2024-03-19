@@ -89,15 +89,16 @@ interface IMemberHoverableCellProps {
   members: IMember[];
 }
 function MembersHoverableCell({ members }: IMemberHoverableCellProps) {
+  if (!members) return null;  
   return (
     <HoverCard>
-      <HoverCardTrigger>{`${members.length} members`}</HoverCardTrigger>
+      <HoverCardTrigger>{`${members?.length} members`}</HoverCardTrigger>
       <HoverCardContent className="w-96 p-2">
         <ScrollArea
           className="data-[member-count=true]:h-[220px]"
-          data-member-count={members.length > 3}
+          data-member-count={members?.length > 3}
         >
-          {members.map((member, i) => {
+          {members?.map((member, i) => {
             const phoneNumber = member.phone
               ? parsePhoneNumber(member.phone)
               : null;

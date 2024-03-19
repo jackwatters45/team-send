@@ -65,6 +65,7 @@ export const groupsColumns: ColumnDef<IGroupPreview>[] = [
       <DataTableColumnHeader column={column} title="Last Message" />
     ),
     cell: ({ row }) => {
+      console.log(row);
       return <HoverableCell row={row} accessorKey="lastMessage" />;
     },
   },

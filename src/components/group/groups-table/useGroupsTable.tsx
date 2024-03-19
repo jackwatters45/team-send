@@ -3,9 +3,9 @@ import { api } from "@/utils/api";
 import { groupsColumns } from "./groupsColumns";
 
 export default function useGroupsTable() {
-  const groups = api.group.getLatest.useQuery();
+  const groups = api.group.getAll.useQuery();
 
-  const {table} = useDataTable({
+  const { table } = useDataTable({
     columns: groupsColumns,
     data: groups.data ?? [],
   });

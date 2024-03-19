@@ -7,61 +7,154 @@ generator client {
 
 datasource db {
     provider = "postgresql"
-    // NOTE: When using mysql or sqlserver, uncomment the @db.Text annotations in model Account below
-    // Further reading:
-    // https://next-auth.js.org/adapters/prisma#create-the-prisma-schema
-    // https://www.prisma.io/docs/reference/api-reference/prisma-schema-reference#string
     url      = env("DATABASE_URL")
 }
 
-model Post {
-    id        Int      @id @default(autoincrement())
+// export interface IReminder {
+//   num: number;
+//   period: "months" | "weeks" | "days";
+// }
+
+// export interface IMessageScheduling {
+//   isScheduled: boolean;
+//   scheduledDate: Date | string | null;
+//   isRecurring: boolean;
+//   recurringNum: number | null;
+//   recurringPeriod: "years" | "months" | "weeks" | "days" | null;
+//   isReminders: boolean;
+//   reminders: IReminder[] | null;
+// }
+
+// export interface IMessageInput extends IMessageScheduling {
+//   content: string;
+//   recipients: IMember[];
+//   groupId: string;
+// }
+
+// export interface IMessage extends IMessageInput {
+//   id: string;
+//   sender: IUser;
+//   time: Date | string;
+//   status: "draft" | "sent" | "scheduled" | "failed";
+// }
+
+model Contact {
+    id        String   @id @default(cuid())
     name      String
+    phone     String   @unique
+    email     String?  @unique
+    avatar    String?
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    Group     Group?   @relation(fields: [groupId], references: [id])
+    groupId   String?
+}
+
+model Message {
+    id      String @id @default(cuid())
+    content String
+    group   Group  @relation(fields: [groupId], references: [id])
+    groupId String
+
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
 
     createdBy   User   @relation(fields: [createdById], references: [id])
     createdById String
+}
 
-    @@index([name])
+// export interface IGroupBase {
+//   id: string;
+//   name: string;
+//   description: string | undefined;
+//   avatar: string | undefined;
+// }
+
+// export interface IGroupPreview extends IGroupBase {
+//   lastMessage: string;
+//   lastMessageTime: Date | string;
+//   members: IMember[];
+// }
+
+// export interface IGroupHistory extends IGroupBase {
+//   messages: IMessage[];
+// }
+
+// export interface IGroupSettings extends IGroupBase {
+//   phone: boolean;
+//   email: boolean;
+// }
+
+// export interface IGroupMetaDetails {
+//   addedGroups: string[];
+//   addedContacts: string[];
+// }
+
+// export interface IGroup
+//   extends IGroupPreview,
+//     IGroupSettings,
+//     IGroupHistory,
+//     IGroupMetaDetails {}
+
+model Group {
+    id          String  @id @default(cuid())
+    name        String
+    description String?
+    avatar      String?
+
+    members   Contact[]
+    messages  Message[]
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+
+    createdBy   User   @relation(fields: [createdById], references: [id])
+    createdById String
 }
 
 // Necessary for Next auth
-model Account {
-    id                String  @id @default(cuid())
-    userId            String
-    type              String
-    provider          String
-    providerAccountId String
-    refresh_token     String? // @db.Text
-    access_token      String? // @db.Text
-    expires_at        Int?
-    token_type        String?
-    scope             String?
-    id_token          String? // @db.Text
-    session_state     String?
-    user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+// model Account {
+//     id                String  @id @default(cuid())
+//     userId            String
+//     type              String
+//     provider          String
+//     providerAccountId String
+//     refresh_token     String? // @db.Text
+//     access_token      String? // @db.Text
+//     expires_at        Int?
+//     token_type        String?
+//     scope             String?
+//     id_token          String? // @db.Text
+//     session_state     String?
+//     user              User    @relation(fields: [userId], references: [id], onDelete: Cascade)
 
-    @@unique([provider, providerAccountId])
-}
+//     @@unique([provider, providerAccountId])
+// }
 
-model Session {
-    id           String   @id @default(cuid())
-    sessionToken String   @unique
-    userId       String
-    expires      DateTime
-    user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-}
+// model Session {
+//     id           String   @id @default(cuid())
+//     sessionToken String   @unique
+//     userId       String
+//     expires      DateTime
+//     user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+// }
 
 model User {
-    id            String    @id @default(cuid())
-    name          String?
-    email         String?   @unique
-    emailVerified DateTime?
-    image         String?
-    accounts      Account[]
-    sessions      Session[]
-    posts         Post[]
+    id       String  @id @default(cuid())
+    name     String?
+    username String? @unique
+    phone    String? @unique
+    email    String? @unique
+
+    // emailVerified DateTime?
+    avatar String?
+
+    // accounts Account[]
+    // sessions Session[]
+    messages Message[]
+    groups   Group[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 model VerificationToken {
