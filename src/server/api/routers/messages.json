@@ -23,7 +23,9 @@
       "name": "Jack Watters",
       "avatar": "https://randomuser.me/api/portraits"
     },
-    "time": "2021-01-01T00:00:00Z",
+    "sentAt": "2021-01-01T00:00:00Z",
+    "updatedAt": "2021-01-01T00:00:00Z",
+    "createAt": "2021-01-01T00:00:00Z",
     "isScheduled": true,
     "isRecurring": true,
     "isReminders": true,
@@ -67,7 +69,8 @@
       "name": "Jack Watters",
       "avatar": "https://randomuser.me/api/portraits"
     },
-    "time": "2024-03-13T12:30:00Z",
+    "sentAt": "2024-03-13T12:30:00Z",
+    "updatedAt": "2021-01-01T00:00:00Z",
     "isScheduled": false,
     "isRecurring": false,
     "isReminders": false,
@@ -130,7 +133,8 @@
       "name": "Jack Watters",
       "avatar": "https://randomuser.me/api/portraits"
     },
-    "time": "2024-03-13T15:12:00Z",
+    "sentAt": "2024-03-13T15:12:00Z",
+    "createAt": "2021-01-01T00:00:00Z",
     "isScheduled": false,
     "isRecurring": false,
     "isReminders": false,
@@ -165,7 +169,7 @@
       "name": "Jack Watters",
       "avatar": "https://randomuser.me/api/portraits"
     },
-    "time": "2024-03-14T09:45:00Z",
+    "sentAt": "2024-03-14T09:45:00Z",
     "isScheduled": false,
     "isRecurring": false,
     "isReminders": false,
@@ -200,7 +204,7 @@
       "name": "Jack Watters",
       "avatar": "https://randomuser.me/api/portraits"
     },
-    "time": "2024-03-14T18:20:00Z",
+    "sentAt": "2024-03-14T18:20:00Z",
     "isScheduled": false,
     "isRecurring": false,
     "isReminders": false,

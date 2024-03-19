@@ -70,7 +70,7 @@ export function getHistoryTableColumns(groupId: string): ColumnDef<IMessage>[] {
         <DataTableColumnHeader column={column} title="Time" />
       ),
       cell: ({ row }) => {
-        return <DateHoverableCell dateString={row.getValue<string>("time")} />;
+        return <DateHoverableCell dateInput={row.getValue<string>("time")} />;
       },
     },
     {
@@ -79,7 +79,7 @@ export function getHistoryTableColumns(groupId: string): ColumnDef<IMessage>[] {
         <DataTableColumnHeader column={column} title="Content" />
       ),
       cell: ({ row }) => {
-        return <HoverableCell row={row} accessorKey="content" />;
+        return <HoverableCell value={row.original.content} />;
       },
     },
     {

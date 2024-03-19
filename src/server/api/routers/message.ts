@@ -2,7 +2,6 @@ import { z } from "zod";
 import { createTRPCRouter, publicProcedure } from "../trpc";
 import { type IUser } from "./auth";
 import { type IMember } from "./contact";
-import messages from "./messages.json";
 
 export interface IReminder {
   num: number;
@@ -28,14 +27,17 @@ export interface IMessageInput extends IMessageScheduling {
 export interface IMessage extends IMessageInput {
   id: string;
   sender: IUser;
-  time: Date | string;
+  
+  sentAt: Date;
+  createdAt: Date;
+  updatedAt: Date;
   status: "draft" | "sent" | "scheduled" | "failed";
 }
 
 export const messageRouter = createTRPCRouter({
   getMessageData: publicProcedure
     .input(z.string().optional())
-    .query(({ input }) => {
-      return messages.find((message) => message.id === input) as IMessage;
+    .query(async ({ ctx }) => {
+      return await ctx.db.message.findFirst({});
     }),
 });

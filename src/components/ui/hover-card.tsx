@@ -1,6 +1,5 @@
 import * as React from "react";
 import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
-import { type Row } from "@tanstack/react-table";
 
 import { cn } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
@@ -34,17 +33,12 @@ const HoverCardContent = React.forwardRef<
 ));
 HoverCardContent.displayName = HoverCardPrimitive.Content.displayName;
 
-interface HoverableCellProps<T> {
-  row: Row<T>;
-  accessorKey: string;
+interface HoverableCellProps {
+  value: string | null | undefined;
   truncateLength?: number;
 }
-function HoverableCell<T>({
-  row,
-  accessorKey,
-  truncateLength = 20,
-}: HoverableCellProps<T>) {
-  const value = row.getValue<string>(accessorKey);
+function HoverableCell({ value, truncateLength = 20 }: HoverableCellProps) {
+  if (!value) return null;
 
   const triggerText =
     value?.length > truncateLength
@@ -89,7 +83,7 @@ interface IMemberHoverableCellProps {
   members: IMember[];
 }
 function MembersHoverableCell({ members }: IMemberHoverableCellProps) {
-  if (!members) return null;  
+  if (!members) return null;
   return (
     <HoverCard>
       <HoverCardTrigger>{`${members?.length} members`}</HoverCardTrigger>
@@ -136,10 +130,10 @@ function MembersHoverableCell({ members }: IMemberHoverableCellProps) {
 }
 
 interface DateHoverableCellProps {
-  dateString: string;
+  dateInput: string | Date;
 }
-function DateHoverableCell({ dateString }: DateHoverableCellProps) {
-  const date = new Date(dateString);
+function DateHoverableCell({ dateInput }: DateHoverableCellProps) {
+  const date = new Date(dateInput);
   const { time, date: dateText } = formatRelativeDateAndTime(date);
 
   return (

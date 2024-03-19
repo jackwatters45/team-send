@@ -2,12 +2,12 @@
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
 generator client {
-    provider = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 datasource db {
-    provider = "postgresql"
-    url      = env("DATABASE_URL")
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // export interface IReminder {
@@ -38,29 +38,48 @@ datasource db {
 //   status: "draft" | "sent" | "scheduled" | "failed";
 // }
 
+//     export interface IReminder {
+//   num: number;
+//   period: "months" | "weeks" | "days";
+
 model Contact {
-    id        String   @id @default(cuid())
-    name      String
-    phone     String   @unique
-    email     String?  @unique
-    avatar    String?
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
-    Group     Group?   @relation(fields: [groupId], references: [id])
-    groupId   String?
+  id        String   @id @default(cuid())
+  name      String
+  phone     String   @unique
+  email     String?  @unique
+  avatar    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  Groups    Group[]
+  groupId   String?
+
+  Message   Message? @relation(fields: [messageId], references: [id])
+  messageId String?
 }
 
 model Message {
-    id      String @id @default(cuid())
-    content String
-    group   Group  @relation(fields: [groupId], references: [id])
-    groupId String
+  id      String @id @default(cuid())
+  content String
+  group   Group  @relation(fields: [groupId], references: [id])
+  groupId String
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  sentAt    DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String
+
+  isScheduled     Boolean   @default(false)
+  scheduledDate   DateTime?
+  isRecurring     Boolean   @default(false)
+  recurringNum    Int?
+  recurringPeriod String?
+  isReminders     Boolean   @default(false)
+  reminders       String?
+
+  recipients Contact[]
+  status     String    @default("draft")
 }
 
 // export interface IGroupBase {
@@ -97,18 +116,18 @@ model Message {
 //     IGroupMetaDetails {}
 
 model Group {
-    id          String  @id @default(cuid())
-    name        String
-    description String?
-    avatar      String?
+  id          String  @id @default(cuid())
+  name        String
+  description String?
+  avatar      String?
 
-    members   Contact[]
-    messages  Message[]
-    createdAt DateTime  @default(now())
-    updatedAt DateTime  @updatedAt
+  members   Contact[]
+  messages  Message[]
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
 
-    createdBy   User   @relation(fields: [createdById], references: [id])
-    createdById String
+  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdById String
 }
 
 // Necessary for Next auth
@@ -139,28 +158,28 @@ model Group {
 // }
 
 model User {
-    id       String  @id @default(cuid())
-    name     String?
-    username String? @unique
-    phone    String? @unique
-    email    String? @unique
+  id       String  @id @default(cuid())
+  name     String?
+  username String? @unique
+  phone    String? @unique
+  email    String? @unique
 
-    // emailVerified DateTime?
-    avatar String?
+  // emailVerified DateTime?
+  avatar String?
 
-    // accounts Account[]
-    // sessions Session[]
-    messages Message[]
-    groups   Group[]
+  // accounts Account[]
+  // sessions Session[]
+  messages Message[]
+  groups   Group[]
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model VerificationToken {
-    identifier String
-    token      String   @unique
-    expires    DateTime
+  identifier String
+  token      String   @unique
+  expires    DateTime
 
-    @@unique([identifier, token])
+  @@unique([identifier, token])
 }

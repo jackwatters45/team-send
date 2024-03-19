@@ -85,7 +85,7 @@ export const getGroupMembersColumns = (): ColumnDef<IContact>[] => {
           className="flex-1"
         />
       ),
-      cell: ({ row }) => <HoverableCell row={row} accessorKey="notes" />,
+      cell: ({ row }) => <HoverableCell value={row.original.notes} />,
     },
     {
       id: "actions",

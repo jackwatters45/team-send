@@ -1,6 +1,6 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
-import type { IGroupPreview } from "@/server/api/routers/group";
+import type { IGroupMessagesMembers } from "@/server/api/routers/group";
 import type { IMember } from "@/server/api/routers/contact";
 
 import { Checkbox } from "@/components/ui/checkbox";
@@ -21,7 +21,7 @@ import {
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 
-export const groupsColumns: ColumnDef<IGroupPreview>[] = [
+export const groupsColumns: ColumnDef<IGroupMessagesMembers>[] = [
   {
     id: "select",
     header: ({ table }) => (
@@ -65,8 +65,9 @@ export const groupsColumns: ColumnDef<IGroupPreview>[] = [
       <DataTableColumnHeader column={column} title="Last Message" />
     ),
     cell: ({ row }) => {
-      console.log(row);
-      return <HoverableCell row={row} accessorKey="lastMessage" />;
+      const lastMessage = row.original.messages?.[0]?.content;
+
+      return <HoverableCell value={lastMessage} />;
     },
   },
   {
@@ -77,11 +78,11 @@ export const groupsColumns: ColumnDef<IGroupPreview>[] = [
       );
     },
     cell: ({ row }) => {
-      return (
-        <DateHoverableCell
-          dateString={row.getValue<string>("lastMessageTime")}
-        />
-      );
+      const lastMessageTime = row.original.messages?.[0]?.sentAt;
+
+      return lastMessageTime ? (
+        <DateHoverableCell dateInput={lastMessageTime} />
+      ) : null;
     },
   },
   {

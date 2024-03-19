@@ -3,10 +3,10 @@ interface useFormatDateGroupReturn {
   time: string;
 }
 const formatRelativeDateAndTime = (
-  dateString: string | Date,
+  dateInput: string | Date,
 ): useFormatDateGroupReturn => {
   const now = new Date();
-  const date = new Date(dateString);
+  const date = new Date(dateInput);
 
   const diff = now.getTime() - date.getTime();
 
@@ -37,9 +37,9 @@ const formatRelativeDateAndTime = (
   return { date: currentDate, time };
 };
 
-const formatShortRelativeDate = (dateString: string | Date): string => {
+const formatShortRelativeDate = (dateInput: string | Date): string => {
   const today = new Date();
-  const date = new Date(dateString);
+  const date = new Date(dateInput);
 
   let formattedDate: string;
   const oneDay = 24 * 60 * 60 * 1000;

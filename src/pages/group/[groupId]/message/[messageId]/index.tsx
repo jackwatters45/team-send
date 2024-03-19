@@ -20,7 +20,7 @@ function useMessageDetails() {
   const messageId = useRouter().query.messageId as string;
   const { data: messageData } = api.message.getMessageData.useQuery(messageId);
 
-  const messageDate = formatRelativeDateAndTime(messageData?.time as string);
+  const messageDate = formatRelativeDateAndTime(messageData?.sentAt!);
 
   const { table } = useDataTable({
     columns: getGroupMembersColumns(),
@@ -51,7 +51,7 @@ export default function MessageDetails() {
   return messageData ? (
     <PageLayout
       title={`Message ${messageData.id}`}
-      description={`Last edited ${formatShortRelativeDate(messageData.time)}`}
+      description={`Last edited ${formatShortRelativeDate(messageData.updatedAt)}`}
       rightSidebar={<EditMessageButton />}
     >
       <div className="flex w-full flex-col gap-8">
