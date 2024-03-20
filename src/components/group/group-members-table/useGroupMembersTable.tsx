@@ -4,7 +4,7 @@ import { useRouter } from "next/router";
 import { api } from "@/utils/api";
 import useDataTable from "@/hooks/useDataTable";
 import { getGroupMembersColumns } from "./groupMembersColumns";
-import { type IContact } from "@/server/api/routers/contact";
+import { type Contact } from "@/server/api/routers/contact";
 import getInitialSelectedMembers from "@/lib/getInitialSelectedMembers";
 
 export default function useGroupMembersTable() {
@@ -14,7 +14,7 @@ export default function useGroupMembersTable() {
   const { table, rowSelection, setRowSelection } = useDataTable({
     columns: getGroupMembersColumns(),
     data: groupMembers.data ?? [],
-    getRowId: (row: IContact) => row.id,
+    getRowId: (row: Contact) => row.id,
     enableRowSelection: (row) => !!row.original.phone || !!row.original.email,
   });
 

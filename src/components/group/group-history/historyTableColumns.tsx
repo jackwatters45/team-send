@@ -6,8 +6,8 @@ import {
   DataTableColumnHeader,
   DataTableRowActions,
 } from "@/components/ui/data-table";
-import { type IUser } from "@/server/api/routers/auth";
-import { type IMember } from "@/server/api/routers/contact";
+import { type User } from "@/server/api/routers/auth";
+import { type Member } from "@/server/api/routers/contact";
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -90,7 +90,7 @@ export function getHistoryTableColumns(groupId: string): ColumnDef<IMessage>[] {
       cell: ({ row }) => {
         return (
           <MembersHoverableCell
-            members={row.getValue<IMember[]>("recipients")}
+            members={row.getValue<Member[]>("recipients")}
           />
         );
       },
@@ -101,7 +101,7 @@ export function getHistoryTableColumns(groupId: string): ColumnDef<IMessage>[] {
         <DataTableColumnHeader column={column} title="Sender" />
       ),
       cell: ({ row }) => {
-        return <UserHoverableCell user={row.getValue<IUser>("sender")} />;
+        return <UserHoverableCell user={row.getValue<User>("sender")} />;
       },
     },
 

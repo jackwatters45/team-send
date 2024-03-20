@@ -4,7 +4,7 @@ import { CopyIcon } from "@radix-ui/react-icons";
 import { z } from "zod";
 
 import extractInitials from "@/lib/extractInitials";
-import { type IUser } from "@/server/api/routers/auth";
+import { type User } from "@/server/api/routers/auth";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Form, FormDescription } from "@/components/ui/form";
@@ -26,7 +26,7 @@ type UserSettingsFormSchema = typeof userSettingsSchema;
 type UserSettingsFormType = z.infer<typeof userSettingsSchema>;
 
 interface AccountProfileFormProps {
-  currentUser: IUser;
+  currentUser: User;
 }
 
 export default function AccountProfileForm({
@@ -57,9 +57,7 @@ export default function AccountProfileForm({
   return (
     <Form {...form}>
       <div className="flex flex-col pb-4 pt-3">
-        <h2 className="text-xl font-semibold tracking-tight">
-          Edit Account
-        </h2>
+        <h2 className="text-xl font-semibold tracking-tight">Edit Account</h2>
         <FormDescription>Make changes to your profile here.</FormDescription>
       </div>
       <form

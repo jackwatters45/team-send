@@ -1,9 +1,9 @@
 import { z } from "zod";
 
 import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
-import { type IMember } from "./contact";
+import { type Member } from "./contact";
 
-import { type IMessage } from "./message";
+import { type Message } from "./message";
 
 export interface IGroupBase {
   id: string;
@@ -13,11 +13,11 @@ export interface IGroupBase {
 }
 
 export interface IGroupPreview extends IGroupBase {
-  members: IMember[];
+  members: Member[];
 }
 
 export interface IGroupHistory extends IGroupBase {
-  messages: IMessage[];
+  messages: Message[];
 }
 
 export type IGroupMessagesMembers = IGroupPreview & IGroupHistory;
@@ -30,13 +30,15 @@ export interface IGroupSettings extends IGroupBase {
 export interface IGroupMetaDetails {
   addedGroups: string[];
   addedContacts: string[];
+  createdAt: Date;
+  updatedAt: Date;
+  createdBy: string;
 }
 
-export interface IGroup
-  extends IGroupPreview,
-    IGroupSettings,
-    IGroupHistory,
-    IGroupMetaDetails {}
+export type Group = IGroupPreview &
+  IGroupSettings &
+  IGroupHistory &
+  IGroupMetaDetails;
 
 export const groupRouter = createTRPCRouter({
   // create: protectedProcedure

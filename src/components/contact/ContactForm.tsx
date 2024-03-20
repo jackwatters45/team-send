@@ -1,21 +1,21 @@
 import { useForm } from "react-hook-form";
 
-import { type IContact } from "@/server/api/routers/contact";
+import { type Contact } from "@/server/api/routers/contact";
 
 import { Form } from "../ui/form";
 import { FormInput, FormTextarea } from "../ui/form-inputs";
 import { Button } from "../ui/button";
 
 interface IContactFormProps {
-  contact: IContact;
+  contact: Contact;
 }
 
 export default function ContactForm({ contact }: IContactFormProps) {
-  const form = useForm<IContact>({
+  const form = useForm<Contact>({
     defaultValues: contact,
   });
 
-  const onSubmit = (data: IContact) => {
+  const onSubmit = (data: Contact) => {
     console.log(data);
   };
 

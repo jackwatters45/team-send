@@ -1,8 +1,8 @@
-import { type IUser } from "@/server/api/routers/auth";
+import { type User } from "@/server/api/routers/auth";
 import { SettingActionItem } from "../ui/SettingActionItem";
 
 interface AccountConnectionsProps {
-  currentUser: IUser;
+  currentUser: User;
 }
 
 export default function AccountConnections({

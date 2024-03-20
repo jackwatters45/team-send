@@ -1,7 +1,7 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { IGroupMessagesMembers } from "@/server/api/routers/group";
-import type { IMember } from "@/server/api/routers/contact";
+import type { Member } from "@/server/api/routers/contact";
 
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -92,7 +92,7 @@ export const groupsColumns: ColumnDef<IGroupMessagesMembers>[] = [
     ),
     cell: ({ row }) => {
       return (
-        <MembersHoverableCell members={row.getValue<IMember[]>("members")} />
+        <MembersHoverableCell members={row.getValue<Member[]>("members")} />
       );
     },
   },

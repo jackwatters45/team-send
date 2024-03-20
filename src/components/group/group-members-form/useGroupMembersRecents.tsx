@@ -1,7 +1,7 @@
 import type { UseFormReturn } from "react-hook-form";
 import { useDebounce } from "use-debounce";
 
-import type { IContact } from "@/server/api/routers/contact";
+import type { Contact } from "@/server/api/routers/contact";
 import type { IGroupPreview } from "@/server/api/routers/group";
 import { api } from "@/utils/api";
 import type { GroupMembersFormType } from "./groupMembersSchema";
@@ -16,13 +16,13 @@ export default function useGroupMembersRecents({
   const [search] = useDebounce(form.watch("recentsSearch"), 500);
 
   // const recentContactsQuery =
-    // await api.contact.getRecentContacts.useQuery(search);
+  // await api.contact.getRecentContacts.useQuery(search);
   // const contactsResults = recentContactsQuery.data ?? [];
 
   // const recentGroupsQuery = await api.group.getRecentGroups.useQuery(search);
   // const groupsResults = recentGroupsQuery.data ?? [];
 
-  const handleClickContact = (contact: IContact) => {
+  const handleClickContact = (contact: Contact) => {
     // query that adds contact to group + addedContacts
   };
 

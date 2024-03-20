@@ -1,7 +1,7 @@
 import { faker } from "@faker-js/faker";
 
 import { db } from "../src/server/db";
-import type { IContact } from "@/server/api/routers/contact";
+import type { Contact } from "@/server/api/routers/contact";
 
 async function createUser() {
   try {
@@ -10,7 +10,7 @@ async function createUser() {
       data: {
         name: name,
         email: faker.internet.email(),
-        phone: faker.phone.number(),
+        phone: `+1${faker.string.numeric(10)}`,
         username: faker.internet.userName({
           firstName: name.split(" ")[0],
           lastName: name.split(" ")[1],
@@ -30,9 +30,8 @@ async function createContact() {
     return await db.contact.create({
       data: {
         name: faker.person.fullName(),
-        phone: faker.phone.number(),
+        phone: `+1${faker.string.numeric(10)}`,
         email: faker.internet.email(),
-        avatar: faker.image.avatar(),
       },
     });
   } catch (e) {
@@ -42,10 +41,9 @@ async function createContact() {
 
 async function createGroup(userId: string, contacts: string[]) {
   try {
-    const name = faker.company.name();
     return await db.group.create({
       data: {
-        name: name,
+        name: faker.company.name(),
         description: faker.company.catchPhrase(),
         avatar: faker.image.avatar(),
         addedContacts: contacts,
@@ -108,7 +106,7 @@ async function main() {
     create: {
       name: "Jack Watters",
       email: "jack.watters@me.com",
-      phone: "123-456-7890",
+      phone: "+19544949167",
     },
   });
 
@@ -116,7 +114,7 @@ async function main() {
   const contacts = (
     (await Promise.all(
       Array.from({ length: 10 }).map(() => createContact()),
-    )) as IContact[]
+    )) as Contact[]
   ).map((c) => c.id);
 
   const groups = await Promise.all(

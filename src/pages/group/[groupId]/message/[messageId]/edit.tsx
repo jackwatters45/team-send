@@ -13,7 +13,7 @@ import { toast } from "@/components/ui/use-toast";
 import useDataTable from "@/hooks/useDataTable";
 import PageLayout from "@/layouts/PageLayout";
 import getInitialSelectedMembers from "@/lib/getInitialSelectedMembers";
-import type { IContact } from "@/server/api/routers/contact";
+import type { Contact } from "@/server/api/routers/contact";
 import { type IMessage } from "@/server/api/routers/message";
 import { api } from "@/utils/api";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -25,7 +25,7 @@ import { useForm } from "react-hook-form";
 
 interface EditMessageFormProps {
   messageData: IMessage;
-  table: Table<IContact>;
+  table: Table<Contact>;
   rowSelection: RowSelectionState;
 }
 
@@ -127,7 +127,7 @@ export default function EditMessage() {
   const { table, rowSelection, setRowSelection } = useDataTable({
     columns: getGroupMembersColumns(),
     data: groupMembers ?? [],
-    getRowId: (row: IContact) => row.id,
+    getRowId: (row: Contact) => row.id,
     enableRowSelection: (row) => !!row.original.phone || !!row.original.email,
   });
 

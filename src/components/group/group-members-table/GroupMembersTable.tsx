@@ -11,10 +11,10 @@ import {
 } from "@/components/ui/data-table";
 
 import { getGroupMembersColumns } from "./groupMembersColumns";
-import { type IContact } from "@/server/api/routers/contact";
+import { type Contact } from "@/server/api/routers/contact";
 
 interface IGroupMembersTableProps {
-  table: Table<IContact>;
+  table: Table<Contact>;
   isLoading?: boolean;
   placeholder?: string;
 }

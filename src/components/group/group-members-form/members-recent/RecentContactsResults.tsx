@@ -1,7 +1,7 @@
 import { parsePhoneNumber } from "libphonenumber-js";
 import { type UseFormReturn } from "react-hook-form";
 
-import { type IContact } from "@/server/api/routers/contact";
+import { type Contact } from "@/server/api/routers/contact";
 import { type GroupMembersFormType } from "../groupMembersSchema";
 import { TabsContent } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
@@ -9,9 +9,9 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import extractInitials from "@/lib/extractInitials";
 
 interface IRecentContactsResultsProps {
-  contactsResults: IContact[];
+  contactsResults: Contact[];
   form: UseFormReturn<GroupMembersFormType>;
-  handleClickContact: (item: IContact) => void;
+  handleClickContact: (item: Contact) => void;
 }
 
 export default function RecentContactsResults({

@@ -2,13 +2,13 @@ import { Fragment } from "react";
 import Link from "next/link";
 
 import extractInitials from "@/lib/extractInitials";
-import { type IGroup } from "@/server/api/routers/group";
+import { type Group } from "@/server/api/routers/group";
 
 import { Avatar, AvatarFallback, AvatarImage } from "../ui/avatar";
 import { Separator } from "../ui/separator";
 
 interface IContactGroupsProps {
-  contactGroups: Array<IGroup>;
+  contactGroups: Array<Group>;
 }
 
 export default function ContactGroupCards({

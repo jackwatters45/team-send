@@ -5,7 +5,7 @@ import {
   formatShortRelativeDate,
 } from "@/lib/dateHelpers";
 import { api } from "@/utils/api";
-import { type IContact } from "@/server/api/routers/contact";
+import { type Contact } from "@/server/api/routers/contact";
 import useDataTable from "@/hooks/useDataTable";
 
 import PageLayout from "@/layouts/PageLayout";
@@ -25,7 +25,7 @@ function useMessageDetails() {
   const { table } = useDataTable({
     columns: getGroupMembersColumns(),
     data: messageData?.recipients ?? [],
-    getRowId: (row: IContact) => row.id,
+    getRowId: (row: Contact) => row.id,
     includeRowSelection: false,
   });
 

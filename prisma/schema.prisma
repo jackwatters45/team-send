@@ -25,20 +25,37 @@ model Group {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  createdBy   User   @relation(fields: [createdById], references: [id])
+  createdBy   User     @relation(fields: [createdById], references: [id])
   createdById String
+  Member      Member[]
 }
 
 model Contact {
-  id        String    @id @default(cuid())
-  name      String
-  phone     String    @unique
-  email     String?   @unique
-  avatar    String?
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  Groups    Group[]
-  Messages  Message[]
+  id    String  @id @default(cuid())
+  name  String
+  phone String  @unique
+  email String? @unique
+  notes String?
+
+  groups   Group[]
+  messages Message[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Member {
+  id          String  @id @default(cuid())
+  memberNotes String?
+  isRecipient Boolean @default(true)
+
+  contact   User   @relation(fields: [contactId], references: [id])
+  contactId String
+  group     Group  @relation(fields: [groupId], references: [id])
+  groupId   String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 model Reminder {
@@ -52,6 +69,7 @@ model Reminder {
 model Message {
   id      String @id @default(cuid())
   content String
+
   group   Group  @relation(fields: [groupId], references: [id])
   groupId String
 
@@ -128,6 +146,7 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  member    Member[]
 }
 
 model VerificationToken {

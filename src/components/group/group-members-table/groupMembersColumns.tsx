@@ -13,10 +13,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
-import type { IContact } from "@/server/api/routers/contact";
+import type { Contact } from "@/server/api/routers/contact";
 import Link from "next/link";
 
-export const getGroupMembersColumns = (): ColumnDef<IContact>[] => {
+export const getGroupMembersColumns = (): ColumnDef<Contact>[] => {
   return [
     {
       id: "select",
