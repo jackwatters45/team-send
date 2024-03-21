@@ -3,8 +3,12 @@ interface useFormatDateGroupReturn {
   time: string;
 }
 const formatRelativeDateAndTime = (
-  dateInput: string | Date,
-): useFormatDateGroupReturn => {
+  dateInput: string | Date | undefined,
+): useFormatDateGroupReturn | undefined => {
+  if (!dateInput) {
+    return undefined;
+  }
+
   const now = new Date();
   const date = new Date(dateInput);
 
