@@ -13,21 +13,20 @@ model Group {
   description String?
   avatar      String?
 
-  members  Contact[]
+  members  Member[]
   messages Message[]
 
   phone Boolean @default(true)
   email Boolean @default(true)
 
-  addedGroups   String[]
-  addedContacts String[]
+  addedGroupIds   String[]
+  addedContactIds String[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  createdBy   User     @relation(fields: [createdById], references: [id])
+  createdBy   User   @relation(fields: [createdById], references: [id])
   createdById String
-  Member      Member[]
 }
 
 model Contact {
@@ -37,11 +36,11 @@ model Contact {
   email String? @unique
   notes String?
 
-  groups   Group[]
-  messages Message[]
-
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+
+  messages Message[]
+  members  Member[]
 }
 
 model Member {
@@ -49,9 +48,9 @@ model Member {
   memberNotes String?
   isRecipient Boolean @default(true)
 
-  contact   User   @relation(fields: [contactId], references: [id])
+  contact   Contact @relation(fields: [contactId], references: [id])
   contactId String
-  group     Group  @relation(fields: [groupId], references: [id])
+  group     Group   @relation(fields: [groupId], references: [id])
   groupId   String
 
   createdAt DateTime @default(now())
@@ -146,7 +145,6 @@ model User {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  member    Member[]
 }
 
 model VerificationToken {
