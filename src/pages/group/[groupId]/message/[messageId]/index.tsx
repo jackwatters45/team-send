@@ -1,4 +1,12 @@
-import { useRouter } from "next/router";
+import type { GetStaticPropsContext, InferGetStaticPropsType } from "next";
+import { Fragment } from "react";
+import Link from "next/link";
+
+import PageLayout from "@/layouts/PageLayout";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { getGroupMembersColumns } from "@/components/group/group-members-table/groupMembersColumns";
+import GroupMembersTable from "@/components/group/group-members-table/GroupMembersTable";
 
 import {
   formatRelativeDateAndTime,
@@ -7,101 +15,87 @@ import {
 import { api } from "@/utils/api";
 import { type Contact } from "@/server/api/routers/contact";
 import useDataTable from "@/hooks/useDataTable";
+import { generateServerSideHelpers } from "@/server/helpers/generateServerSideHelpers";
 
-import PageLayout from "@/layouts/PageLayout";
-import GroupMembersTable from "@/components/group/group-members-table/GroupMembersTable";
-import { getGroupMembersColumns } from "@/components/group/group-members-table/groupMembersColumns";
-import { Separator } from "@/components/ui/separator";
-import { Fragment } from "react";
-import { Button } from "@/components/ui/button";
-import Link from "next/link";
+export default function MessageDetails({
+  messageId,
+  groupId,
+}: MessageDetailsProps) {
+  const { data } = api.message.getMessageById.useQuery({ messageId });
 
-function useMessageDetails() {
-  const messageId = useRouter().query.messageId as string;
-  const { data: messageData } = api.message.getMessageData.useQuery(messageId);
-
-  const messageDate = formatRelativeDateAndTime(messageData?.sentAt!);
+  const messageDate = formatRelativeDateAndTime(data?.sentAt);
 
   const { table } = useDataTable({
     columns: getGroupMembersColumns(),
-    data: messageData?.recipients ?? [],
+    data: data?.recipients ?? [],
     getRowId: (row: Contact) => row.id,
     includeRowSelection: false,
   });
 
-  return { messageDate, messageData, table };
-}
-
-function EditMessageButton() {
-  const messageId = useRouter().query.messageId as string;
-  const groupId = useRouter().query.groupId as string;
+  if (!data) {
+    return <div>404</div>;
+  }
 
   return (
-    <Link
-      href={`/group/${groupId}/message/${messageId}/edit`}
-      className="block"
-    >
-      <Button variant={"secondary"}>Edit</Button>
-    </Link>
-  );
-}
-
-export default function MessageDetails() {
-  const { messageData, messageDate, table } = useMessageDetails();
-  return messageData ? (
     <PageLayout
-      title={`Message ${messageData.id}`}
-      description={`Last edited ${formatShortRelativeDate(messageData.updatedAt)}`}
-      rightSidebar={<EditMessageButton />}
+      title={`Message ${data.id}`}
+      description={`Last edited ${formatShortRelativeDate(data.updatedAt)}`}
+      rightSidebar={
+        <Link
+          href={`/group/${groupId}/message/${messageId}/edit`}
+          className="block"
+        >
+          <Button variant={"secondary"}>Edit</Button>
+        </Link>
+      }
     >
       <div className="flex w-full flex-col gap-8">
         <div className="space-y-1">
           <div className="font-semibold">Sent by</div>
-          <div className="text-sm">{messageData.sender.name}</div>
+          <div className="text-sm">{data.sentBy.name}</div>
         </div>
         <div className="space-y-1">
           <div className="font-semibold">Created</div>
-          <div className="text-sm">
-            {messageDate.date} at {messageDate.time}
-          </div>
+          {messageDate && (
+            <div className="text-sm">
+              {messageDate.date} at {messageDate.time}
+            </div>
+          )}
         </div>
         <div className="border-b dark:border-stone-500 dark:border-opacity-20" />
         <div className="space-y-1">
           <div className="text-lg font-semibold">Content</div>
-          <div className="text-sm">{messageData.content}</div>
+          <div className="text-sm">{data.content}</div>
         </div>
         <div className="border-b dark:border-stone-500 dark:border-opacity-20 " />
         <div className="space-y-1">
           <div className="font-semibold ">Recurring</div>
           <div className="flex items-center space-x-4 text-sm ">
-            <div>{messageData.isRecurring ? "Yes" : "No"}</div>
+            <div>{data.isRecurring ? "Yes" : "No"}</div>
             <Separator orientation="vertical" className="h-5" />
-            {messageData.isRecurring &&
-              messageData.recurringPeriod &&
-              messageData.recurringNum && (
-                <div>
-                  Every {messageData.recurringNum} {messageData.recurringPeriod}
-                  {messageData.recurringNum > 1 ? "s" : ""}
-                </div>
-              )}
+            {data.isRecurring && data.recurringPeriod && data.recurringNum && (
+              <div>
+                Every {data.recurringNum} {data.recurringPeriod}
+                {data.recurringNum > 1 ? "s" : ""}
+              </div>
+            )}
           </div>
         </div>
         <div className="space-y-1">
           <div className="font-semibold">Reminders</div>
           <div className="flex items-center space-x-4 text-sm ">
-            <div>{messageData.isReminders ? "Yes" : "No"}</div>
+            <div>{data.isReminders ? "Yes" : "No"}</div>
             <Separator orientation="vertical" className="h-5" />
-            {messageData.reminders &&
-              messageData.isReminders &&
-              messageData.reminders.map((reminder, index) => (
+            {data.reminders &&
+              data.isReminders &&
+              data.reminders?.map((reminder, index) => (
                 <Fragment key={index}>
                   <div>
                     {reminder.num} {reminder.period}
                   </div>
-                  {messageData.reminders &&
-                    index < messageData.reminders.length - 1 && (
-                      <Separator orientation="vertical" className="h-5" />
-                    )}
+                  {data.reminders && index < data.reminders.length - 1 && (
+                    <Separator orientation="vertical" className="h-5" />
+                  )}
                 </Fragment>
               ))}
           </div>
@@ -109,28 +103,54 @@ export default function MessageDetails() {
         <div>
           <div className="font-semibold">Scheduled</div>
           <div className="flex items-center space-x-4 text-sm ">
-            <div className="text-sm">
-              {messageData.isScheduled ? "Yes" : "No"}
-            </div>
+            <div className="text-sm">{data.isScheduled ? "Yes" : "No"}</div>
             <Separator orientation="vertical" className="h-5" />
-            {messageData.scheduledDate && messageData.scheduledDate && (
-              <div>{new Date(messageData.scheduledDate).toLocaleString()}</div>
+            {data.scheduledDate && data.scheduledDate && (
+              <div>{new Date(data.scheduledDate).toLocaleString()}</div>
             )}
           </div>
         </div>
         <div className="border-b dark:border-stone-500 dark:border-opacity-20 " />
         <div>
           <div className="font-semibold">Message Recipients</div>
-          <div className="text-sm ">
-            {messageData.recipients.length} recipients
-          </div>
+          <div className="text-sm ">{data.recipients.length} recipients</div>
         </div>
         <GroupMembersTable
           table={table}
-          isLoading={!messageData.recipients}
+          isLoading={!data.recipients}
           placeholder="Search recipients"
         />
       </div>
     </PageLayout>
-  ) : null;
+  );
 }
+
+export const getStaticProps = async (
+  context: GetStaticPropsContext<{ messageId: string; groupId: string }>,
+) => {
+  const helpers = generateServerSideHelpers();
+
+  const messageId = context.params?.messageId;
+  const groupId = context.params?.groupId;
+
+  if (typeof messageId !== "string") {
+    throw new Error("Invalid slug");
+  }
+
+  await helpers.message.getMessageById.prefetch({ messageId });
+
+  return {
+    props: {
+      trpcState: helpers.dehydrate(),
+      messageId,
+      groupId,
+    },
+  };
+};
+
+export const getStaticPaths = () => ({
+  paths: [],
+  fallback: "blocking",
+});
+
+type MessageDetailsProps = InferGetStaticPropsType<typeof getStaticProps>;
