@@ -1,6 +1,5 @@
 import { type ColumnDef } from "@tanstack/react-table";
 
-import { type IMessage } from "@/server/api/routers/message";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DataTableColumnHeader,
@@ -20,8 +19,11 @@ import {
   UserHoverableCell,
 } from "@/components/ui/hover-card";
 import Link from "next/link";
+import type { RouterOutputs } from "@/utils/api";
 
-export function getHistoryTableColumns(groupId: string): ColumnDef<IMessage>[] {
+export function getHistoryTableColumns(
+  groupId: string,
+): ColumnDef<RouterOutputs["group"]["getAll"][number]["messages"][number]>[] {
   return [
     {
       id: "select",
@@ -79,7 +81,7 @@ export function getHistoryTableColumns(groupId: string): ColumnDef<IMessage>[] {
         <DataTableColumnHeader column={column} title="Content" />
       ),
       cell: ({ row }) => {
-        return <HoverableCell value={row.original.content} />;
+        return <HoverableCell value={row.getValue<string>("content")} />;
       },
     },
     {
@@ -96,12 +98,12 @@ export function getHistoryTableColumns(groupId: string): ColumnDef<IMessage>[] {
       },
     },
     {
-      accessorKey: "sender",
+      accessorKey: "sentBy",
       header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Sender" />
+        <DataTableColumnHeader column={column} title="Sent By" />
       ),
       cell: ({ row }) => {
-        return <UserHoverableCell user={row.getValue<User>("sender")} />;
+        return <UserHoverableCell user={row.getValue<User>("sentBy")} />;
       },
     },
 
@@ -110,7 +112,6 @@ export function getHistoryTableColumns(groupId: string): ColumnDef<IMessage>[] {
       enableSorting: false,
       enableHiding: false,
       cell: ({ row }) => {
-        console.log(row.getValue<string>("status"));
         return (
           <DataTableRowActions>
             <DropdownMenuItem
