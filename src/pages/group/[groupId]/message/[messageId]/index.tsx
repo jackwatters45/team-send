@@ -72,12 +72,14 @@ export default function MessageDetails({
           <div className="font-semibold ">Recurring</div>
           <div className="flex items-center space-x-4 text-sm ">
             <div>{data.isRecurring ? "Yes" : "No"}</div>
-            <Separator orientation="vertical" className="h-5" />
             {data.isRecurring && data.recurringPeriod && data.recurringNum && (
-              <div>
-                Every {data.recurringNum} {data.recurringPeriod}
-                {data.recurringNum > 1 ? "s" : ""}
-              </div>
+              <>
+                <Separator orientation="vertical" className="h-5" />
+                <div>
+                  Every {data.recurringNum} {data.recurringPeriod}
+                  {data.recurringNum > 1 ? "s" : ""}
+                </div>
+              </>
             )}
           </div>
         </div>
@@ -85,17 +87,14 @@ export default function MessageDetails({
           <div className="font-semibold">Reminders</div>
           <div className="flex items-center space-x-4 text-sm ">
             <div>{data.isReminders ? "Yes" : "No"}</div>
-            <Separator orientation="vertical" className="h-5" />
             {data.reminders &&
               data.isReminders &&
               data.reminders?.map((reminder, index) => (
                 <Fragment key={index}>
+                  <Separator orientation="vertical" className="h-5" />
                   <div>
                     {reminder.num} {reminder.period}
                   </div>
-                  {data.reminders && index < data.reminders.length - 1 && (
-                    <Separator orientation="vertical" className="h-5" />
-                  )}
                 </Fragment>
               ))}
           </div>
@@ -104,9 +103,11 @@ export default function MessageDetails({
           <div className="font-semibold">Scheduled</div>
           <div className="flex items-center space-x-4 text-sm ">
             <div className="text-sm">{data.isScheduled ? "Yes" : "No"}</div>
-            <Separator orientation="vertical" className="h-5" />
             {data.scheduledDate && data.scheduledDate && (
-              <div>{new Date(data.scheduledDate).toLocaleString()}</div>
+              <>
+                <Separator orientation="vertical" className="h-5" />
+                <div>{new Date(data.scheduledDate).toLocaleString()}</div>
+              </>
             )}
           </div>
         </div>
