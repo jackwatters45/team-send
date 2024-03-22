@@ -44,7 +44,6 @@ export const getGroupMembersColumns = (): ColumnDef<MemberBaseContact>[] => {
       enableSorting: false,
       enableHiding: false,
     },
-
     {
       accessorKey: "id",
       header: ({ column }) => (
@@ -53,18 +52,21 @@ export const getGroupMembersColumns = (): ColumnDef<MemberBaseContact>[] => {
     },
     {
       accessorKey: "contact.name",
+      id: "name",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
       ),
     },
     {
       accessorKey: "contact.email",
+      id: "email",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Email" />
       ),
     },
     {
       accessorKey: "contact.phone",
+      id: "phone",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Phone" />
       ),
@@ -78,6 +80,7 @@ export const getGroupMembersColumns = (): ColumnDef<MemberBaseContact>[] => {
     },
     {
       accessorKey: "memberNotes",
+      id: "notes",
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -89,6 +92,8 @@ export const getGroupMembersColumns = (): ColumnDef<MemberBaseContact>[] => {
     },
     {
       id: "actions",
+      enableSorting: false,
+      enableHiding: false,
       cell: ({ row }) => (
         <DataTableRowActions>
           <DropdownMenuItem
@@ -101,8 +106,8 @@ export const getGroupMembersColumns = (): ColumnDef<MemberBaseContact>[] => {
             <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <Link href={`/contact/${row.getValue<string>("id")}`}>
-            <DropdownMenuItem>View member details</DropdownMenuItem>
+          <Link href={`/contact/${row.original.contact.id}`}>
+            <DropdownMenuItem>View contact details</DropdownMenuItem>
           </Link>
           <DropdownMenuItem>
             Remove from group
