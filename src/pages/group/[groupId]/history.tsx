@@ -20,7 +20,7 @@ export default function GroupHistory({ groupId }: GroupProps) {
   const historyTableColumns = getHistoryTableColumns(groupId);
   const { table } = useDataTable({
     columns: historyTableColumns,
-    data: data ?? [],
+    data: data?.messages ?? [],
     state: {
       columnVisibility: {
         id: false,
@@ -37,11 +37,7 @@ export default function GroupHistory({ groupId }: GroupProps) {
   }
 
   return (
-    <GroupLayout
-      groupId={groupId}
-      title="Group Message History"
-      description={`View message history for group: ${groupId}`}
-    >
+    <GroupLayout group={data.group}>
       <div className="flex flex-col pb-4 pt-3">
         <h2 className="text-xl font-semibold tracking-tight">Group History</h2>
         <div className="text-sm text-stone-500 dark:text-stone-400">

@@ -73,7 +73,7 @@ export default function Group({ groupId }: GroupProps) {
   }
 
   return (
-    <GroupLayout groupId={groupId} title={data.name} description={data.name}>
+    <GroupLayout group={data}>
       <Form {...form}>
         <div className="flex flex-col pb-4 pt-3">
           <h2 className="text-xl font-semibold tracking-tight">

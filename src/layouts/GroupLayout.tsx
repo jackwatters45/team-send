@@ -21,22 +21,17 @@ const getSidebarNavItems = (groupId: string) => [
 
 interface GroupLayoutProps {
   children: React.ReactNode;
-  title: string;
-  description: string | null;
-  groupId: string;
+  group: { id: string; name: string; description: string | null };
 }
 
-export function GroupLayout({
-  children,
-  title,
-  description,
-  groupId,
-}: GroupLayoutProps) {
+export function GroupLayout({ children, group }: GroupLayoutProps) {
+  const sidebarNavItems = getSidebarNavItems(group.id);
+
   return (
     <SidebarLayout
-      title={title}
-      description={description}
-      sidebarNavItems={getSidebarNavItems(groupId)}
+      title={group.name}
+      description={group.description}
+      sidebarNavItems={sidebarNavItems}
     >
       {children}
     </SidebarLayout>
