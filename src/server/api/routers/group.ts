@@ -1,26 +1,31 @@
 import { z } from "zod";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
 
-import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
+import {
+  createTRPCRouter,
+  protectedProcedure,
+  publicProcedure,
+} from "@/server/api/trpc";
 import { type Member } from "./contact";
 
 import { type Message } from "./message";
+import { TRPCError } from "@trpc/server";
 
 export interface IGroupBase {
   id: string;
   name: string;
-  description: string | undefined;
-  avatar: string | undefined;
+  description: string | null;
+  avatar: string | null;
 }
 
 export interface IGroupPreview extends IGroupBase {
-  members: Member[];
+  members?: Member[];
 }
 
 export interface IGroupHistory extends IGroupBase {
-  messages: Message[];
+  messages?: Message[];
 }
-
-export type IGroupMessagesMembers = IGroupPreview & IGroupHistory;
 
 export interface IGroupSettings extends IGroupBase {
   phone: boolean;
@@ -40,21 +45,13 @@ export type Group = IGroupPreview &
   IGroupHistory &
   IGroupMetaDetails;
 
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(10, "10 s"),
+  analytics: true,
+});
+
 export const groupRouter = createTRPCRouter({
-  // create: protectedProcedure
-  //   .input(z.object({ name: z.string().min(1) }))
-  //   .mutation(async ({ ctx, input }) => {
-  //     // simulate a slow db call
-  //     await new Promise((resolve) => setTimeout(resolve, 1000));
-
-  //     return ctx.db.post.create({
-  //       data: {
-  //         name: input.name,
-  //         createdBy: { connect: { id: ctx.session.user.id } },
-  //       },
-  //     });
-  //   }),
-
   getAll: publicProcedure.query(async ({ ctx }) => {
     return await ctx.db.group.findMany({
       include: {
@@ -69,66 +66,47 @@ export const groupRouter = createTRPCRouter({
     });
   }),
 
-  getLatest: publicProcedure
-    .input(z.string().optional())
-    .query(async ({ ctx }) => {
-      return await ctx.db.group.findMany({
+  getGroupById: publicProcedure
+    .input(
+      z.object({
+        groupId: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      // TODO some check to make sure it is the user's group
+
+      const group = await ctx.db.group.findUnique({
+        where: { id: input.groupId },
         include: {
-          members: true,
-          messages: true,
+          members: {
+            include: { contact: true },
+          },
+          messages: {
+            include: { sentBy: true },
+          },
         },
       });
-      //   return !!input
-      //     ? groups.filter((group) =>
-      //         group.name.toLowerCase().includes(input.toLowerCase()),
-      //       )
-      //     : groups;
+
+      if (!group) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Group not found" });
+      }
+
+      return group;
     }),
 
-  getRecentGroups: publicProcedure
-    .input(z.string().optional())
-    .query(async ({ ctx }) => {
-      return await ctx.db.group.findMany({
-        include: {
-          members: true,
-          messages: true,
+  create: protectedProcedure
+    .input(z.object({ name: z.string({ required_error: "TODO add errors" }) }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const { success } = await ratelimit.limit(userId);
+      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
+
+      return ctx.db.group.create({
+        data: {
+          name: input.name,
+          createdBy: { connect: { id: ctx.session.user.id } },
         },
       });
     }),
-
-  getGroupSettings: publicProcedure.input(z.string()).query(async ({ ctx }) => {
-    return await ctx.db.group.findMany({
-      include: {
-        members: true,
-        messages: true,
-      },
-    });
-  }),
-
-  getGroupHistory: publicProcedure.input(z.string()).query(async ({ ctx }) => {
-    return await ctx.db.group.findMany({
-      include: {
-        members: true,
-        messages: true,
-      },
-    });
-  }),
-
-  getGroupMembers: publicProcedure.input(z.string()).query(async ({ ctx }) => {
-    return await ctx.db.group.findMany({
-      include: {
-        members: true,
-        messages: true,
-      },
-    });
-  }),
-
-  getGroupData: publicProcedure.input(z.string()).query(async ({ ctx }) => {
-    return await ctx.db.group.findFirst({
-      include: {
-        members: true,
-        messages: true,
-      },
-    });
-  }),
 });

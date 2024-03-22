@@ -14,12 +14,12 @@ export interface IReminder {
 
 export interface IMessageScheduling {
   isScheduled: boolean;
-  scheduledDate: Date | string | null;
+  scheduledDate: Date | string | undefined;
   isRecurring: boolean;
-  recurringNum: number | null;
-  recurringPeriod: "years" | "months" | "weeks" | "days" | null;
+  recurringNum: number | undefined;
+  recurringPeriod: "years" | "months" | "weeks" | "days" | undefined;
   isReminders: boolean;
-  reminders: IReminder[] | null;
+  reminders: IReminder[] | undefined;
 }
 
 export interface IMessageInput extends IMessageScheduling {
@@ -50,9 +50,20 @@ export type Message = IMessageInput &
   };
 
 export const messageRouter = createTRPCRouter({
-  getMessageData: publicProcedure
-    .input(z.string().optional())
-    .query(async ({ ctx }) => {
-      return await ctx.db.message.findFirst({});
+  getMessageById: publicProcedure
+    .input(
+      z.object({
+        messageId: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.db.message.findUnique({
+        where: { id: input.messageId },
+        include: {
+          sentBy: true,
+          recipients: { include: {contact: true} },
+          reminders: true,
+        },
+      });
     }),
 });

@@ -1,17 +1,18 @@
-import { createTRPCRouter } from "@/server/api/trpc";
-import { type User } from "./auth";
+import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
 import { type Group } from "./group";
 import { type Message } from "./message";
+import { TRPCError } from "@trpc/server";
+import { z } from "zod";
 
 export interface ContactBase {
   name: string;
-  email?: string;
-  phone?: string;
-  notes?: string;
+  email: string | undefined;
+  phone: string | undefined;
+  notes: string | undefined;
 }
 
 export interface ContactConnections {
-  groups: Group[];
+  members: Member[];
   messages: Message[];
 }
 
@@ -21,11 +22,21 @@ export interface Contact extends ContactBase {
   updatedAt: Date;
 }
 
-export interface Member extends Contact {
-  id: string;
-  memberNotes?: string;
+export interface MemberBaseContactBase {
+  contact: ContactBase;
+  memberNotes: string | undefined;
   isRecipient: boolean;
-  contact: User;
+}
+
+export interface MemberBase {
+  memberNotes: string | undefined;
+  isRecipient: boolean;
+  contact: Contact;
+}
+
+export interface Member extends MemberBase {
+  id: string;
+  contact: Contact;
   contactId: string;
   group: Group;
   groupId: string;
@@ -34,24 +45,31 @@ export interface Member extends Contact {
 }
 
 export const contactRouter = createTRPCRouter({
-  // getLatest: publicProcedure.input(z.string().optional()).query(({ input }) => {
-  //   return !!input
-  //     ? contacts.filter((contact) =>
-  //         contact.name.toLowerCase().includes(input.toLowerCase()),
-  //       )
-  //     : contacts;
-  // }),
-  // getRecentContacts: publicProcedure
-  //   .input(z.string().optional())
-  //   .query(async ({ input }) => {
-  //     await mockAsyncFetch(contacts, 1000);
-  //     return !!input
-  //       ? contacts.filter((contact) =>
-  //           contact.name.toLowerCase().includes(input.toLowerCase()),
-  //         )
-  //       : contacts;
-  //   }),
-  // getContactData: publicProcedure.input(z.string()).query(({ input }) => {
-  //   return contacts.find((contact) => contact.id === input) as IContact;
-  // }),
+  getContactById: publicProcedure
+    .input(z.object({ contactId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const contact = await ctx.db.contact.findUnique({
+        where: { id: input.contactId },
+        include: {
+          members: {
+            include: {
+              group: true,
+            },
+          },
+        },
+      });
+
+      const groups = await ctx.db.group.findMany({
+        where: { members: { some: { contactId: input.contactId } } },
+      });
+
+      if (!contact) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Contact not found",
+        });
+      }
+
+      return { ...contact, groups };
+    }),
 });
