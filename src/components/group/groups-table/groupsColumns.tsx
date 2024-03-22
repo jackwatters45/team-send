@@ -1,6 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
 
-import type { IGroupMessagesMembers } from "@/server/api/routers/group";
 import type { Member } from "@/server/api/routers/contact";
 
 import { Checkbox } from "@/components/ui/checkbox";
@@ -20,6 +19,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
+
+import type { RouterOutputs } from "@/utils/api";
+
+type IGroupMessagesMembers = RouterOutputs["group"]["getAll"][number];
 
 export const groupsColumns: ColumnDef<IGroupMessagesMembers>[] = [
   {
