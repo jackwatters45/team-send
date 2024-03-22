@@ -1,8 +1,8 @@
-import type { MemberBaseContactBase } from "@/server/api/routers/contact";
+import type { GroupMembersFormType } from "@/components/group/group-members-form/groupMembersSchema";
 
 const createContact = (
-  newMember?: MemberBaseContactBase,
-): MemberBaseContactBase => ({
+  newMember?: GroupMembersFormType["members"][0],
+): GroupMembersFormType["members"][0] => ({
   contact: {
     name: newMember?.contact.name ?? "",
     email: newMember?.contact.email ?? "",
