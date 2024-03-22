@@ -60,12 +60,25 @@ model Member {
   messageId String?
 }
 
+enum ReminderPeriod {
+  months
+  weeks
+  days
+}
+
 model Reminder {
-  id        String  @id @default(cuid())
+  id        String         @id @default(cuid())
   num       Int
-  period    String // "months", "weeks", "days"
-  message   Message @relation(fields: [messageId], references: [id])
+  period    ReminderPeriod
+  message   Message        @relation(fields: [messageId], references: [id])
   messageId String
+}
+
+enum ReccurPeriod {
+  years
+  months
+  weeks
+  days
 }
 
 model Message {
@@ -87,12 +100,12 @@ model Message {
   createdBy   User     @relation(name: "CreatedBy", fields: [createdById], references: [id])
   createdById String
 
-  isScheduled     Boolean    @default(false)
+  isScheduled     Boolean       @default(false)
   scheduledDate   DateTime?
-  isRecurring     Boolean    @default(false)
+  isRecurring     Boolean       @default(false)
   recurringNum    Int?
-  recurringPeriod String?
-  isReminders     Boolean    @default(false)
+  recurringPeriod ReccurPeriod?
+  isReminders     Boolean       @default(false)
   reminders       Reminder[]
 
   recipients Member[]

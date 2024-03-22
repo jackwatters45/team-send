@@ -4,20 +4,22 @@ import { type User } from "./auth";
 import { type Member } from "./contact";
 import { type Group } from "./group";
 
+export type ReminderPeriod = "months" | "weeks" | "days";
 export interface IReminder {
   id: string;
   num: number;
-  period: "months" | "weeks" | "days";
+  period: ReminderPeriod;
   message: Message;
   messageId: string;
 }
 
+export type RecurPeriod = "years" | "months" | "weeks" | "days";
 export interface IMessageScheduling {
   isScheduled: boolean;
   scheduledDate: Date | string | undefined;
   isRecurring: boolean;
   recurringNum: number | undefined;
-  recurringPeriod: "years" | "months" | "weeks" | "days" | undefined;
+  recurringPeriod: RecurPeriod | undefined;
   isReminders: boolean;
   reminders: IReminder[] | undefined;
 }
@@ -61,7 +63,7 @@ export const messageRouter = createTRPCRouter({
         where: { id: input.messageId },
         include: {
           sentBy: true,
-          recipients: { include: {contact: true} },
+          recipients: { include: { contact: true } },
           reminders: true,
         },
       });

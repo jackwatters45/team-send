@@ -56,7 +56,6 @@ export interface IUserMetaDetails {
 
 export interface IUserActivity {
   groups: string[];
-
   messagesSent: string[];
   messagesReceived: string[];
   messagesUpdated: string[];

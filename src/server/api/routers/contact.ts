@@ -6,9 +6,9 @@ import { z } from "zod";
 
 export interface ContactBase {
   name: string;
-  email: string | undefined;
-  phone: string | undefined;
-  notes: string | undefined;
+  email: string | null;
+  phone: string | null;
+  notes: string | null;
 }
 
 export interface ContactConnections {
@@ -22,19 +22,20 @@ export interface Contact extends ContactBase {
   updatedAt: Date;
 }
 
-export interface MemberBaseContactBase {
-  contact: ContactBase;
-  memberNotes: string | undefined;
+interface MemberBase {
+  memberNotes: string | null;
   isRecipient: boolean;
 }
 
-export interface MemberBase {
-  memberNotes: string | undefined;
-  isRecipient: boolean;
+export interface MemberBaseNewContact extends MemberBase {
+  contact: ContactBase;
+}
+
+export interface MemberBaseContact extends MemberBase {
   contact: Contact;
 }
 
-export interface Member extends MemberBase {
+export interface Member extends MemberBaseContact {
   id: string;
   contact: Contact;
   contactId: string;
