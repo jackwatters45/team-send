@@ -30,7 +30,7 @@ type UserSettingsFormSchema = typeof userSettingsSchema;
 type UserSettingsFormType = z.infer<typeof userSettingsSchema>;
 
 export default function AccountProfile() {
-  const { data: user } = api.auth.getCurrentUser.useQuery();
+  const { data: user } = api.auth.getCurrentUserTemp.useQuery();
 
   const form = useForm<UserSettingsFormType>({
     resolver: zodResolver(userSettingsSchema),
@@ -156,7 +156,7 @@ export default function AccountProfile() {
 export const getStaticProps = async () => {
   const helpers = genSSRHelpers();
 
-  await helpers.auth.getCurrentUser.prefetch();
+  await helpers.auth.getCurrentUserTemp.prefetch();
 
   return {
     props: {

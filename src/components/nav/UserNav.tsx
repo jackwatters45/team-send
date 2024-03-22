@@ -15,7 +15,8 @@ import { api } from "@/utils/api";
 import Link from "next/link";
 
 export default function UserNav() {
-  const user = api.auth.getCurrentUser.useQuery().data;
+  const user = api.auth.getCurrentUserTemp.useQuery().data;
+
   if (!user) {
     return null;
   }
