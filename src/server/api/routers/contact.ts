@@ -51,19 +51,14 @@ export const contactRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const contact = await ctx.db.contact.findUnique({
         where: { id: input.contactId },
-        include: {
-          members: {
-            include: {
-              group: true,
-            },
-          },
-        },
       });
 
       const groups = await ctx.db.group.findMany({
         where: { members: { some: { contactId: input.contactId } } },
+        include: { members: true },
       });
 
+      console.log({ contact, groups });
       if (!contact) {
         throw new TRPCError({
           code: "NOT_FOUND",

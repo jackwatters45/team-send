@@ -13,9 +13,8 @@ model Group {
   description String?
   avatar      String?
 
-  members      Member[]
-  membersCount Int       @default(0)
-  messages     Message[]
+  members  Member[]
+  messages Message[]
 
   phone Boolean @default(true)
   email Boolean @default(true)

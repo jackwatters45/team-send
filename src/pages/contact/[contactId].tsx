@@ -96,7 +96,7 @@ export default function Contact({ contactId }: ContactProps) {
                     <div className="space-y-1">
                       <h4 className="text-sm font-semibold">{group.name}</h4>
                       <div className="text-xs">
-                        {group.membersCount ?? 1} members
+                        {group.members.length} members
                       </div>
                       <div className="text-xs text-stone-500">
                         {group.description}
