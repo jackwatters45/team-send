@@ -1,5 +1,4 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import parsePhoneNumber from "libphonenumber-js";
 
 import { Checkbox } from "@/components/ui/checkbox";
 
@@ -13,10 +12,11 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
-import type { Contact } from "@/server/api/routers/contact";
+import type { MemberBaseContact } from "@/server/api/routers/contact";
 import Link from "next/link";
+import { parsePhoneNumber } from "libphonenumber-js";
 
-export const getGroupMembersColumns = (): ColumnDef<Contact>[] => {
+export const getGroupMembersColumns = (): ColumnDef<MemberBaseContact>[] => {
   return [
     {
       id: "select",
@@ -52,32 +52,32 @@ export const getGroupMembersColumns = (): ColumnDef<Contact>[] => {
       ),
     },
     {
-      accessorKey: "name",
+      accessorKey: "contact.name",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
       ),
     },
     {
-      accessorKey: "email",
+      accessorKey: "contact.email",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Email" />
       ),
     },
     {
-      accessorKey: "phone",
+      accessorKey: "contact.phone",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Phone" />
       ),
       cell: ({ row }) => {
-        const phoneNumber = parsePhoneNumber(row.getValue<string>("phone"));
+        const phoneString = row.original.contact?.phone;
+        if (!phoneString) return null;
 
-        return phoneNumber
-          ? phoneNumber.formatNational()
-          : row.getValue<string>("phone");
+        const phone = parsePhoneNumber(phoneString);
+        return phone ? phone.formatNational() : phoneString;
       },
     },
     {
-      accessorKey: "notes",
+      accessorKey: "memberNotes",
       header: ({ column }) => (
         <DataTableColumnHeader
           column={column}
@@ -85,7 +85,7 @@ export const getGroupMembersColumns = (): ColumnDef<Contact>[] => {
           className="flex-1"
         />
       ),
-      cell: ({ row }) => <HoverableCell value={row.original.notes} />,
+      cell: ({ row }) => <HoverableCell value={row.original.contact?.notes} />,
     },
     {
       id: "actions",

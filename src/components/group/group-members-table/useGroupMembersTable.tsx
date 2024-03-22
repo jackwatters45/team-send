@@ -1,30 +1,27 @@
 import { useEffect } from "react";
-import { useRouter } from "next/router";
 
-import { api } from "@/utils/api";
 import useDataTable from "@/hooks/useDataTable";
 import { getGroupMembersColumns } from "./groupMembersColumns";
-import { type Contact } from "@/server/api/routers/contact";
+import type { MemberBaseContact } from "@/server/api/routers/contact";
 import getInitialSelectedMembers from "@/lib/getInitialSelectedMembers";
 
-export default function useGroupMembersTable() {
-  const groupId = useRouter().query.groupId as string;
-  const groupMembers = api.group.getGroupMembers.useQuery(groupId);
-
+export default function useGroupMembersTable(
+  data: MemberBaseContact[] | undefined,
+) {
   const { table, rowSelection, setRowSelection } = useDataTable({
     columns: getGroupMembersColumns(),
-    data: groupMembers.data ?? [],
-    getRowId: (row: Contact) => row.id,
-    enableRowSelection: (row) => !!row.original.phone || !!row.original.email,
+    data: data ?? [],
+    getRowId: (row: MemberBaseContact) => row.contact.id,
+    enableRowSelection: (row) =>
+      !!row.original.contact.phone || !!row.original.contact.email,
   });
 
   useEffect(() => {
-    if (!groupMembers.data) return;
-    setRowSelection(getInitialSelectedMembers(groupMembers.data ?? []));
-  }, [groupMembers.data, setRowSelection]);
+    if (!data) return;
+    setRowSelection(getInitialSelectedMembers(data ?? []));
+  }, [data, setRowSelection]);
 
   return {
-    groupMembers,
     table,
     rowSelection,
     setRowSelection,
