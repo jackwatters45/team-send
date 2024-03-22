@@ -4,7 +4,7 @@ import { api } from "@/utils/api";
 
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 export default function AccountSettings() {
-  const { data: user } = api.auth.getCurrentUser.useQuery();
+  const { data: user } = api.auth.getCurrentUserTemp.useQuery();
 
   const handleExport = () => {
     console.log("Export data");
@@ -117,7 +117,7 @@ export default function AccountSettings() {
 export const getStaticProps = async () => {
   const helpers = genSSRHelpers();
 
-  await helpers.auth.getCurrentUser.prefetch();
+  await helpers.auth.getCurrentUserTemp.prefetch();
 
   return {
     props: {

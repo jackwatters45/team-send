@@ -74,4 +74,10 @@ export const authRouter = createTRPCRouter({
       where: { id: userId },
     });
   }),
+
+  getCurrentUserTemp: publicProcedure.query(({ ctx }) => {
+    return ctx.db.user.findUnique({
+      where: { email: "jack.watters@me.com" },
+    });
+  }),
 });
