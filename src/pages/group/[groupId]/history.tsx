@@ -1,7 +1,7 @@
 import type { GetStaticPropsContext, InferGetStaticPropsType } from "next";
 
 import { api } from "@/utils/api";
-import { generateServerSideHelpers } from "@/server/helpers/generateServerSideHelpers";
+import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { getHistoryTableColumns } from "@/components/group/group-history/historyTableColumns";
 
 import { GroupLayout } from "@/layouts/GroupLayout";
@@ -35,7 +35,6 @@ export default function GroupHistory({ groupId }: GroupProps) {
           View message and user history for this group.
         </div>
       </div>
-
       <div>
         <div className="flex items-center py-4">
           <DataTableFilter
@@ -62,7 +61,7 @@ type GroupProps = InferGetStaticPropsType<typeof getStaticProps>;
 export const getStaticProps = async (
   context: GetStaticPropsContext<{ groupId: string }>,
 ) => {
-  const helpers = generateServerSideHelpers();
+  const helpers = genSSRHelpers();
 
   const groupId = context.params?.groupId;
 
