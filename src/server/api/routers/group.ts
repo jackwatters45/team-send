@@ -74,7 +74,12 @@ export const groupRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      return await ctx.db.message.findMany({
+      const groupBasicInfo = await ctx.db.group.findUnique({
+        where: { id: input.groupId },
+        select: { id: true, name: true, description: true },
+      });
+
+      const messages = await ctx.db.message.findMany({
         where: { groupId: input.groupId },
         include: {
           sentBy: true,
@@ -82,6 +87,12 @@ export const groupRouter = createTRPCRouter({
           reminders: true,
         },
       });
+
+      if (!groupBasicInfo) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Group not found" });
+      }
+
+      return { group: groupBasicInfo, messages };
     }),
   getGroupById: publicProcedure
     .input(

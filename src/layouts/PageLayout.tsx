@@ -3,7 +3,7 @@ import Layout from "./Layout";
 interface GroupLayoutProps {
   children: React.ReactNode;
   title: string | undefined;
-  description: string | null;
+  description: string | undefined | null;
   rightSidebar?: React.ReactNode;
 }
 

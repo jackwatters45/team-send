@@ -19,7 +19,7 @@ export function SidebarLayout({
       <aside className="-ml-4 lg:w-1/5">
         <SidebarNav items={sidebarNavItems} />
       </aside>
-      <div className="flex-1">{children}</div>
+      <div className="max-w-full flex-1">{children}</div>
     </PageLayout>
   );
 }
