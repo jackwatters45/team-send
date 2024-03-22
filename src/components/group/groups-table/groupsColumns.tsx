@@ -101,6 +101,8 @@ export const groupsColumns: ColumnDef<IGroupMessagesMembers>[] = [
   },
   {
     id: "actions",
+    enableSorting: false,
+    enableHiding: false,
     cell: ({ row }) => {
       const id = row.original?.id;
       return (
