@@ -1,4 +1,3 @@
-import Link from "next/link";
 import { MoreHorizontal } from "lucide-react";
 import type { ChangeEvent, InputHTMLAttributes } from "react";
 import {
@@ -369,12 +368,10 @@ function DataTableSkeleton({
 interface DataTableContentProps<TData, TValue> {
   table: TableType<TData>;
   columns: ColumnDef<TData, TValue>[];
-  link?: { pre: string; field: string };
 }
 function DataTableContent<TData, TValue>({
   table,
   columns,
-  link,
 }: DataTableContentProps<TData, TValue>) {
   return (
     <Table>
@@ -404,20 +401,7 @@ function DataTableContent<TData, TValue>({
               data-state={row.getIsSelected() && "selected"}
             >
               {row.getVisibleCells().map((cell) => {
-                const colId = cell.column.id;
-                return link && colId !== "actions" && colId !== "select" ? (
-                  <TableCell key={cell.id}>
-                    <Link
-                      href={`${link.pre}${row.getValue<string>(link.field)}`}
-                      className="block p-4"
-                    >
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
-                      )}
-                    </Link>
-                  </TableCell>
-                ) : (
+                return (
                   <TableCell key={cell.id} className="p-4">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
                   </TableCell>

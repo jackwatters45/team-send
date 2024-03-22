@@ -5,7 +5,7 @@ export default function getInitialSelectedMembers(
   groupMembers: MemberBaseContact[],
 ) {
   return Object.fromEntries(
-    groupMembers?.map((member) => [member.contact.id, member.isRecipient]) ??
+    groupMembers?.map((member) => [member.contact?.id, member.isRecipient]) ??
       [],
   ) as RowSelectionState;
 }

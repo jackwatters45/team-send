@@ -18,7 +18,7 @@ const sidebarNavItems = [
 interface AccountLayoutProps {
   children: React.ReactNode;
   title: string;
-  description?: string;
+  description: string | null;
 }
 
 export function AccountLayout({ children, ...props }: AccountLayoutProps) {

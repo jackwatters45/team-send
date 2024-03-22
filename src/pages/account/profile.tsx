@@ -84,7 +84,7 @@ export default function AccountProfile() {
                   description:
                     "Your user ID has been copied to your clipboard.",
                 });
-                return navigator.clipboard.writeText(user.id);
+                return navigator.clipboard.writeText(user?.id);
               }}
             >
               <div className="flex-1">{user?.id}</div>

@@ -49,7 +49,6 @@ export const groupsColumns: ColumnDef<IGroupMessagesMembers>[] = [
     enableSorting: false,
     enableHiding: false,
   },
-
   {
     accessorKey: "id",
     header: ({ column }) => (
@@ -69,7 +68,6 @@ export const groupsColumns: ColumnDef<IGroupMessagesMembers>[] = [
     ),
     cell: ({ row }) => {
       const lastMessage = row.original.messages?.[0]?.content;
-
       return <HoverableCell value={lastMessage} />;
     },
   },
@@ -85,7 +83,7 @@ export const groupsColumns: ColumnDef<IGroupMessagesMembers>[] = [
 
       return lastMessageTime ? (
         <DateHoverableCell dateInput={lastMessageTime} />
-      ) : null;
+      ) : <div></div>;
     },
   },
   {
@@ -101,45 +99,40 @@ export const groupsColumns: ColumnDef<IGroupMessagesMembers>[] = [
   },
   {
     id: "actions",
-    cell: ({ row }) => (
-      <DataTableRowActions>
-        <DropdownMenuItem
-          onClick={() =>
-            navigator.clipboard.writeText(row.getValue<string>("id"))
-          }
-          className="w-48"
-        >
-          Copy group ID
-          <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuLabel className="font-semibold">
-          View details
-        </DropdownMenuLabel>
-        <DropdownMenuLinkItem href={`/group/${row.getValue<string>("id")}`}>
-          Details
-        </DropdownMenuLinkItem>
-        <DropdownMenuLinkItem
-          href={`/group/${row.getValue<string>("id")}/members`}
-        >
-          Members
-        </DropdownMenuLinkItem>
-        <DropdownMenuLinkItem
-          href={`/group/${row.getValue<string>("id")}/history`}
-        >
-          History
-        </DropdownMenuLinkItem>
-        <DropdownMenuLinkItem
-          href={`/group/${row.getValue<string>("id")}/settings`}
-        >
-          Settings
-        </DropdownMenuLinkItem>
-        <DropdownMenuSeparator />
-        <DropdownMenuItem>
-          Delete group
-          <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-        </DropdownMenuItem>
-      </DataTableRowActions>
-    ),
+    cell: ({ row }) => {
+      const id = row.original?.id;
+      return (
+        <DataTableRowActions>
+          <DropdownMenuItem
+            onClick={() => navigator.clipboard.writeText(id)}
+            className="w-48"
+          >
+            Copy group ID
+            <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuLabel className="font-semibold">
+            View details
+          </DropdownMenuLabel>
+          <DropdownMenuLinkItem href={`/group/${id}`}>
+            Details
+          </DropdownMenuLinkItem>
+          <DropdownMenuLinkItem href={`/group/${id}/members`}>
+            Members
+          </DropdownMenuLinkItem>
+          <DropdownMenuLinkItem href={`/group/${id}/history`}>
+            History
+          </DropdownMenuLinkItem>
+          <DropdownMenuLinkItem href={`/group/${id}/settings`}>
+            Settings
+          </DropdownMenuLinkItem>
+          <DropdownMenuSeparator />
+          <DropdownMenuItem>
+            Delete group
+            <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+          </DropdownMenuItem>
+        </DataTableRowActions>
+      );
+    },
   },
 ];

@@ -34,7 +34,7 @@ export default function EditMessage({
   const { table, rowSelection, setRowSelection } = useDataTable({
     columns: getGroupMembersColumns(),
     data: data?.members ?? [],
-    getRowId: (row: MemberBaseContact) => row.contact.id,
+    getRowId: (row: MemberBaseContact) => row.contact?.id,
     enableRowSelection: (row) =>
       !!row.original.contact.phone || !!row.original.contact.email,
   });

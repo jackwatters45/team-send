@@ -28,7 +28,7 @@ export default function MessageDetails({
   const { table } = useDataTable({
     columns: getGroupMembersColumns(),
     data: data?.recipients ?? [],
-    getRowId: (row: MemberBaseContact) => row.contact.id,
+    getRowId: (row: MemberBaseContact) => row.contact?.id,
     includeRowSelection: false,
   });
 
@@ -38,7 +38,7 @@ export default function MessageDetails({
 
   return (
     <PageLayout
-      title={`Message ${data.id}`}
+      title={`Message ${data?.id}`}
       description={`Last edited ${formatShortRelativeDate(data.updatedAt)}`}
       rightSidebar={
         <Link

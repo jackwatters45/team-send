@@ -5,7 +5,7 @@ interface SidebarLayoutProps {
   children: React.ReactNode;
   sidebarNavItems: SidebarNavItems;
   title: string;
-  description?: string | null;
+  description: string | null;
 }
 
 export function SidebarLayout({

@@ -25,8 +25,8 @@ export default function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size={"icon"} className="relative rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.avatar} alt={user.name} />
-            <AvatarFallback>{extractInitials(user.name)}</AvatarFallback>
+            <AvatarImage src={user.avatar ?? undefined} alt={user.name!} />
+            <AvatarFallback>{extractInitials(user.name!)}</AvatarFallback>
           </Avatar>
         </Button>
       </DropdownMenuTrigger>

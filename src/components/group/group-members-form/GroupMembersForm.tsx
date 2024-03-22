@@ -240,7 +240,7 @@ function RecentGroupResults({
         {groupsResults ? (
           groupsResults.map((group) => (
             <Button
-              key={group.id}
+              key={group?.id}
               onClick={() => handleClickGroup(group)}
               type="button"
               variant={"ghost"}
@@ -290,12 +290,12 @@ function RecentContactsResults({
       <div className="flex flex-wrap">
         {contactsResults ? (
           contactsResults.map((contact) => {
-            const phoneNumber = contact.phone
+            const phoneNumber = contact?.phone
               ? parsePhoneNumber(contact.phone)
               : null;
             return (
               <Button
-                key={contact.id}
+                key={contact?.id}
                 onClick={() => handleClickContact(contact)}
                 type="button"
                 variant={"ghost"}

@@ -79,9 +79,9 @@ export default function Contact({ contactId }: ContactProps) {
           <div className="space-y-2">
             {data.groups.map((group, i) => {
               return (
-                <Fragment key={group.id}>
+                <Fragment key={group?.id}>
                   <Link
-                    href={`/group/${group.id}`}
+                    href={`/group/${group?.id}`}
                     className="flex items-center gap-2 rounded-md p-2"
                   >
                     <Avatar>

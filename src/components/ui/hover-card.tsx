@@ -8,7 +8,7 @@ import { type User } from "@/server/api/routers/auth";
 import { parsePhoneNumber } from "libphonenumber-js";
 import { Separator } from "./separator";
 import { ScrollArea } from "./scroll-area";
-import type {  Member } from "@/server/api/routers/contact";
+import type { Member } from "@/server/api/routers/contact";
 import { formatRelativeDateAndTime } from "@/lib/dateHelpers";
 import Link from "next/link";
 
@@ -94,14 +94,14 @@ function MembersHoverableCell({ members }: IMemberHoverableCellProps) {
           data-member-count={members?.length > 3}
         >
           {members?.map(({ contact }, i) => {
-            const phoneNumber = contact.phone
+            const phoneNumber = contact?.phone
               ? parsePhoneNumber(contact.phone)
               : null;
 
             return (
-              <React.Fragment key={contact.id}>
+              <React.Fragment key={contact?.id}>
                 <Link
-                  href={`/contact/${contact.id}`}
+                  href={`/contact/${contact?.id}`}
                   className="flex items-center gap-2 rounded-md p-2"
                 >
                   <Avatar>

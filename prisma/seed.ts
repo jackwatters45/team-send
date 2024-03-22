@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 
 import { db } from "../src/server/db";
 import type { Contact, Member } from "@/server/api/routers/contact";
-import type { IGroupPreview } from "@/server/api/routers/group";
+import type {  IGroupPreview } from "@/server/api/routers/group";
 
 async function createUser() {
   try {
@@ -69,7 +69,7 @@ async function createGroup(userId: string, contactIds: string[]) {
 
     const members = (await Promise.all(
       contactIds.map((contactId) => createMember(contactId, group.id)),
-    )) as Member[];
+    )) as unknown as Member[];
 
     return { ...group, members };
   } catch (e) {

@@ -21,7 +21,3 @@ export default createNextApiHandler({
 
 export type RouterInput = inferRouterInputs<AppRouter>;
 export type RouterOutput = inferRouterOutputs<AppRouter>;
-
-export type GroupGetLatestInput = RouterInput["group"]["getLatest"];
-export type GroupGetLatestOutput = RouterOutput["group"]["getLatest"];
-

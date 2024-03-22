@@ -55,7 +55,9 @@ export const groupRouter = createTRPCRouter({
   getAll: publicProcedure.query(async ({ ctx }) => {
     return await ctx.db.group.findMany({
       include: {
-        members: true,
+        members: {
+          include: { contact: true },
+        },
         messages: {
           select: { sentAt: true, content: true },
           where: { sentAt: { not: undefined } },

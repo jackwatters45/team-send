@@ -29,7 +29,7 @@ interface GroupLayoutProps {
 
 export function GroupLayout({ children, group }: GroupLayoutProps) {
   const sidebarNavItems = getSidebarNavItems(
-    useRouter().query.groupId as string,
+    useRouter().query?.groupId as string,
   );
 
   return (
@@ -42,3 +42,4 @@ export function GroupLayout({ children, group }: GroupLayoutProps) {
     </SidebarLayout>
   );
 }
+
