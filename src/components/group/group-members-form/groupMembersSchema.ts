@@ -1,10 +1,13 @@
 import { z } from "zod";
 
 const memberSchema = z.object({
-  name: z.string().max(40),
-  email: z.string().email().optional(),
-  phone: z.string().optional(),
-  notes: z.string().max(100).optional(),
+  contact: z.object({
+    name: z.string().max(40),
+    email: z.string().email().optional().nullable(),
+    phone: z.string().optional().nullable(),
+    notes: z.string().max(100).optional().nullable(),
+  }),
+  memberNotes: z.string().max(100).optional().nullable(),
   isRecipient: z.boolean(),
 });
 
