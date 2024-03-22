@@ -48,7 +48,9 @@ export default function useDataTable<TData, TValue>({
     state = { ...state, columnFilters };
   }
 
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+    id: false,
+  });
   if (includeColumnOptions) {
     args = { ...args, onColumnVisibilityChange: setColumnVisibility };
     state = { ...state, columnVisibility };
