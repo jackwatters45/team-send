@@ -13,8 +13,9 @@ model Group {
   description String?
   avatar      String?
 
-  members  Member[]
-  messages Message[]
+  members      Member[]
+  membersCount Int       @default(0)
+  messages     Message[]
 
   phone Boolean @default(true)
   email Boolean @default(true)
@@ -32,7 +33,7 @@ model Group {
 model Contact {
   id    String  @id @default(cuid())
   name  String
-  phone String  @unique
+  phone String? @unique
   email String? @unique
   notes String?
 
@@ -55,6 +56,8 @@ model Member {
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+  Message   Message? @relation(fields: [messageId], references: [id])
+  messageId String?
 }
 
 model Reminder {
@@ -92,8 +95,10 @@ model Message {
   isReminders     Boolean    @default(false)
   reminders       Reminder[]
 
-  recipients Contact[]
-  status     String    @default("draft")
+  recipients Member[]
+  status     String   @default("draft")
+  Contact    Contact? @relation(fields: [contactId], references: [id])
+  contactId  String?
 }
 
 // Necessary for Next auth

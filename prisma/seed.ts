@@ -1,7 +1,8 @@
 import { faker } from "@faker-js/faker";
 
 import { db } from "../src/server/db";
-import type { Contact } from "@/server/api/routers/contact";
+import type { Contact, Member } from "@/server/api/routers/contact";
+import type { IGroupPreview } from "@/server/api/routers/group";
 
 async function createUser() {
   try {
@@ -39,29 +40,45 @@ async function createContact() {
   }
 }
 
-async function createGroup(userId: string, contacts: string[]) {
+async function createMember(contactId: string, groupId: string) {
   try {
-    return await db.group.create({
+    return await db.member.create({
+      data: {
+        contact: { connect: { id: contactId } },
+        group: { connect: { id: groupId } },
+      },
+    });
+  } catch (e) {
+    console.error(e);
+  }
+}
+
+async function createGroup(userId: string, contactIds: string[]) {
+  try {
+    const group = await db.group.create({
       data: {
         name: faker.company.name(),
         description: faker.company.catchPhrase(),
         avatar: faker.image.avatar(),
-        addedContacts: contacts,
-        addedGroups: [],
+        addedGroupIds: [],
         phone: true,
         email: true,
         createdBy: { connect: { id: userId } },
-        members: {
-          connect: contacts?.map((c) => ({ id: c })),
-        },
       },
     });
+
+    const members = (await Promise.all(
+      contactIds.map((contactId) => createMember(contactId, group.id)),
+    )) as Member[];
+
+    return { ...group, members };
   } catch (e) {
     console.error(e);
     throw e;
   }
 }
 
+// TODO add options for scheduled, recurring, reminders
 //   sentAt   DateTime @default(now())
 //   isScheduled     Boolean    @default(false)
 //   scheduledDate   DateTime?
@@ -70,23 +87,17 @@ async function createGroup(userId: string, contacts: string[]) {
 //   recurringPeriod String?
 //   isReminders     Boolean    @default(false)
 //   reminders       Reminder[]
-
-// TODO add options for scheduled, recurring, reminders
-async function createMessage(
-  groupId: string,
-  contacts: string[],
-  userId: string,
-) {
+async function createMessage(group: IGroupPreview, userId: string) {
   try {
     return await db.message.create({
       data: {
         content: faker.lorem.paragraph(),
-        group: { connect: { id: groupId } },
+        group: { connect: { id: group.id } },
         sentBy: { connect: { id: userId } },
         lastUpdatedBy: { connect: { id: userId } },
         createdBy: { connect: { id: userId } },
         recipients: {
-          connect: contacts?.map((c) => ({ id: c })),
+          connect: group.members?.map(({ id }) => ({ id })),
         },
         status: "sent",
       },
@@ -96,8 +107,24 @@ async function createMessage(
   }
 }
 
+async function dropAllTables() {
+  try {
+    await db.member.deleteMany({});
+    await db.account.deleteMany({});
+    await db.message.deleteMany({});
+    await db.contact.deleteMany({});
+    await db.group.deleteMany({});
+    await db.user.deleteMany({});
+    console.log("All tables dropped successfully!");
+  } catch (error) {
+    console.error("Error dropping tables:", error);
+  }
+}
+
 // not all contacts in each group
 async function main() {
+  await dropAllTables();
+
   await Promise.all(Array.from({ length: 5 }).map(() => createUser()));
 
   const me = await db.user.upsert({
@@ -124,9 +151,7 @@ async function main() {
   await Promise.all(
     groups.map((group) => {
       return Promise.all(
-        Array.from({ length: 5 }).map(() =>
-          createMessage(group.id, contacts, me.id),
-        ),
+        Array.from({ length: 5 }).map(() => createMessage(group, me.id)),
       );
     }),
   );
