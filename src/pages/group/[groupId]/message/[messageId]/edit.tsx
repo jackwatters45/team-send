@@ -58,7 +58,7 @@ export default function EditMessage({
         : undefined,
       isRecurring: msgData?.recurringNum ? "yes" : "no",
       recurringNum: msgData?.recurringNum,
-      recurringPeriod: msgData?.recurringPeriod as RecurPeriod,
+      recurringPeriod: msgData?.recurringPeriod as RecurPeriod | undefined,
       isReminders: msgData?.reminders?.length ? "yes" : "no",
       reminders: (msgData?.reminders ?? []) as IReminder[],
       recipientsOnlyThisMessage: true,
