@@ -1,6 +1,3 @@
-import { useRouter } from "next/router";
-
-import type { IGroupBase } from "@/server/api/routers/group";
 import { SidebarLayout } from "./SidebarLayout";
 
 const getSidebarNavItems = (groupId: string) => [
@@ -24,22 +21,24 @@ const getSidebarNavItems = (groupId: string) => [
 
 interface GroupLayoutProps {
   children: React.ReactNode;
-  group: IGroupBase;
+  title: string;
+  description: string | null;
+  groupId: string;
 }
 
-export function GroupLayout({ children, group }: GroupLayoutProps) {
-  const sidebarNavItems = getSidebarNavItems(
-    useRouter().query?.groupId as string,
-  );
-
+export function GroupLayout({
+  children,
+  title,
+  description,
+  groupId,
+}: GroupLayoutProps) {
   return (
     <SidebarLayout
-      title={group.name}
-      description={group.description}
-      sidebarNavItems={sidebarNavItems}
+      title={title}
+      description={description}
+      sidebarNavItems={getSidebarNavItems(groupId)}
     >
       {children}
     </SidebarLayout>
   );
 }
-

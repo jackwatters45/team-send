@@ -83,7 +83,9 @@ export const groupsColumns: ColumnDef<IGroupMessagesMembers>[] = [
 
       return lastMessageTime ? (
         <DateHoverableCell dateInput={lastMessageTime} />
-      ) : <div></div>;
+      ) : (
+        <div></div>
+      );
     },
   },
   {
@@ -99,6 +101,8 @@ export const groupsColumns: ColumnDef<IGroupMessagesMembers>[] = [
   },
   {
     id: "actions",
+    enableSorting: false,
+    enableHiding: false,
     cell: ({ row }) => {
       const id = row.original?.id;
       return (

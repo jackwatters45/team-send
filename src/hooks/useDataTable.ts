@@ -36,7 +36,7 @@ export default function useDataTable<TData, TValue>({
   ...props
 }: UseDataTableProps<TData, TValue>) {
   let args = { ...props, getCoreRowModel: getCoreRowModel() };
-  let state = { ...otherState };
+  let state = {};
 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   if (includeFilter) {
@@ -48,7 +48,9 @@ export default function useDataTable<TData, TValue>({
     state = { ...state, columnFilters };
   }
 
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
+    id: false,
+  });
   if (includeColumnOptions) {
     args = { ...args, onColumnVisibilityChange: setColumnVisibility };
     state = { ...state, columnVisibility };
@@ -77,7 +79,12 @@ export default function useDataTable<TData, TValue>({
     };
   }
 
-  const table = useReactTable({ data, columns, ...args, state });
+  const table = useReactTable({
+    data,
+    columns,
+    ...args,
+    state: { ...state, ...otherState },
+  });
 
   return {
     table,

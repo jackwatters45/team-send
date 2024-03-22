@@ -15,12 +15,21 @@ import {
 } from "@/components/ui/data-table";
 
 export default function GroupHistory({ groupId }: GroupProps) {
-  const { data } = api.group.getGroupById.useQuery({ groupId });
+  const { data } = api.group.getGroupHistoryById.useQuery({ groupId });
 
   const historyTableColumns = getHistoryTableColumns(groupId);
   const { table } = useDataTable({
     columns: historyTableColumns,
-    data: data?.messages ?? [],
+    data: data ?? [],
+    state: {
+      columnVisibility: {
+        id: false,
+        sender: false,
+        scheduled: false,
+        recurring: false,
+        reminders: false,
+      },
+    },
   });
 
   if (!data) {
@@ -28,7 +37,11 @@ export default function GroupHistory({ groupId }: GroupProps) {
   }
 
   return (
-    <GroupLayout group={data}>
+    <GroupLayout
+      groupId={groupId}
+      title="Group Message History"
+      description={`View message history for group: ${groupId}`}
+    >
       <div className="flex flex-col pb-4 pt-3">
         <h2 className="text-xl font-semibold tracking-tight">Group History</h2>
         <div className="text-sm text-stone-500 dark:text-stone-400">
@@ -69,7 +82,7 @@ export const getStaticProps = async (
     throw new Error("Invalid slug");
   }
 
-  await helpers.group.getGroupById.prefetch({ groupId });
+  await helpers.group.getGroupHistoryById.prefetch({ groupId });
 
   return {
     props: {

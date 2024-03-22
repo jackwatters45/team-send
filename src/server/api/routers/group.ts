@@ -67,7 +67,22 @@ export const groupRouter = createTRPCRouter({
       },
     });
   }),
-
+  getGroupHistoryById: publicProcedure
+    .input(
+      z.object({
+        groupId: z.string(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      return await ctx.db.message.findMany({
+        where: { groupId: input.groupId },
+        include: {
+          sentBy: true,
+          recipients: { include: { contact: true } },
+          reminders: true,
+        },
+      });
+    }),
   getGroupById: publicProcedure
     .input(
       z.object({
