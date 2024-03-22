@@ -49,31 +49,11 @@ export function getHistoryTableColumns(
       enableSorting: false,
       enableHiding: false,
     },
-
     {
       accessorKey: "id",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="ID" />
       ),
-    },
-    {
-      accessorKey: "status",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Status" />
-      ),
-      cell: ({ row }) => {
-        const status = row.getValue<string>("status");
-        return status?.[0]?.toUpperCase() + status?.slice(1);
-      },
-    },
-    {
-      accessorKey: "time",
-      header: ({ column }) => (
-        <DataTableColumnHeader column={column} title="Time" />
-      ),
-      cell: ({ row }) => {
-        return <DateHoverableCell dateInput={row.getValue<string>("time")} />;
-      },
     },
     {
       accessorKey: "content",
@@ -98,15 +78,64 @@ export function getHistoryTableColumns(
       },
     },
     {
+      accessorKey: "status",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Status" />
+      ),
+      cell: ({ row }) => {
+        const status = row.getValue<string>("status");
+        return status?.[0]?.toUpperCase() + status?.slice(1);
+      },
+    },
+    {
+      accessorKey: "time",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Send Time" />
+      ),
+      cell: ({ row }) => {
+        return <DateHoverableCell dateInput={row.original.sentAt} />;
+      },
+    },
+    {
       accessorKey: "sentBy",
+      id: "sender",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Sent By" />
       ),
       cell: ({ row }) => {
-        return <UserHoverableCell user={row.getValue<User>("sentBy")} />;
+        return <UserHoverableCell user={row.getValue<User>("sender")} />;
       },
     },
-
+    {
+      accessorKey: "isScheduled",
+      id: "scheduled",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Scheduled" />
+      ),
+      cell: ({ row }) => {
+        return row.getValue<boolean>("scheduled") ? "Yes" : "No";
+      },
+    },
+    {
+      accessorKey: "isRecurring",
+      id: "recurring",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Recurring" />
+      ),
+      cell: ({ row }) => {
+        return row.getValue<boolean>("recurring") ? "Yes" : "No";
+      },
+    },
+    {
+      accessorKey: "isReminders",
+      id: "reminders",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Reminders" />
+      ),
+      cell: ({ row }) => {
+        return row.getValue<boolean>("reminders") ? "Yes" : "No";
+      },
+    },
     {
       id: "actions",
       enableSorting: false,
