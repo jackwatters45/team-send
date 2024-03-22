@@ -3,8 +3,8 @@ import { z } from "zod";
 
 export const env = createEnv({
   /**
-   * Specify your server-side environment variables schema here. This way you can ensure the app
-   * isn't built with invalid env vars.
+   * Specify your server-side environment variables schema here. This way you can ensure the app isn't built with invalid env vars.
+   *
    */
   server: {
     DATABASE_URL: z
@@ -34,6 +34,8 @@ export const env = createEnv({
     GOOGLE_SECRET: z.string(),
     FACEBOOK_ID: z.string(),
     FACEBOOK_SECRET: z.string(),
+    UPSTASH_REDIS_REST_URL: z.string().url(),
+    UPSTASH_REDIS_REST_TOKEN: z.string(),
   },
 
   /**
@@ -60,6 +62,8 @@ export const env = createEnv({
     GOOGLE_SECRET: process.env.GOOGLE_SECRET,
     FACEBOOK_ID: process.env.FACEBOOK_ID,
     FACEBOOK_SECRET: process.env.FACEBOOK_SECRET,
+    UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
+    UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
