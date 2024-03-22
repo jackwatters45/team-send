@@ -8,7 +8,7 @@ import { type User } from "@/server/api/routers/auth";
 import { parsePhoneNumber } from "libphonenumber-js";
 import { Separator } from "./separator";
 import { ScrollArea } from "./scroll-area";
-import { type Member } from "@/server/api/routers/contact";
+import type {  Member } from "@/server/api/routers/contact";
 import { formatRelativeDateAndTime } from "@/lib/dateHelpers";
 import Link from "next/link";
 
@@ -85,7 +85,6 @@ interface IMemberHoverableCellProps {
 function MembersHoverableCell({ members }: IMemberHoverableCellProps) {
   if (!members) return null;
 
-  console.log(members);
   return (
     <HoverCard>
       <HoverCardTrigger>{`${members?.length} members`}</HoverCardTrigger>
@@ -94,27 +93,27 @@ function MembersHoverableCell({ members }: IMemberHoverableCellProps) {
           className="data-[member-count=true]:h-[220px]"
           data-member-count={members?.length > 3}
         >
-          {members?.map((member, i) => {
-            const phoneNumber = member.phone
-              ? parsePhoneNumber(member.phone)
+          {members?.map(({ contact }, i) => {
+            const phoneNumber = contact.phone
+              ? parsePhoneNumber(contact.phone)
               : null;
 
             return (
-              <React.Fragment key={member.id}>
+              <React.Fragment key={contact.id}>
                 <Link
-                  href={`/contact/${member.id}`}
+                  href={`/contact/${contact.id}`}
                   className="flex items-center gap-2 rounded-md p-2"
                 >
                   <Avatar>
                     <AvatarFallback>
-                      {extractInitials(member.name)}
+                      {extractInitials(contact.name)}
                     </AvatarFallback>
                   </Avatar>
                   <div className="space-y-1 truncate">
-                    <h4 className="text-sm font-semibold">{member.name}</h4>
+                    <h4 className="text-sm font-semibold">{contact.name}</h4>
                     <div className="flex flex-wrap text-xs text-stone-500">
-                      {member.email && <div>{member.email}</div>}
-                      {phoneNumber && member.email && (
+                      {contact.email && <div>{contact.email}</div>}
+                      {phoneNumber && contact.email && (
                         <div className="mx-1">•</div>
                       )}
                       {phoneNumber && <div>{phoneNumber.formatNational()}</div>}
@@ -136,11 +135,11 @@ interface DateHoverableCellProps {
 }
 function DateHoverableCell({ dateInput }: DateHoverableCellProps) {
   const date = new Date(dateInput);
-  const { time, date: dateText } = formatRelativeDateAndTime(date);
+  const dateTime = formatRelativeDateAndTime(date);
 
   return (
     <HoverCard>
-      <HoverCardTrigger>{`${dateText} ${time}`}</HoverCardTrigger>
+      <HoverCardTrigger>{`${dateTime?.date} ${dateTime?.time}`}</HoverCardTrigger>
       <HoverCardContent className="text-xs">
         {date.toLocaleString()}
       </HoverCardContent>
