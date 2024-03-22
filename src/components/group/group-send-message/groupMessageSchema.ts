@@ -16,7 +16,7 @@ export const groupMessageSchema = z
     isScheduled: z.enum(["no", "yes"]),
     scheduledDate: z.date().optional(),
     isRecurring: z.enum(["no", "yes"]),
-    recurringNum: z.number().positive().int().max(36).optional(),
+    recurringNum: z.number().positive().int().max(36).nullish(),
     recurringPeriod: z.enum(["years", "months", "weeks", "days"]).optional(),
     isReminders: z.enum(["no", "yes"]),
     reminders: z.array(reminderSchema).max(6).optional(),
