@@ -36,7 +36,7 @@ export default function useDataTable<TData, TValue>({
   ...props
 }: UseDataTableProps<TData, TValue>) {
   let args = { ...props, getCoreRowModel: getCoreRowModel() };
-  let state = { ...otherState };
+  let state = {};
 
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   if (includeFilter) {
@@ -79,7 +79,12 @@ export default function useDataTable<TData, TValue>({
     };
   }
 
-  const table = useReactTable({ data, columns, ...args, state });
+  const table = useReactTable({
+    data,
+    columns,
+    ...args,
+    state: { ...state, ...otherState },
+  });
 
   return {
     table,
