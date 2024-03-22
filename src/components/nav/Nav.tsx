@@ -1,5 +1,4 @@
 import Image from "next/image";
-import Link from "next/link";
 
 import UserNav from "./UserNav";
 import SearchButton from "./SearchButton";
@@ -21,7 +20,7 @@ export default function Nav() {
               width={20}
               height={20}
             />
-            <span className="">Team Send</span>
+            <span>Team Send</span>
           </NavigationMenuLink>
         </NavigationMenuItem>
         <div className="flex items-center gap-6">
