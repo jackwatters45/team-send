@@ -13,9 +13,9 @@ import {
   formatShortRelativeDate,
 } from "@/lib/dateHelpers";
 import { api } from "@/utils/api";
-import { type Contact } from "@/server/api/routers/contact";
+import type { MemberBaseContact } from "@/server/api/routers/contact";
 import useDataTable from "@/hooks/useDataTable";
-import { generateServerSideHelpers } from "@/server/helpers/generateServerSideHelpers";
+import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 
 export default function MessageDetails({
   messageId,
@@ -28,7 +28,7 @@ export default function MessageDetails({
   const { table } = useDataTable({
     columns: getGroupMembersColumns(),
     data: data?.recipients ?? [],
-    getRowId: (row: Contact) => row.id,
+    getRowId: (row: MemberBaseContact) => row.contact.id,
     includeRowSelection: false,
   });
 
@@ -115,11 +115,7 @@ export default function MessageDetails({
           <div className="font-semibold">Message Recipients</div>
           <div className="text-sm ">{data.recipients.length} recipients</div>
         </div>
-        <GroupMembersTable
-          table={table}
-          isLoading={!data.recipients}
-          placeholder="Search recipients"
-        />
+        <GroupMembersTable table={table} placeholder="Search recipients" />
       </div>
     </PageLayout>
   );
@@ -128,7 +124,7 @@ export default function MessageDetails({
 export const getStaticProps = async (
   context: GetStaticPropsContext<{ messageId: string; groupId: string }>,
 ) => {
-  const helpers = generateServerSideHelpers();
+  const helpers = genSSRHelpers();
 
   const messageId = context.params?.messageId;
   const groupId = context.params?.groupId;
