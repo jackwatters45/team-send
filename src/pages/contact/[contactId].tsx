@@ -4,8 +4,8 @@ import { useForm } from "react-hook-form";
 import type { GetStaticPropsContext, InferGetStaticPropsType } from "next";
 
 import { api } from "@/utils/api";
-import { generateServerSideHelpers } from "@/server/helpers/generateServerSideHelpers";
-import { type Contact } from "@/server/api/routers/contact";
+import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
+import { type ContactBase } from "@/server/api/routers/contact";
 import extractInitials from "@/lib/extractInitials";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -18,11 +18,16 @@ import { Button } from "@/components/ui/button";
 export default function Contact({ contactId }: ContactProps) {
   const { data } = api.contact.getContactById.useQuery({ contactId });
 
-  const form = useForm<Contact>({
-    defaultValues: data,
+  const form = useForm<ContactBase>({
+    defaultValues: {
+      name: data?.name ?? "",
+      email: data?.email ?? "",
+      phone: data?.phone ?? "",
+      notes: data?.notes ?? "",
+    },
   });
 
-  const onSubmit = (data: Contact) => {
+  const onSubmit = (data: ContactBase) => {
     console.log(data);
   };
 
@@ -91,7 +96,7 @@ export default function Contact({ contactId }: ContactProps) {
                     <div className="space-y-1">
                       <h4 className="text-sm font-semibold">{group.name}</h4>
                       <div className="text-xs">
-                        {/* {group.members.length} members */}
+                        {group.membersCount ?? 1} members
                       </div>
                       <div className="text-xs text-stone-500">
                         {group.description}
@@ -112,7 +117,7 @@ export default function Contact({ contactId }: ContactProps) {
 export const getStaticProps = async (
   context: GetStaticPropsContext<{ contactId: string }>,
 ) => {
-  const helpers = generateServerSideHelpers();
+  const helpers = genSSRHelpers();
 
   const contactId = context.params?.contactId;
   if (typeof contactId !== "string") {

@@ -1,11 +1,16 @@
-import type {  INewMember } from "@/server/api/routers/contact";
+import type { MemberBaseContactBase } from "@/server/api/routers/contact";
 
-const createContact = (contact?: INewMember): INewMember => ({
-  name: contact?.name ?? "",
-  email: contact?.email ?? "",
-  phone: contact?.phone ?? "",
-  notes: contact?.notes ?? "",
-  isRecipient: true,
+const createContact = (
+  newMember?: MemberBaseContactBase,
+): MemberBaseContactBase => ({
+  contact: {
+    name: newMember?.contact.name ?? "",
+    email: newMember?.contact.email ?? "",
+    phone: newMember?.contact.phone ?? "",
+    notes: newMember?.contact.notes ?? "",
+  },
+  memberNotes: newMember?.memberNotes ?? "",
+  isRecipient: newMember?.isRecipient ?? false,
 });
 
 export default createContact;
