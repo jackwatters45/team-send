@@ -11,13 +11,16 @@ export interface ContactBase {
   notes: string | null;
 }
 
+export interface ContactBaseWithId extends ContactBase {
+  id: string;
+}
+
 export interface ContactConnections {
   members: Member[];
   messages: Message[];
 }
 
-export interface Contact extends ContactBase {
-  id: string;
+export interface Contact extends ContactBaseWithId {
   createdAt: Date;
   updatedAt: Date;
 }
@@ -32,7 +35,7 @@ export interface MemberBaseNewContact extends MemberBase {
 }
 
 export interface MemberBaseContact extends MemberBase {
-  contact: Contact;
+  contact: ContactBaseWithId;
 }
 
 export interface Member extends MemberBaseContact {
@@ -58,7 +61,6 @@ export const contactRouter = createTRPCRouter({
         include: { members: true },
       });
 
-      console.log({ contact, groups });
       if (!contact) {
         throw new TRPCError({
           code: "NOT_FOUND",
@@ -67,5 +69,44 @@ export const contactRouter = createTRPCRouter({
       }
 
       return { ...contact, groups };
+    }),
+  getRecentContacts: publicProcedure
+    .input(
+      z.object({
+        search: z.string().optional(),
+        addedContactIds: z.array(z.string()),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      if (!input.search) {
+        return await ctx.db.contact.findMany({
+          where: { id: { notIn: input.addedContactIds } },
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            notes: true,
+          },
+          take: 10,
+          orderBy: { updatedAt: "desc" },
+        });
+      } else {
+        return await ctx.db.contact.findMany({
+          where: {
+            name: { contains: input.search },
+            id: { notIn: input.addedContactIds },
+          },
+          select: {
+            id: true,
+            name: true,
+            phone: true,
+            email: true,
+            notes: true,
+          },
+          take: 10,
+          orderBy: { updatedAt: "desc" },
+        });
+      }
     }),
 });

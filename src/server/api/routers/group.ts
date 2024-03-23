@@ -33,8 +33,7 @@ export interface IGroupSettings extends IGroupBase {
 }
 
 export interface IGroupMetaDetails {
-  addedGroups: string[];
-  addedContacts: string[];
+  addedGroupIds: string[];
   createdAt: Date;
   updatedAt: Date;
   createdBy: string;
@@ -120,6 +119,33 @@ export const groupRouter = createTRPCRouter({
       }
 
       return group;
+    }),
+  getRecentGroups: publicProcedure
+    .input(
+      z.object({
+        search: z.string().optional(),
+        addedGroupIds: z.array(z.string()),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      if (!input.search) {
+        return await ctx.db.group.findMany({
+          where: { id: { notIn: input.addedGroupIds } },
+          include: { members: { select: { contact: true } } },
+          take: 10,
+          orderBy: { updatedAt: "desc" },
+        });
+      } else {
+        return await ctx.db.group.findMany({
+          where: {
+            name: { contains: input.search },
+            id: { notIn: input.addedGroupIds },
+          },
+          include: { members: { select: { contact: true } } },
+          take: 10,
+          orderBy: { updatedAt: "desc" },
+        });
+      }
     }),
 
   create: protectedProcedure

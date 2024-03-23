@@ -26,7 +26,7 @@ export default function CreateGroup() {
       description: "",
       avatar: "",
       members: [createContact()],
-      recentsSearch: "",
+      addedGroupIds: [],
     },
   });
 

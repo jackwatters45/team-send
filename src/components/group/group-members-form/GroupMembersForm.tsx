@@ -1,4 +1,4 @@
-import { type UseFormReturn } from "react-hook-form";
+import { useForm, type UseFormReturn } from "react-hook-form";
 import { useRef } from "react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { MinusCircledIcon, PlusCircledIcon } from "@radix-ui/react-icons";
@@ -6,9 +6,9 @@ import { useDebounce } from "use-debounce";
 import { parsePhoneNumber } from "libphonenumber-js";
 
 import createContact from "@/lib/createContact";
-import type { Contact } from "@/server/api/routers/contact";
-import type { IGroupPreview } from "@/server/api/routers/group";
 import extractInitials from "@/lib/extractInitials";
+import { api } from "@/utils/api";
+import type { Contact, ContactBaseWithId } from "@/server/api/routers/contact";
 
 import {
   type GroupMembersFormType,
@@ -166,27 +166,9 @@ function GroupMemberList({ form }: { form: FormReturn }) {
 }
 
 function GroupMembersRecents({ form }: { form: FormReturn }) {
-  const [search] = useDebounce(form.watch("recentsSearch"), 500);
+  const recentSearch = useForm({ defaultValues: { recentsSearch: "" } });
 
-  // const recentContactsQuery =
-  // await api.contact.getRecentContacts.useQuery(search);
-  // const contactsResults = recentContactsQuery.data ?? [];
-
-  // const recentGroupsQuery = await api.group.getRecentGroups.useQuery(search);
-  // const groupsResults = recentGroupsQuery.data ?? [];
-
-  const contactsResults: Array<Contact> = [];
-  const groupsResults: Array<IGroupPreview> = [];
-
-  const handleClickContact = (contact: Contact) => {
-    // query that adds contact to group + addedContacts
-    console.log(contact, search);
-  };
-
-  const handleClickGroup = (group: IGroupPreview) => {
-    // query that adds group users to group + addedContacts
-    console.log(group, search);
-  };
+  const [search] = useDebounce(recentSearch.watch("recentsSearch"), 500);
 
   return (
     <Tabs
@@ -201,47 +183,59 @@ function GroupMembersRecents({ form }: { form: FormReturn }) {
         </TabsList>
       </div>
       <div className="pt-4">
-        <FormInput<GroupMembersFormSchema>
+        <FormInput
           control={form.control}
           name={`recentsSearch`}
           placeholder="Search for recent contacts or groups"
         />
       </div>
       <div className="flex flex-col pt-2">
-        <RecentContactsResults
-          contactsResults={contactsResults}
-          form={form}
-          handleClickContact={handleClickContact}
-        />
-        <RecentGroupResults
-          groupsResults={groupsResults}
-          form={form}
-          handleClickGroup={handleClickGroup}
-        />
+        <RecentGroupResults search={search} form={form} />
+        <RecentContactsResults search={search} form={form} />
       </div>
     </Tabs>
   );
 }
 
-interface IRecentGroupResultsProps {
-  groupsResults: IGroupPreview[];
-  form: UseFormReturn<GroupMembersFormType>;
-  handleClickGroup: (item: IGroupPreview) => void;
+interface RecentResultsProps {
+  search: string;
+  form: FormReturn;
 }
 
-function RecentGroupResults({
-  groupsResults,
-  form,
-  handleClickGroup,
-}: IRecentGroupResultsProps) {
+function RecentGroupResults({ search, form }: RecentResultsProps) {
+  const { data } = api.group.getRecentGroups.useQuery({
+    search,
+    addedGroupIds: form.getValues("addedGroupIds"),
+  });
+
+  const handleClickGroup = (
+    id: string,
+    groupMembers: Array<{ contact: Contact }>,
+  ) => {
+    form.setValue("addedGroupIds", [...form.getValues("addedGroupIds"), id]);
+
+    const members = form.getValues("members");
+    const filteredGroupMemberIds = groupMembers.reduce(
+      (accumulator, { contact }) => {
+        if (!members.some((m) => m.contact.id === contact.id)) {
+          accumulator.push({ isRecipient: true, contact, memberNotes: "" });
+        }
+        return accumulator;
+      },
+      [] as GroupMembersFormType["members"],
+    );
+
+    form.setValue("members", [...members, ...filteredGroupMemberIds]);
+  };
+
   return (
     <TabsContent value="groups">
       <div className="flex flex-wrap">
-        {groupsResults ? (
-          groupsResults.map((group) => (
+        {data ? (
+          data.map((group) => (
             <Button
               key={group?.id}
-              onClick={() => handleClickGroup(group)}
+              onClick={() => handleClickGroup(group.id, group.members)}
               type="button"
               variant={"ghost"}
               className="flex h-fit w-full items-center justify-start gap-2 p-2 lg:w-1/2
@@ -267,29 +261,40 @@ function RecentGroupResults({
             </Button>
           ))
         ) : (
-          <div>No groups named &quot;{form.watch("recentsSearch")}&quot;</div>
+          <div>No groups named &quot;{search}&quot;</div>
         )}
       </div>
     </TabsContent>
   );
 }
 
-interface IRecentContactsResultsProps {
-  contactsResults: Contact[];
-  form: UseFormReturn<GroupMembersFormType>;
-  handleClickContact: (item: Contact) => void;
-}
+function RecentContactsResults({ search, form }: RecentResultsProps) {
+  const addedContactIds = form
+    .getValues("members")
+    .reduce((accumulator, member) => {
+      if (member.contact.id) {
+        accumulator.push(member.contact.id);
+      }
+      return accumulator;
+    }, [] as string[]);
 
-function RecentContactsResults({
-  contactsResults,
-  form,
-  handleClickContact,
-}: IRecentContactsResultsProps) {
+  const { data } = api.contact.getRecentContacts.useQuery({
+    search,
+    addedContactIds,
+  });
+
+  const handleClickContact = (contact: ContactBaseWithId) => {
+    form.setValue("members", [
+      ...form.getValues("members"),
+      { isRecipient: true, contact, memberNotes: "" },
+    ]);
+  };
+
   return (
     <TabsContent value="contacts">
       <div className="flex flex-wrap">
-        {contactsResults ? (
-          contactsResults.map((contact) => {
+        {data ? (
+          data.map((contact) => {
             const phoneNumber = contact?.phone
               ? parsePhoneNumber(contact.phone)
               : null;
@@ -320,7 +325,7 @@ function RecentContactsResults({
             );
           })
         ) : (
-          <div>No contacts named &quot;{form.watch("recentsSearch")}&quot;</div>
+          <div>No contacts named &quot;{search}&quot;</div>
         )}
       </div>
     </TabsContent>
