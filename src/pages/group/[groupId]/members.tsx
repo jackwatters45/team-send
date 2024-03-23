@@ -27,7 +27,7 @@ export default function GroupMembers({ groupId }: GroupProps) {
       description: data?.description ?? "",
       avatar: data?.avatar ?? "",
       members: data?.members ?? [createContact()],
-      recentsSearch: "",
+      addedGroupIds: data?.addedGroupIds ?? [],
     },
   });
 
@@ -89,19 +89,3 @@ export const getStaticPaths = () => ({
   paths: [],
   fallback: "blocking",
 });
-
-// export async function getServerSideProps(context: GetServerSidePropsContext) {
-//   const search = context.query.search ?? "";
-
-//   const [contactsResults, groupsResults] = await Promise.all([
-//     api.contact.getRecentContacts(search),
-//     api.group.getRecentGroups(search),
-//   ]);
-
-//   return {
-//     props: {
-//       contactsResults,
-//       groupsResults,
-//     },
-//   };
-// }

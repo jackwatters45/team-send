@@ -6,6 +6,7 @@ const memberSchema = z.object({
     email: z.string().email().optional().nullable(),
     phone: z.string().optional().nullable(),
     notes: z.string().max(100).optional().nullable(),
+    id: z.string().optional().nullable(),
   }),
   memberNotes: z.string().max(100).optional().nullable(),
   isRecipient: z.boolean(),
@@ -16,7 +17,7 @@ export const groupMembersFormSchema = z.object({
   description: z.string().max(100).optional(),
   avatar: z.string().optional(),
   members: z.array(memberSchema),
-  recentsSearch: z.string().optional(),
+  addedGroupIds: z.array(z.string()),
 });
 
 export type GroupMembersFormType = z.infer<typeof groupMembersFormSchema>;

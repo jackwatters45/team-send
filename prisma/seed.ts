@@ -2,7 +2,7 @@ import { faker } from "@faker-js/faker";
 
 import { db } from "../src/server/db";
 import type { Contact, Member } from "@/server/api/routers/contact";
-import type {  IGroupPreview } from "@/server/api/routers/group";
+import type { IGroupPreview } from "@/server/api/routers/group";
 
 async function createUser() {
   try {
@@ -123,7 +123,7 @@ async function dropAllTables() {
 
 // not all contacts in each group
 async function main() {
-  await dropAllTables();
+  // await dropAllTables();
 
   await Promise.all(Array.from({ length: 5 }).map(() => createUser()));
 
