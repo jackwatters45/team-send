@@ -1,3 +1,16 @@
+import type { GetStaticPropsContext, InferGetStaticPropsType } from "next";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import { useEffect } from "react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+
+import useProtectedPage from "@/hooks/useProtectedRoute";
+import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
+import getInitialSelectedMembers from "@/lib/getInitialSelectedMembers";
+import type { MemberBaseContact } from "@/server/api/routers/contact";
+import { api } from "@/utils/api";
+import type { IReminder, RecurPeriod } from "@/server/api/routers/message";
+
 import GroupMembersTable from "@/components/group/group-members-table/GroupMembersTable";
 import { getGroupMembersColumns } from "@/components/group/group-members-table/groupMembersColumns";
 import { MessageSettings } from "@/components/group/group-send-message/MessageSettings";
@@ -12,23 +25,14 @@ import { CheckboxInput, FormTextarea } from "@/components/ui/form-inputs";
 import { toast } from "@/components/ui/use-toast";
 import useDataTable from "@/hooks/useDataTable";
 import PageLayout from "@/layouts/PageLayout";
-import getInitialSelectedMembers from "@/lib/getInitialSelectedMembers";
-import type { MemberBaseContact } from "@/server/api/routers/contact";
-import { api } from "@/utils/api";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect } from "react";
-import { useForm } from "react-hook-form";
-
-import type { GetStaticPropsContext, InferGetStaticPropsType } from "next";
-import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
-import type { IReminder, RecurPeriod } from "@/server/api/routers/message";
 
 // TODO I don't love this, but it works for now
 export default function EditMessage({
   messageId,
   groupId,
 }: MessageDetailsProps) {
+  useProtectedPage();
+
   const { data } = api.group.getGroupById.useQuery({ groupId });
 
   const { table, rowSelection, setRowSelection } = useDataTable({

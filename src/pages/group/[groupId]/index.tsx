@@ -4,10 +4,11 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useEffect } from "react";
 
-import { GroupLayout } from "@/layouts/GroupLayout";
+import useProtectedPage from "@/hooks/useProtectedRoute";
 import { api } from "@/utils/api";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 
+import { GroupLayout } from "@/layouts/GroupLayout";
 import { Form, FormDescription } from "@/components/ui/form";
 import { MessageSettings } from "@/components/group/group-send-message/MessageSettings";
 import { Button } from "@/components/ui/button";
@@ -22,9 +23,11 @@ import {
   groupMessageSchema,
 } from "@/components/group/group-send-message/groupMessageSchema";
 
-type GroupProps = InferGetStaticPropsType<typeof getStaticProps>;
+export default function Group({
+  groupId,
+}: InferGetStaticPropsType<typeof getStaticProps>) {
+  useProtectedPage();
 
-export default function Group({ groupId }: GroupProps) {
   const { data } = api.group.getGroupById.useQuery({ groupId });
 
   const { table, rowSelection } = useGroupMembersTable(data?.members);

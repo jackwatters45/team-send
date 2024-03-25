@@ -19,6 +19,10 @@ import {
 
 type LoginProps = InferGetServerSidePropsType<typeof getServerSideProps>;
 export default function Login({ providers, error }: LoginProps) {
+  if (!providers) {
+    throw new Error("Incorrect NEXTAUTH_URL or no providers added");
+  }
+
   return (
     <div
       className="flex h-screen items-center justify-center bg-stone-100

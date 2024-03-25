@@ -3,6 +3,7 @@ import { Fragment } from "react";
 import { useForm } from "react-hook-form";
 import type { GetStaticPropsContext, InferGetStaticPropsType } from "next";
 
+import useProtectedPage from "@/hooks/useProtectedRoute";
 import { api } from "@/utils/api";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { type ContactBase } from "@/server/api/routers/contact";
@@ -16,6 +17,8 @@ import { FormInput, FormTextarea } from "@/components/ui/form-inputs";
 import { Button } from "@/components/ui/button";
 
 export default function Contact({ contactId }: ContactProps) {
+  useProtectedPage();
+
   const { data } = api.contact.getContactById.useQuery({ contactId });
 
   const form = useForm<ContactBase>({

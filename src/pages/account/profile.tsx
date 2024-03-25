@@ -1,20 +1,19 @@
-import { api } from "@/utils/api";
-
-import { AccountLayout } from "@/layouts/AccountLayout";
-
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { CopyIcon } from "@radix-ui/react-icons";
 import { z } from "zod";
 
+import useProtectedPage from "@/hooks/useProtectedRoute";
+import { api } from "@/utils/api";
 import extractInitials from "@/lib/extractInitials";
+import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 
+import { AccountLayout } from "@/layouts/AccountLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Form, FormDescription } from "@/components/ui/form";
 import { FormInput } from "@/components/ui/form-inputs";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 
 const userSettingsSchema = z.object({
   name: z.string().max(40),
@@ -30,7 +29,9 @@ type UserSettingsFormSchema = typeof userSettingsSchema;
 type UserSettingsFormType = z.infer<typeof userSettingsSchema>;
 
 export default function AccountProfile() {
-  const { data: user } = api.auth.getCurrentUserTemp.useQuery();
+  useProtectedPage();
+
+  const { data: user } = api.auth.getCurrentUser.useQuery();
 
   const form = useForm<UserSettingsFormType>({
     resolver: zodResolver(userSettingsSchema),
@@ -156,7 +157,7 @@ export default function AccountProfile() {
 export const getStaticProps = async () => {
   const helpers = genSSRHelpers();
 
-  await helpers.auth.getCurrentUserTemp.prefetch();
+  await helpers.auth.getCurrentUser.prefetch();
 
   return {
     props: {

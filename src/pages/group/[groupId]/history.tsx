@@ -2,6 +2,7 @@ import type { GetStaticPropsContext, InferGetStaticPropsType } from "next";
 import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 
+import useProtectedPage from "@/hooks/useProtectedRoute";
 import { api } from "@/utils/api";
 import type { RouterOutputs } from "@/utils/api";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
@@ -34,7 +35,11 @@ import {
   DataTableSelectedRowCount,
 } from "@/components/ui/data-table";
 
-export default function GroupHistory({ groupId }: GroupProps) {
+export default function GroupHistory({
+  groupId,
+}: InferGetStaticPropsType<typeof getStaticProps>) {
+  useProtectedPage();
+
   const { data } = api.group.getGroupHistoryById.useQuery({ groupId });
 
   const historyTableColumns = getHistoryTableColumns(groupId);
@@ -84,8 +89,6 @@ export default function GroupHistory({ groupId }: GroupProps) {
     </GroupLayout>
   );
 }
-
-type GroupProps = InferGetStaticPropsType<typeof getStaticProps>;
 
 export const getStaticProps = async (
   context: GetStaticPropsContext<{ groupId: string }>,

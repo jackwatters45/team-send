@@ -4,6 +4,7 @@ import { api } from "@/utils/api";
 import type { GetStaticPropsContext, InferGetStaticPropsType } from "next";
 import * as z from "zod";
 
+import useProtectedPage from "@/hooks/useProtectedRoute";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
@@ -37,8 +38,11 @@ const groupSettingsSchema = z.object({
 type GroupSettingsFormType = z.infer<typeof groupSettingsSchema>;
 type GroupSettingsFormSchema = typeof groupSettingsSchema;
 
-type GroupProps = InferGetStaticPropsType<typeof getStaticProps>;
-export default function GroupSettings({ groupId }: GroupProps) {
+export default function GroupSettings({
+  groupId,
+}: InferGetStaticPropsType<typeof getStaticProps>) {
+  useProtectedPage();
+
   const { data } = api.group.getGroupById.useQuery({ groupId });
 
   const form = useForm<GroupSettingsFormType>({
