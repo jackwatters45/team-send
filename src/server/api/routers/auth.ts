@@ -1,4 +1,4 @@
-import { createTRPCRouter, publicProcedure, protectedProcedure } from "../trpc";
+import { createTRPCRouter, publicProcedure } from "../trpc";
 
 // Auth
 export interface Account {
@@ -68,17 +68,15 @@ export type User = IUserDetails &
   IUserActivity;
 
 export const authRouter = createTRPCRouter({
-  getCurrentUser: protectedProcedure.query(({ ctx }) => {
-    const userId = ctx.session.user.id;
+  getCurrentUser: publicProcedure.query(({ ctx }) => {
+    const userId = ctx.session?.user.id;
+
+    if (!userId) {
+      return null;
+    }
 
     return ctx.db.user.findUnique({
       where: { id: userId },
-    });
-  }),
-
-  getCurrentUserTemp: publicProcedure.query(({ ctx }) => {
-    return ctx.db.user.findUnique({
-      where: { email: "jack.watters@me.com" },
     });
   }),
 });

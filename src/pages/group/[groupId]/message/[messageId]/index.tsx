@@ -2,6 +2,7 @@ import type { GetStaticPropsContext, InferGetStaticPropsType } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
 
+import useProtectedPage from "@/hooks/useProtectedRoute";
 import PageLayout from "@/layouts/PageLayout";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -21,6 +22,8 @@ export default function MessageDetails({
   messageId,
   groupId,
 }: MessageDetailsProps) {
+  useProtectedPage();
+
   const { data } = api.message.getMessageById.useQuery({ messageId });
 
   const messageDate = formatRelativeDateAndTime(data?.sentAt);

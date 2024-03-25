@@ -1,10 +1,14 @@
-import { AccountLayout } from "@/layouts/AccountLayout";
-import { SettingActionItem } from "@/components/ui/setting-action-item";
+import useProtectedPage from "@/hooks/useProtectedRoute";
 import { api } from "@/utils/api";
-
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
+
+import { SettingActionItem } from "@/components/ui/setting-action-item";
+import { AccountLayout } from "@/layouts/AccountLayout";
+
 export default function AccountSettings() {
-  const { data: user } = api.auth.getCurrentUserTemp.useQuery();
+  useProtectedPage();
+
+  const { data: user } = api.auth.getCurrentUser.useQuery();
 
   const handleExport = () => {
     console.log("Export data");
@@ -117,7 +121,7 @@ export default function AccountSettings() {
 export const getStaticProps = async () => {
   const helpers = genSSRHelpers();
 
-  await helpers.auth.getCurrentUserTemp.prefetch();
+  await helpers.auth.getCurrentUser.prefetch();
 
   return {
     props: {

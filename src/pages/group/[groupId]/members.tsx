@@ -2,6 +2,7 @@ import { type GetStaticPropsContext, type InferGetStaticPropsType } from "next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
+import useProtectedPage from "@/hooks/useProtectedRoute";
 import createContact from "@/lib/createContact";
 import { api } from "@/utils/api";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
@@ -15,9 +16,11 @@ import { GroupLayout } from "@/layouts/GroupLayout";
 import { Form } from "@/components/ui/form";
 import GroupMembersFormContent from "@/components/group/group-members-form/GroupMembersForm";
 
-type GroupProps = InferGetStaticPropsType<typeof getStaticProps>;
+export default function GroupMembers({
+  groupId,
+}: InferGetStaticPropsType<typeof getStaticProps>) {
+  useProtectedPage();
 
-export default function GroupMembers({ groupId }: GroupProps) {
   const { data } = api.group.getGroupById.useQuery({ groupId });
 
   const form = useForm<GroupMembersFormType>({

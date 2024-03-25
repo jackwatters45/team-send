@@ -1,7 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import type { GetServerSidePropsContext, GetStaticPropsContext } from "next";
 
-import { getServerAuthSession } from "@/server/auth";
 import { type RouterOutputs, api } from "@/utils/api";
 import useDataTable from "@/hooks/useDataTable";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
@@ -32,31 +30,10 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
-import { useRouter } from "next/router";
-import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
-
-const useAuth = () => {
-  const router = useRouter();
-
-  const session = useSession();
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    if (session.status === "loading") return;
-
-    if (!session.data) {
-      void router.push("/login");
-    } else {
-      setIsLoading(false);
-    }
-  }, [session, router]);
-
-  return isLoading;
-};
+import useProtectedPage from "@/hooks/useProtectedRoute";
 
 export default function Home() {
-  const isLoading = useAuth();
+  useProtectedPage();
 
   const { data } = api.group.getAll.useQuery();
 
@@ -65,7 +42,7 @@ export default function Home() {
     data: data ?? [],
   });
 
-  if (!data || isLoading) {
+  if (!data) {
     return null;
   }
 
@@ -89,7 +66,7 @@ export default function Home() {
   );
 }
 
-export const getStaticProps = async (context: GetStaticPropsContext) => {
+export const getStaticProps = async () => {
   // const session = await getServerAuthSession(context);
   // if (!session) return { redirect: { destination: "/login" } };
 

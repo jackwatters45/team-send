@@ -1,14 +1,14 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import createContact from "@/lib/createContact";
-import { toast } from "@/components/ui/use-toast";
-
+import useProtectedPage from "@/hooks/useProtectedRoute";
 import { api } from "@/utils/api";
+import createContact from "@/lib/createContact";
+import extractInitials from "@/lib/extractInitials";
 
+import { toast } from "@/components/ui/use-toast";
 import PageLayout from "@/layouts/PageLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import extractInitials from "@/lib/extractInitials";
 import { FormInput } from "@/components/ui/form-inputs";
 import { Form } from "@/components/ui/form";
 import {
@@ -19,6 +19,8 @@ import {
 import GroupMembersFormContent from "@/components/group/group-members-form/GroupMembersForm";
 
 export default function CreateGroup() {
+  useProtectedPage();
+
   const form = useForm<GroupMembersFormType>({
     resolver: zodResolver(groupMembersFormSchema),
     defaultValues: {
