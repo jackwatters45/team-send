@@ -16,7 +16,7 @@ async function createUser() {
           firstName: name.split(" ")[0],
           lastName: name.split(" ")[1],
         }),
-        avatar: faker.image.avatar(),
+        image: faker.image.avatar(),
         nodeMailer: faker.string.uuid(),
         twilio: faker.string.uuid(),
       },
@@ -123,16 +123,16 @@ async function dropAllTables() {
 
 // not all contacts in each group
 async function main() {
-  // await dropAllTables();
+  await dropAllTables();
 
   await Promise.all(Array.from({ length: 5 }).map(() => createUser()));
 
   const me = await db.user.upsert({
-    where: { email: "jack.watters@me.com" },
+    where: { email: "jackwattersdev@gmail.com" },
     update: {},
     create: {
       name: "Jack Watters",
-      email: "jack.watters@me.com",
+      email: "jackwattersdev@gmail.com",
       phone: "+19544949167",
     },
   });

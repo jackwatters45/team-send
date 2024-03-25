@@ -1,9 +1,12 @@
-import { useState } from "react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { signIn, signOut, useSession } from "next-auth/react";
-import * as z from "zod";
+import { getProviders, signIn } from "next-auth/react";
 import Image from "next/image";
+import type {
+  GetServerSidePropsContext,
+  InferGetServerSidePropsType,
+} from "next";
+
+import { getServerAuthSession } from "@/server/auth";
+import { cn } from "@/lib/utils";
 
 import { Button } from "@/components/ui/button";
 import {
@@ -14,9 +17,8 @@ import {
   CardContent,
 } from "@/components/ui/card";
 
-export default function Login() {
-  const { data: session } = useSession();
-
+type LoginProps = InferGetServerSidePropsType<typeof getServerSideProps>;
+export default function Login({ providers, error }: LoginProps) {
   return (
     <div
       className="flex h-screen items-center justify-center bg-stone-100
@@ -30,162 +32,80 @@ export default function Login() {
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <LocalLogin />
-          <AlternateLogins />
+          <div className="flex flex-col items-center gap-4">
+            {providers &&
+              Object.values(providers).map((provider) => (
+                <Button
+                  key={provider.name}
+                  variant={"outline"}
+                  className="h-16 w-full py-4"
+                  onClick={async (e) => {
+                    e.preventDefault();
+                    await signIn(provider.id);
+                  }}
+                >
+                  <Image
+                    src={getProviderIcon(provider.id)}
+                    alt={`login with ${provider.name}`}
+                    className={cn(
+                      "w-8",
+                      provider.id === "github" ? "dark:invert" : "",
+                    )}
+                    contextMenu="("
+                    width={40}
+                    height={40}
+                  />
+                  <span className="ml-4 text-base">{`Continue with ${provider.name}`}</span>
+                </Button>
+              ))}
+          </div>
+          {error && (
+            <div className="pt-4 text-center text-sm text-red-500">
+              {getAuthError(error)}
+            </div>
+          )}
         </CardContent>
       </Card>
     </div>
   );
 }
 
-const formSchema = z.object({
-  username: z
-    .string()
-    .min(6, {
-      message: "Email must be at least 6 characters.",
-    })
-    .max(30, {
-      message: "Email must be at most 40 characters.",
-    }),
-
-  password: z
-    .string()
-    .min(8, {
-      message: "Password must be at least 8 characters.",
-    })
-    .max(50),
-});
-
-type FormData = z.infer<typeof formSchema>;
-
-const LocalLogin = () => {
-  const { data: sessionData } = useSession();
-
-  const [showPassword, setShowPassword] = useState(false);
-  const toggleShowPassword = () => setShowPassword((prev) => !prev);
-
-  const {
-    handleSubmit,
-    register,
-    formState: { errors },
-  } = useForm<FormData>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      username: "",
-      password: "",
-    },
-  });
-
-  const onSubmit = handleSubmit((values: z.infer<typeof formSchema>) => {
-    console.log(values);
-  });
-
-  return (
-    <form onSubmit={onSubmit} className="flex flex-col gap-4 text-neutral-500">
-      <div className="relative rounded-lg border border-solid border-neutral-300 hover:border-neutral-400 dark:border-stone-300 dark:text-stone-300 dark:hover:border-stone-50">
-        <label htmlFor="username" className="absolute left-4 top-3 text-xs ">
-          Email
-        </label>
-        <input
-          className="w-full rounded-lg px-4 pb-2 pt-7 text-lg dark:bg-stone-800"
-          type="email"
-          id="username"
-          autoComplete="username"
-          {...register("username")}
-        />
-      </div>
-      <div className="relative rounded-lg border border-solid border-neutral-300 hover:border-neutral-400 dark:border-stone-300 dark:text-stone-300 dark:hover:border-stone-50">
-        <label htmlFor="password" className="absolute left-4 top-3 text-xs ">
-          Password
-        </label>
-        <input
-          className="w-full rounded-lg px-4 pb-2 pt-7 text-lg dark:bg-stone-800"
-          type={showPassword ? "text" : "password"}
-          id="password"
-          autoComplete="current-password"
-          {...register("password")}
-        />
-        <button
-          className="absolute right-3 top-6 text-sm font-semibold "
-          onClick={toggleShowPassword}
-          type="button"
-        >
-          {showPassword ? "Hide" : "Show"}
-        </button>
-      </div>
-      <Button className="" type="submit">
-        Continue
-      </Button>
-    </form>
-  );
-};
-
-function AlternateLogins() {
-  return (
-    <div className="flex flex-col items-center gap-2 pt-8">
-      <span className="text-sm font-bold text-neutral-500">
-        Or continue with
-      </span>
-      <div className="flex gap-3">
-        <button className="cursor-pointer rounded-full bg-none p-2 hover:bg-black hover:bg-opacity-5 dark:hover:bg-stone-50 dark:hover:bg-white dark:hover:bg-opacity-10">
-          <a href={"http://localhost:3000/api/auth/callback/facebook"}>
-            <Image
-              src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/facebook/facebook-plain.svg"
-              alt="login with facebook"
-              className="w-10"
-              width={40}
-              height={40}
-            />
-          </a>
-        </button>
-        <button className="cursor-pointer rounded-full bg-none p-2 hover:bg-black hover:bg-opacity-5 dark:hover:bg-stone-50 dark:hover:bg-white dark:hover:bg-opacity-10">
-          <a href={"http://localhost:3000/api/auth/callback/google"}>
-            <Image
-              src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg"
-              alt="login with google"
-              className="w-10"
-              width={40}
-              height={40}
-            />
-          </a>
-        </button>
-        <button className="cursor-pointer rounded-full bg-none p-2 hover:bg-black hover:bg-opacity-5 dark:hover:bg-stone-50 dark:hover:bg-white dark:hover:bg-opacity-10">
-          <a href={"http://localhost:3000/api/auth/callback/github"}>
-            <div className="rounded-full dark:bg-stone-300">
-              <Image
-                src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/github/github-original.svg"
-                alt="login with github"
-                className="w-10"
-                width={40}
-                height={40}
-              />
-            </div>
-          </a>
-        </button>
-      </div>
-    </div>
-  );
+function getProviderIcon(providerId: string) {
+  switch (providerId) {
+    case "google":
+      return "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg";
+    case "facebook":
+      return "https://cdn.jsdelivr.net/gh/devicons/devicon/icons/facebook/facebook-plain.svg";
+    case "github":
+      return "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/github/github-original.svg";
+    default:
+      return "";
+  }
 }
 
-function AuthShowcase() {
-  const { data: sessionData } = useSession();
+function getAuthError(error: string | string[]) {
+  if (Array.isArray(error)) {
+    return "An error occurred while logging in. Please try again.";
+  }
 
-  // const { data: secretMessage } = api.post.getSecretMessage.useQuery(
-  //   undefined, // no input
-  //   { enabled: sessionData?.user !== undefined },
-  // );
+  switch (error) {
+    case "OAuthAccountNotLinked":
+      return "This account is already linked to another login method.";
+    default:
+      return "An error occurred while logging in. Please try again.";
+  }
+}
 
-  return (
-    <div className="flex flex-col items-center justify-center gap-4">
-      <p className="text-center text-2xl text-white">
-        {sessionData && <span>Logged in as {sessionData.user?.name}</span>}
-      </p>
-      <button
-        className="rounded-full bg-white/10 px-10 py-3 font-semibold text-white no-underline transition hover:bg-white/20"
-        onClick={sessionData ? () => void signOut() : () => void signIn()}
-      >
-        {sessionData ? "Sign out" : "Sign in"}
-      </button>
-    </div>
-  );
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+  const session = await getServerAuthSession(ctx);
+
+  if (session) {
+    return { redirect: { destination: "/" } };
+  }
+
+  const providers = await getProviders();
+
+  return {
+    props: { providers: providers ?? [], error: ctx.query.error ?? null },
+  };
 }

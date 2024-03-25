@@ -2,11 +2,11 @@ import { GroupLayout } from "@/layouts/GroupLayout";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { api } from "@/utils/api";
 import type { GetStaticPropsContext, InferGetStaticPropsType } from "next";
+import * as z from "zod";
 
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import type { z } from "zod";
 
 import extractInitials from "@/lib/extractInitials";
 
@@ -21,17 +21,23 @@ import {
   FormItem,
   FormLabel,
 } from "@/components/ui/form";
-import {
-  type GroupSettingsFormSchema,
-  type GroupSettingsFormType,
-  groupSettingsSchema,
-} from "@/components/group/group-settings/groupSettingsSchema";
 import { toast } from "@/components/ui/use-toast";
 import { CheckboxInput, FormInput } from "@/components/ui/form-inputs";
 import { Button } from "@/components/ui/button";
 
-type GroupProps = InferGetStaticPropsType<typeof getStaticProps>;
+const groupSettingsSchema = z.object({
+  name: z.string().max(40),
+  description: z.string().max(100).optional(),
+  avatar: z.string().optional(),
+  "avatar-file": z.string().optional(),
+  phone: z.boolean(),
+  email: z.boolean(),
+  "change-global": z.boolean(),
+});
+type GroupSettingsFormType = z.infer<typeof groupSettingsSchema>;
+type GroupSettingsFormSchema = typeof groupSettingsSchema;
 
+type GroupProps = InferGetStaticPropsType<typeof getStaticProps>;
 export default function GroupSettings({ groupId }: GroupProps) {
   const { data } = api.group.getGroupById.useQuery({ groupId });
 
