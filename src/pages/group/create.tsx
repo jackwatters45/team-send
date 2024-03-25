@@ -24,7 +24,7 @@ export default function CreateGroup() {
     defaultValues: {
       name: "",
       description: "",
-      avatar: "",
+      image: "",
       members: [createContact()],
       addedGroupIds: [],
     },
@@ -83,7 +83,7 @@ export default function CreateGroup() {
             <div className="flex w-full  flex-col gap-8 px-4 py-4  sm:px-0 lg:max-w-lg">
               <FormInput<GroupMembersFormSchema>
                 control={form.control}
-                name="avatar"
+                name="image"
                 label="Group Avatar"
                 type="file"
                 accept=".png, .jpg, .jpeg"
@@ -102,9 +102,9 @@ export default function CreateGroup() {
                 placeholder="Enter a Group Description (optional)"
               />
             </div>
-            {(form.watch("name") || form.watch("avatar")) && (
+            {(form.watch("name") || form.watch("image")) && (
               <Avatar className="h-24 w-24 lg:h-48 lg:w-48">
-                <AvatarImage src={form.watch("avatar")} alt="Group Avatar" />
+                <AvatarImage src={form.watch("image")} alt="Group Avatar" />
                 <AvatarFallback className="text-4xl font-medium lg:text-8xl">
                   {extractInitials(form.watch("name"))}
                 </AvatarFallback>

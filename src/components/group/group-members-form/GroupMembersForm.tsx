@@ -243,7 +243,7 @@ function RecentGroupResults({ search, form }: RecentResultsProps) {
             >
               <Avatar className="h-10 w-10">
                 <AvatarImage
-                  src={group.avatar ?? undefined}
+                  src={group.image ?? undefined}
                   alt="Contact Avatar"
                 />
                 <AvatarFallback className="">

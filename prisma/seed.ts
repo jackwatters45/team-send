@@ -59,7 +59,7 @@ async function createGroup(userId: string, contactIds: string[]) {
       data: {
         name: faker.company.name(),
         description: faker.company.catchPhrase(),
-        avatar: faker.image.avatar(),
+        image: faker.image.avatar(),
         addedGroupIds: [],
         phone: true,
         email: true,

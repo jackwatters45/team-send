@@ -18,8 +18,8 @@ import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 
 const userSettingsSchema = z.object({
   name: z.string().max(40),
-  avatar: z.string().optional(),
-  "avatar-file": z.string().optional(),
+  image: z.string().optional(),
+  "image-file": z.string().optional(),
   email: z.string().email(),
   phone: z.string().optional(),
   username: z.string(),
@@ -36,8 +36,8 @@ export default function AccountProfile() {
     resolver: zodResolver(userSettingsSchema),
     defaultValues: {
       name: user?.name ?? "",
-      avatar: user?.avatar ?? "",
-      "avatar-file": "",
+      image: user?.image ?? "",
+      "image-file": "",
       email: user?.email ?? "",
       username: user?.username ?? "",
     },
@@ -96,7 +96,7 @@ export default function AccountProfile() {
           <div className="flex justify-between gap-12">
             <div className="flex-1">
               <FormInput<UserSettingsFormSchema>
-                name="avatar-file"
+                name="image-file"
                 label="Group Avatar"
                 type="file"
                 accept=".png, .jpg, .jpeg"
@@ -105,11 +105,11 @@ export default function AccountProfile() {
               />
             </div>
             {(form.watch("name") ??
-              form.watch("avatar") ??
-              form.watch("avatar-file")) && (
+              form.watch("image") ??
+              form.watch("image-file")) && (
               <Avatar className="h-20 w-20">
                 <AvatarImage
-                  src={form.watch("avatar-file") ?? form.watch("avatar")}
+                  src={form.watch("image-file") ?? form.watch("image")}
                   alt="Group Avatar"
                 />
                 <AvatarFallback className="text-4xl font-medium ">

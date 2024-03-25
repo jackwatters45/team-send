@@ -15,7 +15,7 @@ const memberSchema = z.object({
 export const groupMembersFormSchema = z.object({
   name: z.string().max(40),
   description: z.string().max(100).optional(),
-  avatar: z.string().optional(),
+  image: z.string().optional(),
   members: z.array(memberSchema),
   addedGroupIds: z.array(z.string()),
 });

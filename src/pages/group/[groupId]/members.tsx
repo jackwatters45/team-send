@@ -25,7 +25,7 @@ export default function GroupMembers({ groupId }: GroupProps) {
     defaultValues: {
       name: data?.name ?? "",
       description: data?.description ?? "",
-      avatar: data?.avatar ?? "",
+      image: data?.image ?? "",
       members: data?.members ?? [createContact()],
       addedGroupIds: data?.addedGroupIds ?? [],
     },

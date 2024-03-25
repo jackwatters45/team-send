@@ -28,8 +28,8 @@ import { Button } from "@/components/ui/button";
 const groupSettingsSchema = z.object({
   name: z.string().max(40),
   description: z.string().max(100).optional(),
-  avatar: z.string().optional(),
-  "avatar-file": z.string().optional(),
+  image: z.string().optional(),
+  "image-file": z.string().optional(),
   phone: z.boolean(),
   email: z.boolean(),
   "change-global": z.boolean(),
@@ -46,8 +46,8 @@ export default function GroupSettings({ groupId }: GroupProps) {
     defaultValues: {
       name: data?.name ?? "",
       description: data?.description ?? "",
-      avatar: data?.avatar ?? "",
-      "avatar-file": "",
+      image: data?.image ?? "",
+      "image-file": "",
       phone: data?.phone ?? false,
       email: data?.email ?? false,
       "change-global": false,
@@ -90,7 +90,7 @@ export default function GroupSettings({ groupId }: GroupProps) {
           <div className="flex justify-between gap-12">
             <div className="flex-1">
               <FormInput<GroupSettingsFormSchema>
-                name="avatar-file"
+                name="image-file"
                 label="Group Avatar"
                 type="file"
                 accept=".png, .jpg, .jpeg"
@@ -99,11 +99,11 @@ export default function GroupSettings({ groupId }: GroupProps) {
               />
             </div>
             {(form.watch("name") ??
-              form.watch("avatar") ??
-              form.watch("avatar-file")) && (
+              form.watch("image") ??
+              form.watch("image-file")) && (
               <Avatar className="h-20 w-20">
                 <AvatarImage
-                  src={form.watch("avatar-file") ?? form.watch("avatar")}
+                  src={form.watch("image-file") ?? form.watch("image")}
                   alt="Group Avatar"
                 />
                 <AvatarFallback className="text-4xl font-medium ">

@@ -1,5 +1,5 @@
 import type { ColumnDef } from "@tanstack/react-table";
-import type { GetServerSidePropsContext } from "next";
+import type { GetServerSidePropsContext, GetStaticPropsContext } from "next";
 
 import { getServerAuthSession } from "@/server/auth";
 import { type RouterOutputs, api } from "@/utils/api";
@@ -32,8 +32,32 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
+import { useRouter } from "next/router";
+import { useSession } from "next-auth/react";
+import { useEffect, useState } from "react";
+
+const useAuth = () => {
+  const router = useRouter();
+
+  const session = useSession();
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    if (session.status === "loading") return;
+
+    if (!session.data) {
+      void router.push("/login");
+    } else {
+      setIsLoading(false);
+    }
+  }, [session, router]);
+
+  return isLoading;
+};
 
 export default function Home() {
+  const isLoading = useAuth();
+
   const { data } = api.group.getAll.useQuery();
 
   const { table } = useDataTable({
@@ -41,7 +65,7 @@ export default function Home() {
     data: data ?? [],
   });
 
-  if (!data) {
+  if (!data || isLoading) {
     return null;
   }
 
@@ -65,11 +89,9 @@ export default function Home() {
   );
 }
 
-export const getServerSideProps = async (
-  context: GetServerSidePropsContext,
-) => {
-  const session = await getServerAuthSession(context);
-  if (!session) return { redirect: { destination: "/login" } };
+export const getStaticProps = async (context: GetStaticPropsContext) => {
+  // const session = await getServerAuthSession(context);
+  // if (!session) return { redirect: { destination: "/login" } };
 
   const helpers = genSSRHelpers();
   await helpers.group.getAll.prefetch();

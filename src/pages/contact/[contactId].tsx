@@ -86,7 +86,7 @@ export default function Contact({ contactId }: ContactProps) {
                   >
                     <Avatar>
                       <AvatarImage
-                        src={group.avatar ?? undefined}
+                        src={group.image ?? undefined}
                         alt={group.name}
                       />
                       <AvatarFallback>

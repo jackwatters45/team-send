@@ -16,7 +16,7 @@ export interface IGroupBase {
   id: string;
   name: string;
   description: string | null;
-  avatar: string | null;
+  image: string | null;
 }
 
 export interface IGroupPreview extends IGroupBase {
