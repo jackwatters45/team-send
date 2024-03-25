@@ -63,7 +63,7 @@ function UserHoverableCell({ user }: IUserHoverableCellProps) {
       <HoverCardContent className="text-xs">
         <div className="flex justify-between space-x-4">
           <Avatar>
-            <AvatarImage src={user.avatar} />
+            <AvatarImage src={user.image} />
             <AvatarFallback>{extractInitials(user.name)}</AvatarFallback>
           </Avatar>
           <div className="space-y-1">
