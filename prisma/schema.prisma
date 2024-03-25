@@ -19,7 +19,7 @@ model Group {
   phone Boolean @default(true)
   email Boolean @default(true)
 
-  addedGroupIds   String[]
+  addedGroupIds String[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -115,10 +115,11 @@ model Message {
 // Necessary for Next auth
 model Account {
   id                String  @id @default(cuid())
-  userId            String
+  userId            String  @unique
   type              String
+  password          String?
   provider          String
-  providerAccountId String
+  providerAccountId String?
   refresh_token     String? // @db.Text
   access_token      String? // @db.Text
   expires_at        Int?
@@ -140,18 +141,19 @@ model Session {
 }
 
 model User {
-  id       String  @id @default(cuid())
-  name     String?
-  username String? @unique
-  phone    String? @unique
-  email    String? @unique
-  // emailVerified DateTime?
-  avatar   String?
+  id            String    @id @default(cuid())
+  name          String?
+  username      String?   @unique
+  phone         String?   @unique
+  email         String?   @unique
+  emailVerified DateTime?
+  image         String?
 
   nodeMailer String?
   twilio     String?
 
-  accounts Account[]
+  account   Account?
+
   sessions Session[]
   groups   Group[]
 

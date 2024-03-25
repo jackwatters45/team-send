@@ -5,6 +5,7 @@ export interface Account {
   id: string;
   userId: string;
   type: string;
+  password?: string;
   provider: string;
   providerAccountId: string;
   refreshToken?: string;
@@ -39,7 +40,7 @@ export interface IUserDetails {
   phone?: string;
   email?: string;
   // emailVerified? : boolean;
-  avatar: string;
+  image: string;
 }
 
 export interface IUserConnections {
@@ -48,7 +49,7 @@ export interface IUserConnections {
 }
 
 export interface IUserMetaDetails {
-  accounts: Account[];
+  account: Account;
   sessions: Session[];
   createdAt: Date;
   updatedAt: Date;

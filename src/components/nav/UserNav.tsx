@@ -12,10 +12,15 @@ import {
 } from "@/components/ui/dropdown-menu";
 import extractInitials from "@/lib/extractInitials";
 import { api } from "@/utils/api";
+import { signOut } from "next-auth/react";
 import Link from "next/link";
 
 export default function UserNav() {
   const user = api.auth.getCurrentUserTemp.useQuery().data;
+
+  const handleLogout = async () => {
+    await signOut();
+  };
 
   if (!user) {
     return null;
@@ -26,7 +31,7 @@ export default function UserNav() {
       <DropdownMenuTrigger asChild>
         <Button variant="ghost" size={"icon"} className="relative rounded-full">
           <Avatar className="h-8 w-8">
-            <AvatarImage src={user.avatar ?? undefined} alt={user.name!} />
+            <AvatarImage src={user.image ?? undefined} alt={user.name!} />
             <AvatarFallback>{extractInitials(user.name!)}</AvatarFallback>
           </Avatar>
         </Button>
@@ -62,7 +67,7 @@ export default function UserNav() {
           </Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleLogout}>
           Log out
           <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
         </DropdownMenuItem>
