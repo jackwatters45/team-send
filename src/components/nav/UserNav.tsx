@@ -11,19 +11,22 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import extractInitials from "@/lib/extractInitials";
-import { api } from "@/utils/api";
-import { signOut } from "next-auth/react";
+import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 
 export default function UserNav() {
-  const user = api.auth.getCurrentUserTemp.useQuery().data;
+  const user = useSession()?.data?.user;
 
   const handleLogout = async () => {
     await signOut();
   };
 
   if (!user) {
-    return null;
+    return (
+      <Avatar className="h-8 w-8">
+        <AvatarFallback />
+      </Avatar>
+    );
   }
 
   return (
@@ -40,9 +43,11 @@ export default function UserNav() {
         <DropdownMenuLabel className="font-normal">
           <div className="flex flex-col space-y-1">
             <p className="text-sm font-medium leading-none">{user.name}</p>
-            <p className="text-xs leading-none text-stone-400 dark:text-stone-400">
-              @{user.username}
-            </p>
+            {user.username && (
+              <p className="text-xs leading-none text-stone-400 dark:text-stone-400">
+                @{user.username}
+              </p>
+            )}
           </div>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
