@@ -11,6 +11,7 @@ import { type Member } from "./contact";
 
 import { type Message } from "./message";
 import { TRPCError } from "@trpc/server";
+import { groupMembersFormSchema } from "@/components/group/group-members-form/groupMembersSchema";
 
 export interface IGroupBase {
   id: string;
@@ -149,20 +150,66 @@ export const groupRouter = createTRPCRouter({
     }),
 
   create: protectedProcedure
-    .input(z.object({ name: z.string({ required_error: "TODO add errors" }) }))
+    .input(groupMembersFormSchema)
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
       const { success } = await ratelimit.limit(userId);
       if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
 
-      return ctx.db.group.create({
-        data: {
-          name: input.name,
-          createdBy: { connect: { id: ctx.session.user.id } },
-        },
-      });
+      try {
+        const result = await ctx.db.$transaction(async (prisma) => {
+          const members = await Promise.all(
+            input.members
+              .filter((member) => member.contact.name)
+              .map(async (member) => {
+                if (member.contact.id) {
+                  // TODO improvement: prevent redundant contact updates
+                  await prisma.contact.upsert({
+                    where: { id: member.contact.id },
+                    update: { ...member.contact },
+                    create: { ...member.contact },
+                  });
+
+                  return {
+                    contact: { connect: { id: member.contact.id } },
+                    memberNotes: member.memberNotes,
+                    isRecipient: member.isRecipient,
+                  };
+                } else {
+                  const contact = await prisma.contact.create({
+                    data: {
+                      ...member.contact,
+                    },
+                  });
+
+                  return {
+                    contact: { connect: { id: contact.id } },
+                    memberNotes: member.memberNotes,
+                    isRecipient: member.isRecipient,
+                  };
+                }
+              }),
+          );
+
+          const group = await prisma.group.create({
+            data: {
+              ...input,
+              members: { create: members },
+              createdBy: { connect: { id: ctx.session.user.id } },
+            },
+          });
+
+          return group;
+        });
+
+        return result;
+      } catch (err) {
+        console.error(err);
+        throw err;
+      }
     }),
+
   delete: protectedProcedure
     .input(z.object({ groupId: z.string() }))
     .mutation(async ({ ctx, input }) => {

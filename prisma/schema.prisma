@@ -47,7 +47,7 @@ model Member {
   memberNotes String?
   isRecipient Boolean @default(true)
 
-  contact   Contact @relation(fields: [contactId], references: [id])
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
   contactId String
   group     Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId   String
