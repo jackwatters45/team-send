@@ -8,7 +8,7 @@ import { parsePhoneNumber } from "libphonenumber-js";
 import createContact from "@/lib/createContact";
 import extractInitials from "@/lib/extractInitials";
 import { api } from "@/utils/api";
-import type { Contact, ContactBaseWithId } from "@/server/api/routers/contact";
+import type { ContactBaseWithId } from "@/server/api/routers/contact";
 
 import {
   type GroupMembersFormType,
@@ -283,7 +283,7 @@ function RecentGroupResults({ search, form }: RecentResultsProps) {
 
   const handleClickGroup = (
     id: string,
-    groupMembers: Array<{ contact: Contact }>,
+    groupMembers: Array<{ contact: ContactBaseWithId }>,
   ) => {
     form.setValue("addedGroupIds", [...form.getValues("addedGroupIds"), id]);
 

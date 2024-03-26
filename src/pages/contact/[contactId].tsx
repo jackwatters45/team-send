@@ -1,12 +1,17 @@
 import Link from "next/link";
 import { Fragment } from "react";
 import { useForm } from "react-hook-form";
-import type { GetStaticPropsContext, InferGetStaticPropsType } from "next";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
+import type {
+  GetServerSidePropsContext,
+  InferGetServerSidePropsType,
+} from "next";
 
-import useProtectedPage from "@/hooks/useProtectedRoute";
+import { getServerAuthSession } from "@/server/auth";
 import { api } from "@/utils/api";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
-import { type ContactBase } from "@/server/api/routers/contact";
+import { type ContactBaseWithId } from "@/server/api/routers/contact";
 import extractInitials from "@/lib/extractInitials";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -15,34 +20,76 @@ import { Separator } from "@/components/ui/separator";
 import { Form } from "@/components/ui/form";
 import { FormInput, FormTextarea } from "@/components/ui/form-inputs";
 import { Button } from "@/components/ui/button";
+import { toast } from "@/components/ui/use-toast";
 
+const contactBaseSchema = z.object({
+  id: z.string(),
+  name: z.string().min(1, "Name is required"),
+  email: z
+    .string()
+    .or(
+      z
+        .string()
+        .email()
+        .refine((val) => val !== "", "Invalid email"),
+    )
+    .nullish(),
+  phone: z.string().nullish(),
+  notes: z.string().nullish(),
+});
+
+// TODO commits
+// make index protect + make sure create is fine
+// TODO add userId to pages
 export default function Contact({ contactId }: ContactProps) {
-  useProtectedPage();
-
   const { data } = api.contact.getContactById.useQuery({ contactId });
 
-  const form = useForm<ContactBase>({
+  const form = useForm<ContactBaseWithId>({
+    resolver: zodResolver(contactBaseSchema),
     defaultValues: {
-      name: data?.name ?? "",
+      id: contactId,
+      name: data?.name,
       email: data?.email ?? "",
       phone: data?.phone ?? "",
       notes: data?.notes ?? "",
     },
   });
 
-  const onSubmit = (data: ContactBase) => {
-    console.log(data);
-  };
+  const { mutate } = api.contact.update.useMutation({
+    onSuccess: (data) => {
+      toast({
+        title: "Contact Updated",
+        description: `Contact "${data.name}" has been updated.`,
+      });
+    },
+    onError: (error) => {
+      const errorMessage = error.data?.zodError?.fieldErrors?.content;
+      if (errorMessage?.[0]) {
+        toast({
+          title: "Contact Update Failed",
+          description: errorMessage[0],
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Contact Update Failed",
+          description:
+            "An error occurred while updating the contact. Please try again.",
+          variant: "destructive",
+        });
+      }
+    },
+  });
 
   if (!data) {
     return <div>404</div>;
   }
 
   return (
-    <PageLayout title={data?.name} description={`User ID: ${contactId}`}>
+    <PageLayout title={data?.name} description={`Contact ID: ${contactId}`}>
       <Form {...form}>
         <form
-          onSubmit={form.handleSubmit(onSubmit)}
+          onSubmit={form.handleSubmit((data) => mutate(data))}
           className="flex w-full flex-col gap-8"
         >
           <h2 className="text-lg font-semibold">Edit Details</h2>
@@ -117,16 +164,25 @@ export default function Contact({ contactId }: ContactProps) {
   );
 }
 
-export const getStaticProps = async (
-  context: GetStaticPropsContext<{ contactId: string }>,
+export const getServerSideProps = async (
+  context: GetServerSidePropsContext<{ contactId: string }>,
 ) => {
-  const helpers = genSSRHelpers();
-
   const contactId = context.params?.contactId;
   if (typeof contactId !== "string") {
     throw new Error("Invalid slug");
   }
 
+  const session = await getServerAuthSession(context);
+  if (!session) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false,
+      },
+    };
+  }
+
+  const helpers = genSSRHelpers(session);
   await helpers.contact.getContactById.prefetch({ contactId });
 
   return {
@@ -137,9 +193,4 @@ export const getStaticProps = async (
   };
 };
 
-export const getStaticPaths = () => ({
-  paths: [],
-  fallback: "blocking",
-});
-
-type ContactProps = InferGetStaticPropsType<typeof getStaticProps>;
+type ContactProps = InferGetServerSidePropsType<typeof getServerSideProps>;
