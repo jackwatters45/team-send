@@ -1,8 +1,9 @@
-import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { type Group } from "./group";
 import { type Message } from "./message";
 import { TRPCError } from "@trpc/server";
 import { z } from "zod";
+import type { User } from "./auth";
 
 export interface ContactBase {
   name: string;
@@ -23,6 +24,8 @@ export interface ContactConnections {
 export interface Contact extends ContactBaseWithId {
   createdAt: Date;
   updatedAt: Date;
+  createdBy: User;
+  createdById: string;
 }
 
 interface MemberBase {
@@ -49,11 +52,16 @@ export interface Member extends MemberBaseContact {
 }
 
 export const contactRouter = createTRPCRouter({
-  getContactById: publicProcedure
+  getContactById: protectedProcedure
     .input(z.object({ contactId: z.string() }))
     .query(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
       const contact = await ctx.db.contact.findUnique({
-        where: { id: input.contactId },
+        where: {
+          id: input.contactId,
+          createdById: userId,
+        },
       });
 
       const groups = await ctx.db.group.findMany({
@@ -70,7 +78,7 @@ export const contactRouter = createTRPCRouter({
 
       return { ...contact, groups };
     }),
-  getRecentContacts: publicProcedure
+  getRecentContacts: protectedProcedure
     .input(
       z.object({
         search: z.string().optional(),
@@ -108,5 +116,45 @@ export const contactRouter = createTRPCRouter({
           orderBy: { updatedAt: "desc" },
         });
       }
+    }),
+  update: protectedProcedure
+    .input(
+      z.object({
+        id: z.string(),
+        name: z.string(),
+        email: z
+          .string()
+          .or(
+            z
+              .string()
+              .email()
+              .refine((val) => val !== "", "Invalid email"),
+          )
+          .nullish(),
+        phone: z.string().nullish(),
+        notes: z.string().nullish(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const contact = await ctx.db.contact.update({
+        where: { id: input.id, createdById: userId },
+        data: {
+          name: input.name,
+          email: input.email ?? null,
+          phone: input.phone ?? null,
+          notes: input.notes ?? null,
+        },
+      });
+
+      if (!contact) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Contact not found",
+        });
+      }
+
+      return contact;
     }),
 });
