@@ -58,16 +58,30 @@ export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db) as Adapter,
   providers: [
     GithubProvider({
-      clientId: env.GITHUB_ID,
-      clientSecret: env.GITHUB_SECRET,
+      clientId:
+        env.NODE_ENV === "development" ? env.GITHUB_ID_DEV : env.GITHUB_ID_PROD,
+      clientSecret:
+        env.NODE_ENV === "development"
+          ? env.GITHUB_SECRET_DEV
+          : env.GITHUB_SECRET_PROD,
     }),
     GoogleProvider({
-      clientId: env.GOOGLE_ID,
-      clientSecret: env.GOOGLE_SECRET,
+      clientId:
+        env.NODE_ENV === "development" ? env.GOOGLE_ID_DEV : env.GOOGLE_ID_PROD,
+      clientSecret:
+        env.NODE_ENV === "development"
+          ? env.GOOGLE_SECRET_DEV
+          : env.GOOGLE_SECRET_PROD,
     }),
     FacebookProvider({
-      clientId: env.FACEBOOK_ID,
-      clientSecret: env.FACEBOOK_SECRET,
+      clientId:
+        env.NODE_ENV === "development"
+          ? env.FACEBOOK_ID_DEV
+          : env.FACEBOOK_ID_PROD,
+      clientSecret:
+        env.NODE_ENV === "development"
+          ? env.FACEBOOK_SECRET_DEV
+          : env.FACEBOOK_SECRET_PROD,
     }),
   ],
   pages: {
