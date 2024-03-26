@@ -7,7 +7,7 @@ export default function useProtectedPage() {
   const session = useSession();
 
   useEffect(() => {
-    if (!session.data) {
+    if (!session) {
       void router.push("/login");
     }
   }, [session, router]);
