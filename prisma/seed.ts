@@ -125,7 +125,7 @@ async function dropAllTables() {
 async function main() {
   await dropAllTables();
 
-  await Promise.all(Array.from({ length: 5 }).map(() => createUser()));
+  await Promise.all(Array.from({ length: 2 }).map(() => createUser()));
 
   const me = await db.user.upsert({
     where: { email: "jackwattersdev@gmail.com" },
@@ -140,18 +140,18 @@ async function main() {
   // Seed Contacts
   const contacts = (
     (await Promise.all(
-      Array.from({ length: 10 }).map(() => createContact()),
+      Array.from({ length: 20 }).map(() => createContact()),
     )) as Contact[]
   ).map((c) => c.id);
 
   const groups = await Promise.all(
-    Array.from({ length: 3 }).map(() => createGroup(me.id, contacts)),
+    Array.from({ length: 6 }).map(() => createGroup(me.id, contacts)),
   );
 
   await Promise.all(
     groups.map((group) => {
       return Promise.all(
-        Array.from({ length: 5 }).map(() => createMessage(group, me.id)),
+        Array.from({ length: 6 }).map(() => createMessage(group, me.id)),
       );
     }),
   );
