@@ -1,13 +1,13 @@
-import useProtectedPage from "@/hooks/useProtectedRoute";
+import type { GetServerSideProps } from "next";
+
 import { api } from "@/utils/api";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
+import { getServerAuthSession } from "@/server/auth";
 
 import { SettingActionItem } from "@/components/ui/setting-action-item";
 import { AccountLayout } from "@/layouts/AccountLayout";
 
 export default function AccountSettings() {
-  useProtectedPage();
-
   const { data: user } = api.auth.getCurrentUser.useQuery();
 
   const handleExport = () => {
@@ -118,14 +118,16 @@ export default function AccountSettings() {
   );
 }
 
-export const getStaticProps = async () => {
-  const helpers = genSSRHelpers();
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const session = await getServerAuthSession(context);
+  if (!session) {
+    return {
+      redirect: { destination: "/login", permanent: false },
+    };
+  }
 
+  const helpers = genSSRHelpers(session);
   await helpers.auth.getCurrentUser.prefetch();
 
-  return {
-    props: {
-      trpcState: helpers.dehydrate(),
-    },
-  };
+  return { props: { trpcState: helpers.dehydrate() } };
 };

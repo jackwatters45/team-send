@@ -1,4 +1,4 @@
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure } from "../trpc";
 
 // Auth
 export interface Account {
@@ -68,7 +68,7 @@ export type User = IUserDetails &
   IUserActivity;
 
 export const authRouter = createTRPCRouter({
-  getCurrentUser: publicProcedure.query(({ ctx }) => {
+  getCurrentUser: protectedProcedure.query(({ ctx }) => {
     const userId = ctx.session?.user.id;
 
     if (!userId) {

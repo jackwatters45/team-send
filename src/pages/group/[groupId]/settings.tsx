@@ -1,14 +1,16 @@
 import { GroupLayout } from "@/layouts/GroupLayout";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { api } from "@/utils/api";
-import type { GetStaticPropsContext, InferGetStaticPropsType } from "next";
+import type {
+  GetServerSidePropsContext,
+  InferGetServerSidePropsType,
+} from "next";
 import * as z from "zod";
-
-import useProtectedPage from "@/hooks/useProtectedRoute";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 
+import { getServerAuthSession } from "@/server/auth";
 import extractInitials from "@/lib/extractInitials";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -40,9 +42,7 @@ type GroupSettingsFormSchema = typeof groupSettingsSchema;
 
 export default function GroupSettings({
   groupId,
-}: InferGetStaticPropsType<typeof getStaticProps>) {
-  useProtectedPage();
-
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const { data } = api.group.getGroupById.useQuery({ groupId });
 
   const form = useForm<GroupSettingsFormType>({
@@ -223,17 +223,20 @@ export default function GroupSettings({
   );
 }
 
-export const getStaticProps = async (
-  context: GetStaticPropsContext<{ groupId: string }>,
+export const getServerSideProps = async (
+  context: GetServerSidePropsContext<{ groupId: string }>,
 ) => {
-  const helpers = genSSRHelpers();
+  const session = await getServerAuthSession(context);
+  if (!session) {
+    return { redirect: { destination: "/login", permanent: false } };
+  }
 
   const groupId = context.params?.groupId;
-
   if (typeof groupId !== "string") {
     throw new Error("Invalid slug");
   }
 
+  const helpers = genSSRHelpers(session);
   await helpers.group.getGroupById.prefetch({ groupId });
 
   return {
@@ -243,8 +246,3 @@ export const getStaticProps = async (
     },
   };
 };
-
-export const getStaticPaths = () => ({
-  paths: [],
-  fallback: "blocking",
-});

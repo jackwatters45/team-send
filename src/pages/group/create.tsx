@@ -1,8 +1,9 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
+import type { GetServerSideProps } from "next";
 
-import useProtectedPage from "@/hooks/useProtectedRoute";
+import { getServerAuthSession } from "@/server/auth";
 import { api } from "@/utils/api";
 import createContact from "@/lib/createContact";
 import extractInitials from "@/lib/extractInitials";
@@ -20,8 +21,6 @@ import {
 } from "@/components/group/group-members-form/groupMembersSchema";
 
 export default function CreateGroup() {
-  useProtectedPage();
-
   const form = useForm<GroupMembersFormType>({
     resolver: zodResolver(groupMembersFormSchema),
     defaultValues: {
@@ -116,3 +115,14 @@ export default function CreateGroup() {
     </PageLayout>
   );
 }
+
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const session = await getServerAuthSession(context);
+  if (!session) {
+    return {
+      redirect: { destination: "/login", permanent: false },
+    };
+  }
+
+  return { props: {} };
+};

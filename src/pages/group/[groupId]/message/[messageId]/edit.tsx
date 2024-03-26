@@ -1,10 +1,12 @@
-import type { GetStaticPropsContext, InferGetStaticPropsType } from "next";
+import type {
+  GetServerSidePropsContext,
+  InferGetServerSidePropsType,
+} from "next";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useEffect } from "react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
-import useProtectedPage from "@/hooks/useProtectedRoute";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import getInitialSelectedMembers from "@/lib/getInitialSelectedMembers";
 import type { MemberBaseContact } from "@/server/api/routers/contact";
@@ -25,14 +27,13 @@ import { CheckboxInput, FormTextarea } from "@/components/ui/form-inputs";
 import { toast } from "@/components/ui/use-toast";
 import useDataTable from "@/hooks/useDataTable";
 import PageLayout from "@/layouts/PageLayout";
+import { getServerAuthSession } from "@/server/auth";
 
 // TODO I don't love this, but it works for now
 export default function EditMessage({
   messageId,
   groupId,
 }: MessageDetailsProps) {
-  useProtectedPage();
-
   const { data } = api.group.getGroupById.useQuery({ groupId });
 
   const { table, rowSelection, setRowSelection } = useDataTable({
@@ -145,10 +146,15 @@ export default function EditMessage({
   );
 }
 
-export const getStaticProps = async (
-  context: GetStaticPropsContext<{ messageId: string; groupId: string }>,
+export const getServerSideProps = async (
+  context: GetServerSidePropsContext<{ messageId: string; groupId: string }>,
 ) => {
-  const helpers = genSSRHelpers();
+  const session = await getServerAuthSession(context);
+  if (!session) {
+    return {
+      redirect: { destination: "/login", permanent: false },
+    };
+  }
 
   const messageId = context.params?.messageId;
   const groupId = context.params?.groupId;
@@ -157,6 +163,7 @@ export const getStaticProps = async (
     throw new Error("Invalid slug");
   }
 
+  const helpers = genSSRHelpers(session);
   await helpers.message.getMessageById.prefetch({ messageId });
 
   return {
@@ -168,9 +175,6 @@ export const getStaticProps = async (
   };
 };
 
-export const getStaticPaths = () => ({
-  paths: [],
-  fallback: "blocking",
-});
-
-type MessageDetailsProps = InferGetStaticPropsType<typeof getStaticProps>;
+type MessageDetailsProps = InferGetServerSidePropsType<
+  typeof getServerSideProps
+>;

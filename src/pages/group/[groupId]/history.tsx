@@ -1,12 +1,15 @@
-import type { GetStaticPropsContext, InferGetStaticPropsType } from "next";
+import type {
+  GetServerSidePropsContext,
+  InferGetServerSidePropsType,
+} from "next";
 import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 
-import useProtectedPage from "@/hooks/useProtectedRoute";
 import { api } from "@/utils/api";
 import type { RouterOutputs } from "@/utils/api";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import useDataTable from "@/hooks/useDataTable";
+import { getServerAuthSession } from "@/server/auth";
 
 import { GroupLayout } from "@/layouts/GroupLayout";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -37,9 +40,7 @@ import {
 
 export default function GroupHistory({
   groupId,
-}: InferGetStaticPropsType<typeof getStaticProps>) {
-  useProtectedPage();
-
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const { data } = api.group.getGroupHistoryById.useQuery({ groupId });
 
   const historyTableColumns = getHistoryTableColumns(groupId);
@@ -90,17 +91,22 @@ export default function GroupHistory({
   );
 }
 
-export const getStaticProps = async (
-  context: GetStaticPropsContext<{ groupId: string }>,
+export const getServerSideProps = async (
+  context: GetServerSidePropsContext<{ groupId: string }>,
 ) => {
-  const helpers = genSSRHelpers();
+  const session = await getServerAuthSession(context);
+  if (!session) {
+    return {
+      redirect: { destination: "/login", permanent: false },
+    };
+  }
 
   const groupId = context.params?.groupId;
-
   if (typeof groupId !== "string") {
     throw new Error("Invalid slug");
   }
 
+  const helpers = genSSRHelpers(session);
   await helpers.group.getGroupHistoryById.prefetch({ groupId });
 
   return {
@@ -110,11 +116,6 @@ export const getStaticProps = async (
     },
   };
 };
-
-export const getStaticPaths = () => ({
-  paths: [],
-  fallback: "blocking",
-});
 
 function getHistoryTableColumns(
   groupId: string,

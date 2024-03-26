@@ -2,9 +2,10 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { CopyIcon } from "@radix-ui/react-icons";
 import { z } from "zod";
+import type { GetServerSideProps } from "next";
 
-import useProtectedPage from "@/hooks/useProtectedRoute";
 import { api } from "@/utils/api";
+import { getServerAuthSession } from "@/server/auth";
 import extractInitials from "@/lib/extractInitials";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 
@@ -29,8 +30,6 @@ type UserSettingsFormSchema = typeof userSettingsSchema;
 type UserSettingsFormType = z.infer<typeof userSettingsSchema>;
 
 export default function AccountProfile() {
-  useProtectedPage();
-
   const { data: user } = api.auth.getCurrentUser.useQuery();
 
   const form = useForm<UserSettingsFormType>({
@@ -154,14 +153,16 @@ export default function AccountProfile() {
   );
 }
 
-export const getStaticProps = async () => {
-  const helpers = genSSRHelpers();
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const session = await getServerAuthSession(context);
+  if (!session) {
+    return {
+      redirect: { destination: "/login", permanent: false },
+    };
+  }
 
+  const helpers = genSSRHelpers(session);
   await helpers.auth.getCurrentUser.prefetch();
 
-  return {
-    props: {
-      trpcState: helpers.dehydrate(),
-    },
-  };
+  return { props: { trpcState: helpers.dehydrate() } };
 };

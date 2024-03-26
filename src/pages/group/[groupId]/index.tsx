@@ -1,10 +1,12 @@
-import type { GetStaticPropsContext, InferGetStaticPropsType } from "next";
+import type {
+  GetServerSidePropsContext,
+  InferGetServerSidePropsType,
+} from "next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useEffect } from "react";
 
-import useProtectedPage from "@/hooks/useProtectedRoute";
 import { api } from "@/utils/api";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 
@@ -22,12 +24,11 @@ import {
   defaultReminder,
   groupMessageSchema,
 } from "@/components/group/group-send-message/groupMessageSchema";
+import { getServerAuthSession } from "@/server/auth";
 
 export default function Group({
   groupId,
-}: InferGetStaticPropsType<typeof getStaticProps>) {
-  useProtectedPage();
-
+}: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const { data } = api.group.getGroupById.useQuery({ groupId });
 
   const { table, rowSelection } = useGroupMembersTable(data?.members);
@@ -129,17 +130,22 @@ export default function Group({
   );
 }
 
-export const getStaticProps = async (
-  context: GetStaticPropsContext<{ groupId: string }>,
+export const getServerSideProps = async (
+  context: GetServerSidePropsContext<{ groupId: string }>,
 ) => {
-  const helpers = genSSRHelpers();
+  const session = await getServerAuthSession(context);
+  if (!session) {
+    return {
+      redirect: { destination: "/login", permanent: false },
+    };
+  }
 
   const groupId = context.params?.groupId;
-
   if (typeof groupId !== "string") {
     throw new Error("Invalid slug");
   }
 
+  const helpers = genSSRHelpers(session);
   await helpers.group.getGroupById.prefetch({ groupId });
 
   return {
@@ -149,8 +155,3 @@ export const getStaticProps = async (
     },
   };
 };
-
-export const getStaticPaths = () => ({
-  paths: [],
-  fallback: "blocking",
-});
