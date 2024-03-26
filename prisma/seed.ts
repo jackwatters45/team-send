@@ -26,13 +26,14 @@ async function createUser() {
   }
 }
 
-async function createContact() {
+async function createContact(userId: string) {
   try {
     return await db.contact.create({
       data: {
         name: faker.person.fullName(),
         phone: `+1${faker.string.numeric(10)}`,
         email: faker.internet.email(),
+        createdBy: { connect: { id: userId } },
       },
     });
   } catch (e) {
@@ -110,11 +111,23 @@ async function createMessage(group: IGroupPreview, userId: string) {
 async function dropAllTables() {
   try {
     await db.member.deleteMany({});
-    await db.account.deleteMany({});
+    await db.account.deleteMany({
+      where: {
+        providerAccountId: {
+          not: "70183051",
+        },
+      },
+    });
     await db.message.deleteMany({});
     await db.contact.deleteMany({});
     await db.group.deleteMany({});
-    await db.user.deleteMany({});
+    await db.user.deleteMany({
+      where: {
+        email: {
+          not: "jack.watters@me.com",
+        },
+      },
+    });
     console.log("All tables dropped successfully!");
   } catch (error) {
     console.error("Error dropping tables:", error);
@@ -127,20 +140,18 @@ async function main() {
 
   await Promise.all(Array.from({ length: 2 }).map(() => createUser()));
 
-  const me = await db.user.upsert({
-    where: { email: "jackwattersdev@gmail.com" },
-    update: {},
-    create: {
-      name: "Jack Watters",
-      email: "jackwattersdev@gmail.com",
-      phone: "+19544949167",
-    },
+  const me = await db.user.findUnique({
+    where: { email: "jack.watters@me.com" },
   });
+
+  if (!me) {
+    throw new Error("User not found");
+  }
 
   // Seed Contacts
   const contacts = (
     (await Promise.all(
-      Array.from({ length: 20 }).map(() => createContact()),
+      Array.from({ length: 20 }).map(() => createContact(me.id)),
     )) as Contact[]
   ).map((c) => c.id);
 
