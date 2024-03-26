@@ -1,9 +1,11 @@
+import type { GetServerSideProps } from "next";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { type RouterOutputs, api } from "@/utils/api";
 import useDataTable from "@/hooks/useDataTable";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import type { Member } from "@/server/api/routers/contact";
+import { getServerAuthSession } from "@/server/auth";
 
 import Layout from "@/layouts/Layout";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -41,19 +43,14 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import useProtectedPage from "@/hooks/useProtectedRoute";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 
 export default function Home() {
-  useProtectedPage();
-
   const { data } = api.group.getAll.useQuery();
 
   const ctx = api.useUtils();
 
-  // TODO on error
-  // TODO are you sure modal
   const { mutate } = api.group.delete.useMutation({
     onSuccess: () => {
       void ctx.group.getAll.invalidate();
@@ -97,11 +94,18 @@ export default function Home() {
   );
 }
 
-export const getStaticProps = async () => {
-  // const session = await getServerAuthSession(context);
-  // if (!session) return { redirect: { destination: "/login" } };
+export const getServerSideProps: GetServerSideProps = async (context) => {
+  const session = await getServerAuthSession(context);
+  if (!session) {
+    return {
+      redirect: {
+        destination: "/login",
+        permanent: false,
+      },
+    };
+  }
 
-  const helpers = genSSRHelpers();
+  const helpers = genSSRHelpers(session);
   await helpers.group.getAll.prefetch();
 
   return {
