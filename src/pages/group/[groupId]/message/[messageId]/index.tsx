@@ -1,13 +1,11 @@
-import type { GetStaticPropsContext, InferGetStaticPropsType } from "next";
+import type {
+  GetServerSidePropsContext,
+  InferGetServerSidePropsType,
+} from "next";
 import { Fragment } from "react";
 import Link from "next/link";
-
-import useProtectedPage from "@/hooks/useProtectedRoute";
-import PageLayout from "@/layouts/PageLayout";
-import { Separator } from "@/components/ui/separator";
-import { Button } from "@/components/ui/button";
-import { getGroupMembersColumns } from "@/components/group/group-members-table/groupMembersColumns";
-import GroupMembersTable from "@/components/group/group-members-table/GroupMembersTable";
+import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
+import { getServerAuthSession } from "@/server/auth";
 
 import {
   formatRelativeDateAndTime,
@@ -16,14 +14,17 @@ import {
 import { api } from "@/utils/api";
 import type { MemberBaseContact } from "@/server/api/routers/contact";
 import useDataTable from "@/hooks/useDataTable";
-import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
+
+import PageLayout from "@/layouts/PageLayout";
+import { Separator } from "@/components/ui/separator";
+import { Button } from "@/components/ui/button";
+import { getGroupMembersColumns } from "@/components/group/group-members-table/groupMembersColumns";
+import GroupMembersTable from "@/components/group/group-members-table/GroupMembersTable";
 
 export default function MessageDetails({
   messageId,
   groupId,
 }: MessageDetailsProps) {
-  useProtectedPage();
-
   const { data } = api.message.getMessageById.useQuery({ messageId });
 
   const messageDate = formatRelativeDateAndTime(data?.sentAt);
@@ -125,18 +126,24 @@ export default function MessageDetails({
   );
 }
 
-export const getStaticProps = async (
-  context: GetStaticPropsContext<{ messageId: string; groupId: string }>,
+export const getServerSideProps = async (
+  context: GetServerSidePropsContext<{ messageId: string; groupId: string }>,
 ) => {
-  const helpers = genSSRHelpers();
+  const session = await getServerAuthSession(context);
+  if (!session) {
+    return {
+      redirect: { destination: "/login", permanent: false },
+    };
+  }
 
   const messageId = context.params?.messageId;
   const groupId = context.params?.groupId;
 
-  if (typeof messageId !== "string") {
+  if (typeof messageId !== "string" || typeof groupId !== "string") {
     throw new Error("Invalid slug");
   }
 
+  const helpers = genSSRHelpers(session);
   await helpers.message.getMessageById.prefetch({ messageId });
 
   return {
@@ -148,9 +155,6 @@ export const getStaticProps = async (
   };
 };
 
-export const getStaticPaths = () => ({
-  paths: [],
-  fallback: "blocking",
-});
-
-type MessageDetailsProps = InferGetStaticPropsType<typeof getStaticProps>;
+type MessageDetailsProps = InferGetServerSidePropsType<
+  typeof getServerSideProps
+>;
