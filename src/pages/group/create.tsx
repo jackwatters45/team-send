@@ -17,6 +17,7 @@ import {
   groupMembersFormSchema,
 } from "@/components/group/group-members-form/groupMembersSchema";
 import GroupMembersFormContent from "@/components/group/group-members-form/GroupMembersForm";
+import { useEffect } from "react";
 
 export default function CreateGroup() {
   useProtectedPage();
@@ -31,6 +32,10 @@ export default function CreateGroup() {
       addedGroupIds: [],
     },
   });
+
+  useEffect(() => {
+    console.log(form.getValues());
+  }, [form]);
 
   const onSubmit = (data: GroupMembersFormType) => {
     toast({

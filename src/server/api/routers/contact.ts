@@ -94,7 +94,7 @@ export const contactRouter = createTRPCRouter({
       } else {
         return await ctx.db.contact.findMany({
           where: {
-            name: { contains: input.search },
+            name: { contains: input.search, mode: "insensitive" },
             id: { notIn: input.addedContactIds },
           },
           select: {
