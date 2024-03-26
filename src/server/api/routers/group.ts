@@ -52,8 +52,11 @@ const ratelimit = new Ratelimit({
 });
 
 export const groupRouter = createTRPCRouter({
-  getAll: publicProcedure.query(async ({ ctx }) => {
+  getAll: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
     return await ctx.db.group.findMany({
+      where: { createdBy: { id: userId } },
       include: {
         members: {
           include: { contact: true },
@@ -166,9 +169,12 @@ export const groupRouter = createTRPCRouter({
                 if (member.contact.id) {
                   // TODO improvement: prevent redundant contact updates
                   await prisma.contact.upsert({
-                    where: { id: member.contact.id },
+                    where: { id: member.contact.id, createdById: userId },
                     update: { ...member.contact },
-                    create: { ...member.contact },
+                    create: {
+                      ...member.contact,
+                      createdBy: { connect: { id: userId } },
+                    },
                   });
 
                   return {
@@ -180,6 +186,7 @@ export const groupRouter = createTRPCRouter({
                   const contact = await prisma.contact.create({
                     data: {
                       ...member.contact,
+                      createdBy: { connect: { id: userId } },
                     },
                   });
 
