@@ -87,7 +87,9 @@ function MembersHoverableCell({ members }: IMemberHoverableCellProps) {
 
   return (
     <HoverCard>
-      <HoverCardTrigger>{`${members?.length} members`}</HoverCardTrigger>
+      <HoverCardTrigger>{`${members?.length} member${
+        members?.length > 1 ? "s" : ""
+      }`}</HoverCardTrigger>
       <HoverCardContent className="w-96 p-2">
         <ScrollArea
           className="data-[member-count=true]:h-[220px]"
