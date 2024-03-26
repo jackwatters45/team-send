@@ -11,7 +11,7 @@ model Group {
   id          String  @id @default(cuid())
   name        String
   description String?
-  image      String?
+  image       String?
 
   members  Member[]
   messages Message[]
@@ -49,7 +49,7 @@ model Member {
 
   contact   Contact @relation(fields: [contactId], references: [id])
   contactId String
-  group     Group   @relation(fields: [groupId], references: [id])
+  group     Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId   String
 
   createdAt DateTime @default(now())
@@ -83,7 +83,7 @@ model Message {
   id      String @id @default(cuid())
   content String
 
-  group   Group  @relation(fields: [groupId], references: [id])
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId String
 
   sentAt   DateTime @default(now())
@@ -152,7 +152,7 @@ model User {
   nodeMailer String?
   twilio     String?
 
-  account   Account?
+  account Account?
 
   sessions Session[]
   groups   Group[]
