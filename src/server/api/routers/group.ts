@@ -2,11 +2,7 @@ import { z } from "zod";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
 
-import {
-  createTRPCRouter,
-  protectedProcedure,
-  publicProcedure,
-} from "@/server/api/trpc";
+import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { type Member } from "./contact";
 
 import { type Message } from "./message";
@@ -70,7 +66,7 @@ export const groupRouter = createTRPCRouter({
       },
     });
   }),
-  getGroupHistoryById: publicProcedure
+  getGroupHistoryById: protectedProcedure
     .input(
       z.object({
         groupId: z.string(),
@@ -97,7 +93,7 @@ export const groupRouter = createTRPCRouter({
 
       return { group: groupBasicInfo, messages };
     }),
-  getGroupById: publicProcedure
+  getGroupById: protectedProcedure
     .input(
       z.object({
         groupId: z.string(),
@@ -124,7 +120,7 @@ export const groupRouter = createTRPCRouter({
 
       return group;
     }),
-  getRecentGroups: publicProcedure
+  getRecentGroups: protectedProcedure
     .input(
       z.object({
         search: z.string().optional(),

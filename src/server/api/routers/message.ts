@@ -1,5 +1,5 @@
 import { z } from "zod";
-import { createTRPCRouter, publicProcedure } from "../trpc";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { type User } from "./auth";
 import { type Member } from "./contact";
 import { type Group } from "./group";
@@ -52,7 +52,7 @@ export type Message = IMessageInput &
   };
 
 export const messageRouter = createTRPCRouter({
-  getMessageById: publicProcedure
+  getMessageById: protectedProcedure
     .input(
       z.object({
         messageId: z.string(),
