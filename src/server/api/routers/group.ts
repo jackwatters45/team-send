@@ -124,7 +124,7 @@ export const groupRouter = createTRPCRouter({
     .input(
       z.object({
         search: z.string().optional(),
-        addedGroupIds: z.array(z.string()),
+        addedGroupIds: z.array(z.string()).optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -138,7 +138,7 @@ export const groupRouter = createTRPCRouter({
       } else {
         return await ctx.db.group.findMany({
           where: {
-            name: { contains: input.search },
+            name: { contains: input.search, mode: "insensitive" },
             id: { notIn: input.addedGroupIds },
           },
           include: { members: { select: { contact: true } } },

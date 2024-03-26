@@ -10,7 +10,7 @@ const createContact = (
     notes: newMember?.contact.notes ?? "",
   },
   memberNotes: newMember?.memberNotes ?? "",
-  isRecipient: newMember?.isRecipient ?? false,
+  isRecipient: newMember?.isRecipient ?? true,
 });
 
 export default createContact;
