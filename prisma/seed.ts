@@ -1,8 +1,11 @@
 import { faker } from "@faker-js/faker";
+import debug from "debug";
 
 import { db } from "../src/server/db";
 import type { Contact, Member } from "@/server/api/routers/contact";
 import type { IGroupPreview } from "@/server/api/routers/group";
+
+const log = debug("team-send:seed");
 
 async function createUser() {
   try {
@@ -47,6 +50,8 @@ async function createMember(contactId: string, groupId: string) {
       data: {
         contact: { connect: { id: contactId } },
         group: { connect: { id: groupId } },
+        memberNotes: faker.lorem.sentence(),
+        isRecipient: true,
       },
     });
   } catch (e) {
@@ -90,6 +95,8 @@ async function createGroup(userId: string, contactIds: string[]) {
 //   reminders       Reminder[]
 async function createMessage(group: IGroupPreview, userId: string) {
   try {
+    log("group.members", group.members);
+
     return await db.message.create({
       data: {
         content: faker.lorem.paragraph(),
@@ -98,7 +105,7 @@ async function createMessage(group: IGroupPreview, userId: string) {
         lastUpdatedBy: { connect: { id: userId } },
         createdBy: { connect: { id: userId } },
         recipients: {
-          connect: group.members?.map(({ id }) => ({ id })),
+          connect: group.members?.map((m) => ({ id: m.id })),
         },
         status: "sent",
       },
