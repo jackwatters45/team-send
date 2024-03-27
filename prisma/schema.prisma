@@ -5,6 +5,7 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+  
 }
 
 model Group {
@@ -40,8 +41,8 @@ model Contact {
   createdById String
   updatedAt   DateTime @updatedAt
 
-  messages Message[]
-  members  Member[]
+  members         Member[]
+  memberSnapshots MemberSnapshot[]
 }
 
 model Member {
@@ -49,14 +50,13 @@ model Member {
   memberNotes String?
   isRecipient Boolean @default(true)
 
-  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  contactId String
-  group     Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  groupId   String
+  contact         Contact          @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId       String
+  group           Group            @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId         String
 
-  createdAt DateTime  @default(now())
-  updatedAt DateTime  @updatedAt
-  Messages  Message[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum ReminderPeriod {
@@ -69,7 +69,7 @@ model Reminder {
   id        String         @id @default(cuid())
   num       Int
   period    ReminderPeriod
-  message   Message        @relation(fields: [messageId], references: [id])
+  message   Message        @relation(fields: [messageId], references: [id], onDelete: Cascade)
   messageId String
 }
 
@@ -80,6 +80,28 @@ enum ReccurPeriod {
   days
 }
 
+enum MessageStatus {
+  draft
+  scheduled
+  sent
+  failed
+}
+
+model MemberSnapshot {
+  id          String   @id @default(cuid())
+  memberNotes String?
+  isRecipient Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id])
+
+  messageId String
+  message   Message @relation(fields: [messageId], references: [id])
+
+  @@unique([id, messageId])
+}
+
 model Message {
   id      String @id @default(cuid())
   content String
@@ -87,7 +109,7 @@ model Message {
   group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId String
 
-  sentAt   DateTime @default(now())
+  sendAt   DateTime @default(now())
   sentBy   User     @relation(name: "SentBy", fields: [sentById], references: [id])
   sentById String
 
@@ -107,10 +129,8 @@ model Message {
   isReminders     Boolean       @default(false)
   reminders       Reminder[]
 
-  recipients Member[]
-  status     String   @default("draft")
-  Contact    Contact? @relation(fields: [contactId], references: [id])
-  contactId  String?
+  recipients MemberSnapshot[]
+  status     MessageStatus    @default(draft)
 }
 
 // Necessary for Next auth
