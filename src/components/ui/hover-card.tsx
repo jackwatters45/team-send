@@ -1,15 +1,13 @@
 import * as React from "react";
 import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
 
-import { cn } from "@/lib/utils";
+import { cn, extractInitials, formatRelativeDateAndTime } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
-import extractInitials from "@/lib/extractInitials";
 import { type User } from "@/server/api/routers/auth";
 import { parsePhoneNumber } from "libphonenumber-js";
 import { Separator } from "./separator";
 import { ScrollArea } from "./scroll-area";
 import type { Member } from "@/server/api/routers/contact";
-import { formatRelativeDateAndTime } from "@/lib/dateHelpers";
 import Link from "next/link";
 
 const HoverCard = HoverCardPrimitive.Root;

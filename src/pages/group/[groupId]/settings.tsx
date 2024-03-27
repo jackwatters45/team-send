@@ -11,7 +11,7 @@ import { useForm } from "react-hook-form";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 
 import { getServerAuthSession } from "@/server/auth";
-import extractInitials from "@/lib/extractInitials";
+import { extractInitials } from "@/lib/utils";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Switch } from "@/components/ui/switch";

@@ -5,7 +5,7 @@ import type {
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 
-import createContact from "@/lib/createContact";
+import { createContact } from "@/lib/utils";
 import { api } from "@/utils/api";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 

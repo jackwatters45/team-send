@@ -12,7 +12,7 @@ import { getServerAuthSession } from "@/server/auth";
 import { api } from "@/utils/api";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { type ContactBaseWithId } from "@/server/api/routers/contact";
-import extractInitials from "@/lib/extractInitials";
+import { extractInitials } from "@/lib/utils";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import PageLayout from "@/layouts/PageLayout";

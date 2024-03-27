@@ -10,7 +10,7 @@ import {
   DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import extractInitials from "@/lib/extractInitials";
+import { extractInitials } from "@/lib/utils";
 import { signOut, useSession } from "next-auth/react";
 import Link from "next/link";
 

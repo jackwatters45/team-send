@@ -8,7 +8,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
-import getInitialSelectedMembers from "@/lib/getInitialSelectedMembers";
+import { getInitialSelectedMembers } from "@/lib/utils";
 import type { MemberBaseContact } from "@/server/api/routers/contact";
 import { api } from "@/utils/api";
 import type { IReminder, RecurPeriod } from "@/server/api/routers/message";

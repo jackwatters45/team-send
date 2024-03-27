@@ -6,7 +6,7 @@ import type { GetServerSideProps } from "next";
 
 import { api } from "@/utils/api";
 import { getServerAuthSession } from "@/server/auth";
-import extractInitials from "@/lib/extractInitials";
+import { extractInitials } from "@/lib/utils";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 
 import { AccountLayout } from "@/layouts/AccountLayout";
