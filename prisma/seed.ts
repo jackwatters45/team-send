@@ -1,11 +1,13 @@
 import { faker } from "@faker-js/faker";
 import debug from "debug";
+import pLimit from "p-limit";
 
 import { db } from "../src/server/db";
 import type { Contact, Member } from "@/server/api/routers/contact";
 import type { IGroupPreview } from "@/server/api/routers/group";
 
 const log = debug("team-send:seed");
+const limit = pLimit(5);
 
 async function createUser() {
   try {
@@ -51,12 +53,20 @@ async function createMember(contactId: string, groupId: string) {
         contact: { connect: { id: contactId } },
         group: { connect: { id: groupId } },
         memberNotes: faker.lorem.sentence(),
-        isRecipient: true,
+        isRecipient: faker.datatype.boolean(0.8),
       },
     });
   } catch (e) {
     console.error(e);
   }
+}
+
+function shuffleArray<T>(array: T[]): T[] {
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j]!, array[i]!];
+  }
+  return array;
 }
 
 async function createGroup(userId: string, contactIds: string[]) {
@@ -73,8 +83,17 @@ async function createGroup(userId: string, contactIds: string[]) {
       },
     });
 
+    const shuffledContactIds = shuffleArray(contactIds);
+    const selectedCount = faker.number.int({
+      min: 5,
+      max: contactIds.length,
+    });
+    const selectedContactIds = shuffledContactIds.slice(0, selectedCount);
+
     const members = (await Promise.all(
-      contactIds.map((contactId) => createMember(contactId, group.id)),
+      selectedContactIds.map((contactId) =>
+        limit(() => createMember(contactId, group.id)),
+      ),
     )) as unknown as Member[];
 
     return { ...group, members };
@@ -84,32 +103,94 @@ async function createGroup(userId: string, contactIds: string[]) {
   }
 }
 
-// TODO add options for scheduled, recurring, reminders
-//   sentAt   DateTime @default(now())
-//   isScheduled     Boolean    @default(false)
-//   scheduledDate   DateTime?
-//   isRecurring     Boolean    @default(false)
-//   recurringNum    Int?
-//   recurringPeriod String?
-//   isReminders     Boolean    @default(false)
-//   reminders       Reminder[]
+const statusOptions = ["sent", "draft", "scheduled", "failed"] as const;
+const getRandomStatus = (): (typeof statusOptions)[number] => {
+  return statusOptions[Math.floor(Math.random() * statusOptions.length)]!;
+};
+
+const recurringPeriodOptions = ["days", "weeks", "months", "years"] as const;
+const getRandomRecurringPeriod =
+  (): (typeof recurringPeriodOptions)[number] => {
+    return recurringPeriodOptions[
+      Math.floor(Math.random() * recurringPeriodOptions.length)
+    ]!;
+  };
+
+const reminderPeriodOptions = ["days", "weeks", "months"] as const;
+const getRandomReminderPeriod = (): (typeof reminderPeriodOptions)[number] => {
+  return reminderPeriodOptions[
+    Math.floor(Math.random() * reminderPeriodOptions.length)
+  ]!;
+};
+
+async function createReminder({ messageId }: { messageId: string }) {
+  try {
+    return await db.reminder.create({
+      data: {
+        num: faker.number.int({ min: 1, max: 4 }),
+        period: getRandomReminderPeriod(),
+        messageId,
+      },
+    });
+  } catch (error) {
+    console.error("Failed to create reminder:", error);
+  }
+}
+
 async function createMessage(group: IGroupPreview, userId: string) {
   try {
-    log("group.members", group.members);
+    const randomPastDate = faker.date.past();
+    const randomFutureDate = faker.date.future();
 
-    return await db.message.create({
+    const isScheduled = faker.datatype.boolean(0.25);
+    const isRecurring = faker.datatype.boolean(0.25);
+    const isReminders = faker.datatype.boolean(0.25);
+
+    const message = await db.message.create({
       data: {
         content: faker.lorem.paragraph(),
         group: { connect: { id: group.id } },
         sentBy: { connect: { id: userId } },
         lastUpdatedBy: { connect: { id: userId } },
         createdBy: { connect: { id: userId } },
-        recipients: {
-          connect: group.members?.map((m) => ({ id: m.id })),
-        },
-        status: "sent",
+
+        status: getRandomStatus(),
+        sendAt: isScheduled ? randomFutureDate : randomPastDate,
+        isScheduled,
+        scheduledDate: isScheduled ? randomFutureDate : null,
+        isRecurring,
+        recurringNum: isRecurring ? faker.number.int({ min: 1, max: 4 }) : null,
+        recurringPeriod: isRecurring ? getRandomRecurringPeriod() : null,
+        isReminders,
       },
     });
+
+    await Promise.all(
+      group.members
+        .filter((m) => m.isRecipient)
+        .map((member) =>
+          limit(() =>
+            db.memberSnapshot.create({
+              data: {
+                memberNotes: member.memberNotes,
+                isRecipient: member.isRecipient,
+                contact: { connect: { id: member.contactId } },
+                message: { connect: { id: message.id } },
+              },
+            }),
+          ),
+        ),
+    );
+
+    if (isReminders) {
+      await Promise.all(
+        Array.from({ length: faker.number.int({ min: 1, max: 2 }) }).map(() =>
+          createReminder({ messageId: message.id }),
+        ),
+      );
+    }
+
+    return message;
   } catch (e) {
     console.error(e);
   }
@@ -117,7 +198,9 @@ async function createMessage(group: IGroupPreview, userId: string) {
 
 async function dropAllTables() {
   try {
+    await db.memberSnapshot.deleteMany({});
     await db.member.deleteMany({});
+    await db.reminder.deleteMany({});
     await db.account.deleteMany({
       where: {
         providerAccountId: {
@@ -163,13 +246,15 @@ async function main() {
   ).map((c) => c.id);
 
   const groups = await Promise.all(
-    Array.from({ length: 6 }).map(() => createGroup(me.id, contacts)),
+    Array.from({ length: 12 }).map(() => createGroup(me.id, contacts)),
   );
 
   await Promise.all(
     groups.map((group) => {
       return Promise.all(
-        Array.from({ length: 6 }).map(() => createMessage(group, me.id)),
+        Array.from({ length: faker.number.int({ min: 5, max: 20 }) }).map(() =>
+          createMessage(group, me.id),
+        ),
       );
     }),
   );
