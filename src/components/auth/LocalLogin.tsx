@@ -31,7 +31,7 @@ const LocalLogin = () => {
   const {
     handleSubmit,
     register,
-    formState: { errors },
+    // formState: { errors },
   } = useForm<FormData>({
     resolver: zodResolver(formSchema),
     defaultValues: {

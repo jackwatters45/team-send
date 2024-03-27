@@ -6,15 +6,17 @@ import { api } from "@/utils/api";
 
 import { AccountLayout } from "@/layouts/AccountLayout";
 
-export default function AccountProfile() {
+export default function AccountBilling() {
   const { data: user } = api.auth.getCurrentUser.useQuery();
+
+  if (!user) return <div>404</div>;
 
   return (
     <AccountLayout
       title="User Billing"
       description={"Update your payment methods and manage your subscriptions."}
     >
-      <div>Billing</div>
+      <div>Billing for {user.id}</div>
     </AccountLayout>
   );
 }
