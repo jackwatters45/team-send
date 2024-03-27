@@ -1,6 +1,7 @@
 import { z } from "zod";
 
 export const reminderSchema = z.object({
+  id: z.string().optional(),
   num: z.number().positive().int().max(36),
   period: z.enum(["months", "weeks", "days"]),
 });
@@ -12,6 +13,8 @@ export const defaultReminder: z.infer<typeof reminderSchema> = {
 
 export const groupMessageSchema = z
   .object({
+    id: z.string().optional(),
+    status: z.enum(["draft", "scheduled", "sent", "failed"]),
     content: z.string().max(500).min(1),
     isScheduled: z.enum(["no", "yes"]),
     scheduledDate: z.date().optional(),
@@ -20,8 +23,8 @@ export const groupMessageSchema = z
     recurringPeriod: z.enum(["years", "months", "weeks", "days"]).optional(),
     isReminders: z.enum(["no", "yes"]),
     reminders: z.array(reminderSchema).max(6).optional(),
-    recipientsOnlyThisMessage: z.boolean(),
-    selectedMembers: z.record(z.string(), z.boolean()),
+    saveRecipientState: z.boolean(),
+    recipients: z.record(z.string(), z.boolean()),
   })
   .refine(
     (data) => {

@@ -8,7 +8,7 @@ import {
   DataTableSelectedRowCount,
 } from "@/components/ui/data-table";
 
-import { getGroupMembersColumns } from "./groupMembersColumns";
+import { groupMembersColumns } from "./groupMembersColumns";
 import type { MemberBaseContact } from "@/server/api/routers/contact";
 
 interface IGroupMembersTableProps {
@@ -27,7 +27,7 @@ export default function GroupMembersTable({
         <DataTableColumnOptions table={table} />
       </div>
       <div className="rounded-md border dark:border-stone-700">
-        <DataTableContent table={table} columns={getGroupMembersColumns()} />
+        <DataTableContent table={table} columns={groupMembersColumns} />
       </div>
       <div className="flex items-center justify-between p-2">
         <DataTableSelectedRowCount table={table} />
