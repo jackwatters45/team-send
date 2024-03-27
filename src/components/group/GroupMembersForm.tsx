@@ -4,15 +4,12 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { MinusCircledIcon, PlusCircledIcon } from "@radix-ui/react-icons";
 import { useDebounce } from "use-debounce";
 import { parsePhoneNumber } from "libphonenumber-js";
+import { z } from "zod";
 
 import { createContact, extractInitials } from "@/lib/utils";
 import { api } from "@/utils/api";
 import type { ContactBaseWithId } from "@/server/api/routers/contact";
 
-import {
-  type GroupMembersFormType,
-  type GroupMembersFormSchema,
-} from "@/components/group/group-members-form/groupMembersSchema";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { FormInput } from "@/components/ui/form-inputs";
@@ -365,3 +362,36 @@ function RecentSearchResultPlaceholder() {
     </Skeleton>
   );
 }
+
+const memberSchema = z.object({
+  contact: z.object({
+    name: z.string().max(40),
+    email: z
+      .string()
+      .or(
+        z
+          .string()
+          .email()
+          .refine((val) => val !== "", "Invalid email"),
+      )
+      .optional()
+      .nullable(),
+    phone: z.string().optional().nullable(),
+    notes: z.string().max(100).optional().nullable(),
+    id: z.string().optional(),
+  }),
+  memberNotes: z.string().max(100).optional().nullable(),
+  isRecipient: z.boolean(),
+});
+
+export const groupMembersFormSchema = z.object({
+  name: z.string().max(40),
+  description: z.string().max(100).optional(),
+  image: z.string().optional(),
+  members: z.array(memberSchema),
+  addedGroupIds: z.array(z.string()),
+});
+
+export type GroupMembersFormType = z.infer<typeof groupMembersFormSchema>;
+
+export type GroupMembersFormSchema = typeof groupMembersFormSchema;
