@@ -35,10 +35,10 @@ model Contact {
   email String? @unique
   notes String?
 
-  createdAt DateTime @default(now())
+  createdAt   DateTime @default(now())
   createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
   createdById String
-  updatedAt DateTime @updatedAt
+  updatedAt   DateTime @updatedAt
 
   messages Message[]
   members  Member[]
@@ -54,10 +54,9 @@ model Member {
   group     Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
   groupId   String
 
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  Message   Message? @relation(fields: [messageId], references: [id])
-  messageId String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+  Messages  Message[]
 }
 
 enum ReminderPeriod {
