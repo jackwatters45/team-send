@@ -13,33 +13,39 @@ import {
 } from "@tanstack/react-table";
 import { useState } from "react";
 
+interface DataTableOption<T> {
+  initial?: T;
+  include?: boolean;
+}
+
+interface UseDataTableOptions {
+  columnVisibility?: DataTableOption<VisibilityState>;
+  columnFilters?: DataTableOption<ColumnFiltersState>;
+  rowSelection?: DataTableOption<RowSelectionState>;
+  sorting?: DataTableOption<SortingState>;
+  pagination?: { include: boolean };
+}
+
 export interface UseDataTableProps<TData, TValue>
   extends Partial<TableOptions<TData>> {
   columns: ColumnDef<TData, TValue>[];
   data: TData[];
-  includeFilter?: boolean;
-  includeColumnOptions?: boolean;
-  includeRowSelection?: boolean;
-  includePagination?: boolean;
-  includeSorting?: boolean;
+  options?: UseDataTableOptions;
 }
 
 export default function useDataTable<TData, TValue>({
   columns,
   data,
-  includeFilter = true,
-  includeColumnOptions = true,
-  includeRowSelection = true,
-  includePagination = true,
-  includeSorting = true,
-  state: otherState,
+  options,
   ...props
 }: UseDataTableProps<TData, TValue>) {
   let args = { ...props, getCoreRowModel: getCoreRowModel() };
   let state = {};
 
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  if (includeFilter) {
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>(
+    options?.columnFilters?.initial ?? [],
+  );
+  if (options?.columnFilters?.include !== false) {
     args = {
       ...args,
       onColumnFiltersChange: setColumnFilters,
@@ -48,22 +54,26 @@ export default function useDataTable<TData, TValue>({
     state = { ...state, columnFilters };
   }
 
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({
-    id: false,
-  });
-  if (includeColumnOptions) {
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>(
+    options?.columnVisibility?.initial ?? { id: false },
+  );
+  if (options?.columnVisibility?.include !== false) {
     args = { ...args, onColumnVisibilityChange: setColumnVisibility };
     state = { ...state, columnVisibility };
   }
 
-  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
-  if (includeRowSelection) {
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>(
+    options?.rowSelection?.initial ?? {},
+  );
+  if (options?.rowSelection?.include !== false) {
     args = { ...args, onRowSelectionChange: setRowSelection };
     state = { ...state, rowSelection };
   }
 
-  const [sorting, setSorting] = useState<SortingState>([]);
-  if (includeSorting) {
+  const [sorting, setSorting] = useState<SortingState>(
+    options?.sorting?.initial ?? [],
+  );
+  if (options?.sorting?.include !== false) {
     args = {
       ...args,
       onSortingChange: setSorting,
@@ -72,7 +82,7 @@ export default function useDataTable<TData, TValue>({
     state = { ...state, sorting };
   }
 
-  if (includePagination) {
+  if (options?.pagination?.include !== false) {
     args = {
       ...args,
       getPaginationRowModel: getPaginationRowModel(),
@@ -83,7 +93,7 @@ export default function useDataTable<TData, TValue>({
     data,
     columns,
     ...args,
-    state: { ...state, ...otherState },
+    state,
   });
 
   return {
