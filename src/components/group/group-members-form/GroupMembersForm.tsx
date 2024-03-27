@@ -5,8 +5,7 @@ import { MinusCircledIcon, PlusCircledIcon } from "@radix-ui/react-icons";
 import { useDebounce } from "use-debounce";
 import { parsePhoneNumber } from "libphonenumber-js";
 
-import createContact from "@/lib/createContact";
-import extractInitials from "@/lib/extractInitials";
+import { createContact, extractInitials } from "@/lib/utils";
 import { api } from "@/utils/api";
 import type { ContactBaseWithId } from "@/server/api/routers/contact";
 

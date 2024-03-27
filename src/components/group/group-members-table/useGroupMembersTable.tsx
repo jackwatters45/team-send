@@ -3,7 +3,7 @@ import { useEffect } from "react";
 import useDataTable from "@/hooks/useDataTable";
 import { getGroupMembersColumns } from "./groupMembersColumns";
 import type { MemberBaseContact } from "@/server/api/routers/contact";
-import getInitialSelectedMembers from "@/lib/getInitialSelectedMembers";
+import { getInitialSelectedMembers } from "@/lib/utils";
 
 export default function useGroupMembersTable(
   data: MemberBaseContact[] | undefined,

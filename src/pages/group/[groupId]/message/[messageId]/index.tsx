@@ -10,7 +10,7 @@ import { getServerAuthSession } from "@/server/auth";
 import {
   formatRelativeDateAndTime,
   formatShortRelativeDate,
-} from "@/lib/dateHelpers";
+} from "@/lib/utils";
 import { api } from "@/utils/api";
 import type { MemberBaseContact } from "@/server/api/routers/contact";
 import useDataTable from "@/hooks/useDataTable";
@@ -21,6 +21,7 @@ import { Button } from "@/components/ui/button";
 import { getGroupMembersColumns } from "@/components/group/group-members-table/groupMembersColumns";
 import GroupMembersTable from "@/components/group/group-members-table/GroupMembersTable";
 
+// TODO - seed add recipients to message
 export default function MessageDetails({
   messageId,
   groupId,

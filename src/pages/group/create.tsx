@@ -5,8 +5,7 @@ import type { GetServerSideProps } from "next";
 
 import { getServerAuthSession } from "@/server/auth";
 import { api } from "@/utils/api";
-import createContact from "@/lib/createContact";
-import extractInitials from "@/lib/extractInitials";
+import { createContact, extractInitials } from "@/lib/utils";
 
 import GroupMembersFormContent from "@/components/group/group-members-form/GroupMembersForm";
 import { toast } from "@/components/ui/use-toast";
