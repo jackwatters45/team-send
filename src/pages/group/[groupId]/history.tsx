@@ -168,13 +168,13 @@ function getHistoryTableColumns(
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Recipients" />
       ),
-      cell: ({ row }) => {
-        return (
-          <MembersHoverableCell
-            members={row.getValue<Member[]>("recipients")}
-          />
-        );
-      },
+      cell: ({ row }) => (
+        <MembersHoverableCell
+          members={row
+            .getValue<Member[]>("recipients")
+            .filter(({ isRecipient }) => isRecipient)}
+        />
+      ),
     },
     {
       accessorKey: "status",
