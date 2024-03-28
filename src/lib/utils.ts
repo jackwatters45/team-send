@@ -72,7 +72,7 @@ export function formatRelativeDateAndTime(
     currentDate = "Today";
   } else if (diffDays === 1) {
     currentDate = "Yesterday";
-  } else if (diffDays < 7) {
+  } else if (diffDays < 7 && diffDays > 1) {
     currentDate = date.toLocaleDateString("en-US", { weekday: "long" });
   } else {
     currentDate =

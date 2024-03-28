@@ -41,6 +41,7 @@ export default function Group({
       !!row.original.contact.phone || !!row.original.contact.email,
     options: {
       rowSelection: { initial: getInitialSelectedMembers(data?.members ?? []) },
+      sorting: { initial: [{ id: "id", desc: true }] },
     },
   });
 

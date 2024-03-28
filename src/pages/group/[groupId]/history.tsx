@@ -57,6 +57,7 @@ export default function GroupHistory({
           reminders: false,
         },
       },
+      sorting: { initial: [{ id: "sendAt", desc: true }] },
     },
   });
 
@@ -186,7 +187,7 @@ function getHistoryTableColumns(
       },
     },
     {
-      accessorKey: "time",
+      accessorKey: "sendAt",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Send Time" />
       ),

@@ -68,6 +68,9 @@ export default function Home() {
   const { table } = useDataTable({
     columns: groupsColumns,
     data: data ?? [],
+    options: {
+      sorting: { initial: [{ id: "lastMessageTime", desc: true }] },
+    },
   });
 
   if (!data) {
@@ -212,7 +215,7 @@ const getGroupColumns = (
             View details
           </DropdownMenuLabel>
           <DropdownMenuLinkItem href={`/group/${id}`}>
-            Details
+            Send
           </DropdownMenuLinkItem>
           <DropdownMenuLinkItem href={`/group/${id}/members`}>
             Members
