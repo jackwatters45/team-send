@@ -52,15 +52,29 @@ export default function Home() {
   const ctx = api.useUtils();
 
   const { mutate } = api.group.delete.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       void ctx.group.getAll.invalidate();
-    },
-    onError: () => {
       toast({
-        variant: "destructive",
-        title: "Failed to delete",
-        description: "There was an error deleting the group. Please try again.",
+        title: "Group Deleted",
+        description: `Group "${data.id}" has been deleted.`,
       });
+    },
+    onError: (error) => {
+      const errorMessage = error.data?.zodError?.fieldErrors?.content;
+      if (errorMessage?.[0]) {
+        toast({
+          title: "Failed to delete group",
+          description: errorMessage[0],
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Failed to delete group",
+          description:
+            "There was an error deleting the group. Please try again.",
+          variant: "destructive",
+        });
+      }
     },
   });
 
