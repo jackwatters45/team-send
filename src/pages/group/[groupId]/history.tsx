@@ -37,13 +37,46 @@ import {
   DataTablePagination,
   DataTableSelectedRowCount,
 } from "@/components/ui/data-table";
+import { toast } from "@/components/ui/use-toast";
+import { ConfirmDeleteDialog } from "@/components/ui/alert-dialog";
 
+// fd
+// duplicate -> create new message with same content minus send part -> navigate to edit page
 export default function GroupHistory({
   groupId,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const { data } = api.group.getGroupHistoryById.useQuery({ groupId });
 
-  const historyTableColumns = getHistoryTableColumns(groupId);
+  const ctx = api.useUtils();
+  const { mutate: deleteMessage } = api.message.delete.useMutation({
+    onSuccess: (data) => {
+      void ctx.group.getGroupHistoryById.invalidate();
+      toast({
+        title: "Message Deleted",
+        description: `Message "${data.id}" has been deleted.`,
+      });
+    },
+    onError: (error) => {
+      const errorMessage = error.data?.zodError?.fieldErrors?.content;
+      if (errorMessage?.[0]) {
+        toast({
+          title: "Message Delete Failed",
+          description: errorMessage[0],
+          variant: "destructive",
+        });
+      } else {
+        toast({
+          title: "Message Delete Failed",
+          description:
+            "An error occurred while deleting the message. Please try again.",
+          variant: "destructive",
+        });
+      }
+    },
+  });
+  const handleDelete = (messageId: string) => deleteMessage({ messageId });
+
+  const historyTableColumns = getHistoryTableColumns({ groupId, handleDelete });
   const { table } = useDataTable({
     columns: historyTableColumns,
     data: data?.messages ?? [],
@@ -120,9 +153,13 @@ export const getServerSideProps = async (
   };
 };
 
-function getHistoryTableColumns(
-  groupId: string,
-): ColumnDef<RouterOutputs["group"]["getAll"][number]["messages"][number]>[] {
+function getHistoryTableColumns({
+  groupId,
+  handleDelete,
+}: {
+  groupId: string;
+  handleDelete: (messageId: string) => void;
+}): ColumnDef<RouterOutputs["group"]["getAll"][number]["messages"][number]>[] {
   return [
     {
       id: "select",
@@ -273,10 +310,10 @@ function getHistoryTableColumns(
                 </Link>
               </DropdownMenuItem>
             )}
-            <DropdownMenuItem>
-              Delete message
-              <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-            </DropdownMenuItem>
+            <ConfirmDeleteDialog
+              triggerText="Delete message"
+              onConfirm={() => handleDelete(row.getValue("id"))}
+            />
           </DataTableRowActions>
         );
       },

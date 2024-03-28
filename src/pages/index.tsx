@@ -32,19 +32,8 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
+import { ConfirmDeleteDialog } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
-import { Button } from "@/components/ui/button";
 
 export default function Home() {
   const { data } = api.group.getAll.useQuery();
@@ -77,8 +66,9 @@ export default function Home() {
       }
     },
   });
+  const handleDelete = (groupId: string) => mutate({ groupId });
 
-  const groupsColumns = getGroupColumns(mutate);
+  const groupsColumns = getGroupColumns(handleDelete);
   const { table } = useDataTable({
     columns: groupsColumns,
     data: data ?? [],
@@ -132,11 +122,9 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   };
 };
 
-type IGroupMessagesMembers = RouterOutputs["group"]["getAll"][number];
-
 const getGroupColumns = (
-  deleteMutation: ReturnType<typeof api.group.delete.useMutation>["mutate"],
-): ColumnDef<IGroupMessagesMembers>[] => [
+  handleDelete: (groupId: string) => void,
+): ColumnDef<RouterOutputs["group"]["getAll"][number]>[] => [
   {
     id: "select",
     header: ({ table }) => (
@@ -241,34 +229,10 @@ const getGroupColumns = (
             Settings
           </DropdownMenuLinkItem>
           <DropdownMenuSeparator />
-          <AlertDialog>
-            <AlertDialogTrigger asChild className="w-full">
-              <Button
-                className="h-fit select-none items-center rounded-sm px-2 py-1.5 text-sm outline-none transition-colors hover:bg-stone-100 focus:bg-stone-100 focus:text-stone-900 dark:hover:bg-stone-800 dark:hover:text-stone-50 dark:focus:bg-stone-800 dark:focus:text-stone-50"
-                variant="ghost"
-              >
-                Delete group
-                <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-                <AlertDialogDescription>
-                  This action cannot be undone. This will permanently delete
-                  your account and remove your data from our servers.
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction
-                  onClick={() => deleteMutation({ groupId: id })}
-                >
-                  Continue
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <ConfirmDeleteDialog
+            triggerText="Delete group"
+            onConfirm={() => handleDelete(id)}
+          />
         </DataTableRowActions>
       );
     },
