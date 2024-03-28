@@ -6,10 +6,12 @@ import { Fragment } from "react";
 import Link from "next/link";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { getServerAuthSession } from "@/server/auth";
+import type { ColumnDef } from "@tanstack/react-table";
+import { parsePhoneNumber } from "libphonenumber-js";
 
 import {
   formatRelativeDateAndTime,
-  formatShortRelativeDate,
+  getInitialSelectedMembers,
 } from "@/lib/utils";
 import { api } from "@/utils/api";
 import type { MemberBaseContact } from "@/server/api/routers/contact";
@@ -18,23 +20,36 @@ import useDataTable from "@/hooks/useDataTable";
 import PageLayout from "@/layouts/PageLayout";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
-import { getGroupMembersColumns } from "@/components/group/group-members-table/groupMembersColumns";
-import GroupMembersTable from "@/components/group/group-members-table/GroupMembersTable";
+import GroupMembersTable from "@/components/group/GroupMembersTable";
+import {
+  DataTableColumnHeader,
+  DataTableRowActions,
+} from "@/components/ui/data-table";
+import { HoverableCell } from "@/components/ui/hover-card";
+import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+} from "@/components/ui/dropdown-menu";
+import { Checkbox } from "@/components/ui/checkbox";
 
-// TODO - seed add recipients to message
 export default function MessageDetails({
   messageId,
   groupId,
 }: MessageDetailsProps) {
   const { data } = api.message.getMessageById.useQuery({ messageId });
 
-  const messageDate = formatRelativeDateAndTime(data?.sentAt);
+  const messageDate = formatRelativeDateAndTime(data?.sendAt)!;
 
   const { table } = useDataTable({
-    columns: getGroupMembersColumns(),
+    columns: groupMembersColumns,
     data: data?.recipients ?? [],
-    getRowId: (row: MemberBaseContact) => row.contact?.id,
-    includeRowSelection: false,
+    getRowId: (row: MemberBaseContact) => row.id,
+    options: {
+      rowSelection: {
+        initial: getInitialSelectedMembers(data?.recipients ?? []),
+      },
+    },
   });
 
   if (!data) {
@@ -44,14 +59,16 @@ export default function MessageDetails({
   return (
     <PageLayout
       title={`Message ${data?.id}`}
-      description={`Last edited ${formatShortRelativeDate(data.updatedAt)}`}
+      description={`Status: ${data?.status.charAt(0).toUpperCase() + data?.status.slice(1)}`}
       rightSidebar={
-        <Link
-          href={`/group/${groupId}/message/${messageId}/edit`}
-          className="block"
-        >
-          <Button variant={"secondary"}>Edit</Button>
-        </Link>
+        data.status !== "sent" ? (
+          <Link
+            href={`/group/${groupId}/message/${messageId}/edit`}
+            className="block"
+          >
+            <Button variant={"secondary"}>Edit</Button>
+          </Link>
+        ) : null
       }
     >
       <div className="flex w-full flex-col gap-8">
@@ -61,11 +78,9 @@ export default function MessageDetails({
         </div>
         <div className="space-y-1">
           <div className="font-semibold">Created</div>
-          {messageDate && (
-            <div className="text-sm">
-              {messageDate.date} at {messageDate.time}
-            </div>
-          )}
+          <div className="text-sm">
+            {messageDate.date} at {messageDate.time}
+          </div>
         </div>
         <div className="border-b dark:border-stone-500 dark:border-opacity-20" />
         <div className="space-y-1">
@@ -159,3 +174,88 @@ export const getServerSideProps = async (
 type MessageDetailsProps = InferGetServerSidePropsType<
   typeof getServerSideProps
 >;
+
+const groupMembersColumns: ColumnDef<MemberBaseContact>[] = [
+  {
+    id: "select",
+    cell: ({ row }) => {
+      return (
+        <Checkbox
+          checked={row.getIsSelected()}
+          disabled={true}
+          className="pointer-events-none cursor-none"
+        />
+      );
+    },
+    enableSorting: false,
+    enableHiding: false,
+  },
+  {
+    accessorKey: "id",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="ID" />
+    ),
+  },
+  {
+    accessorKey: "contact.name",
+    id: "name",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Name" />
+    ),
+  },
+  {
+    accessorKey: "contact.email",
+    id: "email",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Email" />
+    ),
+  },
+  {
+    accessorKey: "contact.phone",
+    id: "phone",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Phone" />
+    ),
+    cell: ({ row }) => {
+      const phoneString = row.original.contact?.phone;
+      if (!phoneString) return null;
+
+      const phone = parsePhoneNumber(phoneString);
+      return phone ? phone.formatNational() : phoneString;
+    },
+  },
+  {
+    accessorKey: "memberNotes",
+    id: "notes",
+    header: ({ column }) => (
+      <DataTableColumnHeader column={column} title="Notes" className="flex-1" />
+    ),
+    cell: ({ row }) => <HoverableCell value={row.original.contact?.notes} />,
+  },
+  {
+    id: "actions",
+    enableSorting: false,
+    enableHiding: false,
+    cell: ({ row }) => (
+      <DataTableRowActions>
+        <DropdownMenuItem
+          onClick={() =>
+            navigator.clipboard.writeText(row.getValue<string>("id"))
+          }
+          className="w-48"
+        >
+          Copy member ID
+          <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
+        </DropdownMenuItem>
+        <DropdownMenuSeparator />
+        <Link href={`/contact/${row.original.contact.id}`}>
+          <DropdownMenuItem>View contact details</DropdownMenuItem>
+        </Link>
+        <DropdownMenuItem>
+          Remove from group
+          <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+        </DropdownMenuItem>
+      </DataTableRowActions>
+    ),
+  },
+];
