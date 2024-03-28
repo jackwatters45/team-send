@@ -41,17 +41,6 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 
-// clean up + commit
-
-// add better validation to create
-
-// default sorting for tables
-
-// sentry + axiom
-
-// history
-// display recipient count not member count (change text?)
-
 export default function EditMessage({ messageId }: MessageDetailsProps) {
   const { data } = api.message.getMessageById.useQuery({ messageId });
 
