@@ -188,8 +188,8 @@ function DateTimeInput<T extends z.ZodType>({
               {...field}
               value={
                 field.value
-                  ? (field.value as Date).toISOString().slice(0, 16)
-                  : ""
+                  ? new Date(field.value).toISOString().slice(0, 16)
+                  : undefined
               }
               onChange={(e) => field.onChange(new Date(e.target.value))}
             />

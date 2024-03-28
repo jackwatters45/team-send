@@ -38,6 +38,7 @@ export interface MemberBaseNewContact extends MemberBase {
 }
 
 export interface MemberBaseContact extends MemberBase {
+  id: string;
   contact: ContactBaseWithId;
 }
 

@@ -9,14 +9,13 @@ import { createContact } from "@/lib/utils";
 import { api } from "@/utils/api";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 
-import {
-  type GroupMembersFormType,
-  groupMembersFormSchema,
-} from "@/components/group/group-members-form/groupMembersSchema";
 import { toast } from "@/components/ui/use-toast";
 import { GroupLayout } from "@/layouts/GroupLayout";
 import { Form } from "@/components/ui/form";
-import GroupMembersFormContent from "@/components/group/group-members-form/GroupMembersForm";
+import GroupMembersFormContent, {
+  type GroupMembersFormType,
+  groupMembersFormSchema,
+} from "@/components/group/GroupMembersForm";
 import { getServerAuthSession } from "@/server/auth";
 
 export default function GroupMembers({

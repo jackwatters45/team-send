@@ -35,8 +35,9 @@ model Contact {
   email String? @unique
   notes String?
 
-  createdAt   DateTime @default(now())
-  createdBy   User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+  createdBy User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
+
   createdById String
   updatedAt   DateTime @updatedAt
 
@@ -49,10 +50,13 @@ model Member {
   memberNotes String?
   isRecipient Boolean @default(true)
 
-  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
   contactId String
-  group     Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  groupId   String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  groupId String
+  group   Group  @relation(fields: [groupId], references: [id], onDelete: Cascade)
+
+  memberSnapshots MemberSnapshot[]
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -69,6 +73,9 @@ model MemberSnapshot {
 
   messageId String
   message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  memberId String
+  member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   @@unique([id, messageId])
 }

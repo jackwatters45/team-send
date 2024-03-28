@@ -7,17 +7,16 @@ import { getServerAuthSession } from "@/server/auth";
 import { api } from "@/utils/api";
 import { createContact, extractInitials } from "@/lib/utils";
 
-import GroupMembersFormContent from "@/components/group/group-members-form/GroupMembersForm";
+import GroupMembersFormContent, {
+  type GroupMembersFormSchema,
+  type GroupMembersFormType,
+  groupMembersFormSchema,
+} from "@/components/group/GroupMembersForm";
 import { toast } from "@/components/ui/use-toast";
 import PageLayout from "@/layouts/PageLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FormInput } from "@/components/ui/form-inputs";
 import { Form } from "@/components/ui/form";
-import {
-  type GroupMembersFormSchema,
-  type GroupMembersFormType,
-  groupMembersFormSchema,
-} from "@/components/group/group-members-form/groupMembersSchema";
 
 export default function CreateGroup() {
   const form = useForm<GroupMembersFormType>({

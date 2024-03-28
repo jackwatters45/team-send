@@ -30,8 +30,13 @@ export function extractInitials(text: string, numInitials = 2): string {
 
 export function getInitialSelectedMembers(groupMembers: MemberBaseContact[]) {
   return Object.fromEntries(
-    groupMembers?.map((member) => [member.contact?.id, member.isRecipient]) ??
-      [],
+    groupMembers?.map((member) => {
+      const isSelected =
+        member.isRecipient &&
+        (!!member.contact?.phone || !!member.contact?.email);
+
+      return [member.id, isSelected];
+    }) ?? [],
   ) as RowSelectionState;
 }
 

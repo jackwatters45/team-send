@@ -12,10 +12,9 @@ import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 
 import { GroupLayout } from "@/layouts/GroupLayout";
 import { Form, FormDescription } from "@/components/ui/form";
-import { MessageSettings } from "@/components/group/group-send-message/MessageSettings";
+import { MessageSettings } from "@/components/group/MessageSettings";
 import { Button } from "@/components/ui/button";
-import GroupMembersTable from "@/components/group/group-members-table/GroupMembersTable";
-import useGroupMembersTable from "@/components/group/group-members-table/useGroupMembersTable";
+import GroupMembersTable from "@/components/group/GroupMembersTable";
 import { toast } from "@/components/ui/use-toast";
 import { CheckboxInput, FormTextarea } from "@/components/ui/form-inputs";
 import {
@@ -23,15 +22,27 @@ import {
   type GroupMessageType,
   defaultReminder,
   groupMessageSchema,
-} from "@/components/group/group-send-message/groupMessageSchema";
+} from "@/components/group/groupMessageSchema";
 import { getServerAuthSession } from "@/server/auth";
+import { getInitialSelectedMembers } from "@/lib/utils";
+import useDataTable from "@/hooks/useDataTable";
+import { groupMembersColumns } from "@/components/group/groupMembersColumns";
 
 export default function Group({
   groupId,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const { data } = api.group.getGroupById.useQuery({ groupId });
 
-  const { table, rowSelection } = useGroupMembersTable(data?.members);
+  const { table, rowSelection } = useDataTable({
+    columns: groupMembersColumns,
+    data: data?.members ?? [],
+    getRowId: (row) => row.contact?.id,
+    enableRowSelection: (row) =>
+      !!row.original.contact.phone || !!row.original.contact.email,
+    options: {
+      rowSelection: { initial: getInitialSelectedMembers(data?.members ?? []) },
+    },
+  });
 
   const form = useForm<GroupMessageType>({
     resolver: zodResolver(groupMessageSchema),
@@ -44,14 +55,14 @@ export default function Group({
       recurringPeriod: "months",
       isReminders: "yes",
       reminders: [defaultReminder],
-      recipientsOnlyThisMessage: true,
-      selectedMembers: rowSelection ?? {},
+      saveRecipientState: true,
+      recipients: getInitialSelectedMembers(data?.members ?? []),
     },
   });
 
   useEffect(() => {
     if (!rowSelection || !form) return;
-    form.setValue("selectedMembers", rowSelection);
+    form.setValue("recipients", rowSelection);
   }, [rowSelection, form]);
 
   // TODO definitely a lot more considerations here
@@ -117,7 +128,7 @@ export default function Group({
               </p>
             </div>
             <CheckboxInput<GroupMessageSchema>
-              name="recipientsOnlyThisMessage"
+              name="saveRecipientState"
               label="Save recipient state for group"
               description="Recipients you choose for this message will become the new default for this group."
               control={form.control}

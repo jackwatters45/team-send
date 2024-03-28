@@ -174,7 +174,7 @@ const getGroupColumns = (
       );
     },
     cell: ({ row }) => {
-      const lastMessageTime = row.original.messages?.[0]?.sentAt;
+      const lastMessageTime = row.original.messages?.[0]?.sendAt;
 
       if (!lastMessageTime) return null;
 

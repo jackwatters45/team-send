@@ -9,10 +9,7 @@ import { getServerAuthSession } from "@/server/auth";
 import type { ColumnDef } from "@tanstack/react-table";
 import { parsePhoneNumber } from "libphonenumber-js";
 
-import {
-  formatRelativeDateAndTime,
-  getInitialSelectedMembers,
-} from "@/lib/utils";
+import { getInitialSelectedMembers } from "@/lib/utils";
 import { api } from "@/utils/api";
 import type { MemberBaseContact } from "@/server/api/routers/contact";
 import useDataTable from "@/hooks/useDataTable";
@@ -38,8 +35,6 @@ export default function MessageDetails({
   groupId,
 }: MessageDetailsProps) {
   const { data } = api.message.getMessageById.useQuery({ messageId });
-
-  const messageDate = formatRelativeDateAndTime(data?.sendAt)!;
 
   const { table } = useDataTable({
     columns: groupMembersColumns,
@@ -77,9 +72,9 @@ export default function MessageDetails({
           <div className="text-sm">{data.sentBy.name}</div>
         </div>
         <div className="space-y-1">
-          <div className="font-semibold">Created</div>
+          <div className="font-semibold">Send Time</div>
           <div className="text-sm">
-            {messageDate.date} at {messageDate.time}
+            {new Date(data.sendAt).toLocaleString()}{" "}
           </div>
         </div>
         <div className="border-b dark:border-stone-500 dark:border-opacity-20" />
