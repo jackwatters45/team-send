@@ -153,7 +153,6 @@ async function createMessage(group: IGroupPreview, userId: string) {
         sentBy: { connect: { id: userId } },
         lastUpdatedBy: { connect: { id: userId } },
         createdBy: { connect: { id: userId } },
-
         status: getRandomStatus(),
         sendAt: isScheduled ? randomFutureDate : randomPastDate,
         isScheduled,
@@ -166,20 +165,18 @@ async function createMessage(group: IGroupPreview, userId: string) {
     });
 
     await Promise.all(
-      group.members
-        .filter((m) => m.isRecipient)
-        .map((member) =>
-          limit(() =>
-            db.memberSnapshot.create({
-              data: {
-                memberNotes: member.memberNotes,
-                isRecipient: member.isRecipient,
-                contact: { connect: { id: member.contactId } },
-                message: { connect: { id: message.id } },
-              },
-            }),
-          ),
+      group.members.map((member) =>
+        limit(() =>
+          db.memberSnapshot.create({
+            data: {
+              memberNotes: member.memberNotes,
+              isRecipient: member.isRecipient,
+              contact: { connect: { id: member.contactId } },
+              message: { connect: { id: message.id } },
+            },
+          }),
         ),
+      ),
     );
 
     if (isReminders) {
