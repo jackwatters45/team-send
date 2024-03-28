@@ -5,7 +5,6 @@ generator client {
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
-  
 }
 
 model Group {
@@ -50,13 +49,28 @@ model Member {
   memberNotes String?
   isRecipient Boolean @default(true)
 
-  contact         Contact          @relation(fields: [contactId], references: [id], onDelete: Cascade)
-  contactId       String
-  group           Group            @relation(fields: [groupId], references: [id], onDelete: Cascade)
-  groupId         String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  contactId String
+  group     Group   @relation(fields: [groupId], references: [id], onDelete: Cascade)
+  groupId   String
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model MemberSnapshot {
+  id          String   @id @default(cuid())
+  memberNotes String?
+  isRecipient Boolean  @default(true)
+  createdAt   DateTime @default(now())
+
+  contactId String
+  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
+
+  messageId String
+  message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+
+  @@unique([id, messageId])
 }
 
 enum ReminderPeriod {
@@ -85,21 +99,6 @@ enum MessageStatus {
   scheduled
   sent
   failed
-}
-
-model MemberSnapshot {
-  id          String   @id @default(cuid())
-  memberNotes String?
-  isRecipient Boolean  @default(true)
-  createdAt   DateTime @default(now())
-
-  contactId String
-  contact   Contact @relation(fields: [contactId], references: [id])
-
-  messageId String
-  message   Message @relation(fields: [messageId], references: [id])
-
-  @@unique([id, messageId])
 }
 
 model Message {
