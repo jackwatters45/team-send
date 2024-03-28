@@ -9,6 +9,7 @@ import type { IGroupPreview } from "@/server/api/routers/group";
 const log = debug("team-send:seed");
 const limit = pLimit(5);
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 async function createUser() {
   try {
     const name = faker.person.fullName();
@@ -173,6 +174,7 @@ async function createMessage(group: IGroupPreview, userId: string) {
               isRecipient: member.isRecipient,
               contact: { connect: { id: member.contactId } },
               message: { connect: { id: message.id } },
+              member: { connect: { id: member.id } },
             },
           }),
         ),
@@ -225,7 +227,7 @@ async function dropAllTables() {
 async function main() {
   await dropAllTables();
 
-  await Promise.all(Array.from({ length: 2 }).map(() => createUser()));
+  // await Promise.all(Array.from({ length: 2 }).map(() => createUser()));
 
   const me = await db.user.findUnique({
     where: { email: "jack.watters@me.com" },
@@ -243,13 +245,13 @@ async function main() {
   ).map((c) => c.id);
 
   const groups = await Promise.all(
-    Array.from({ length: 12 }).map(() => createGroup(me.id, contacts)),
+    Array.from({ length: 2 }).map(() => createGroup(me.id, contacts)),
   );
 
   await Promise.all(
     groups.map((group) => {
       return Promise.all(
-        Array.from({ length: faker.number.int({ min: 5, max: 20 }) }).map(() =>
+        Array.from({ length: faker.number.int({ min: 5, max: 12 }) }).map(() =>
           createMessage(group, me.id),
         ),
       );

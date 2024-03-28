@@ -47,13 +47,15 @@ export default function GroupHistory({
   const { table } = useDataTable({
     columns: historyTableColumns,
     data: data?.messages ?? [],
-    state: {
+    options: {
       columnVisibility: {
-        id: false,
-        sender: false,
-        scheduled: false,
-        recurring: false,
-        reminders: false,
+        initial: {
+          id: false,
+          sender: false,
+          scheduled: false,
+          recurring: false,
+          reminders: false,
+        },
       },
     },
   });
@@ -189,7 +191,7 @@ function getHistoryTableColumns(
         <DataTableColumnHeader column={column} title="Send Time" />
       ),
       cell: ({ row }) => {
-        return <DateHoverableCell dateInput={row.original.sentAt} />;
+        return <DateHoverableCell dateInput={row.original.sendAt} />;
       },
     },
     {

@@ -1,8 +1,16 @@
 import { z } from "zod";
+import { Ratelimit } from "@upstash/ratelimit";
+import { Redis } from "@upstash/redis";
+import debug from "debug";
+
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { type User } from "./auth";
-import { type Member } from "./contact";
 import { type Group } from "./group";
+import { type Member } from "./contact";
+import { TRPCError } from "@trpc/server";
+import { reminderSchema } from "@/components/group/groupMessageSchema";
+
+const log = debug("team-send:api:message");
 
 export type ReminderPeriod = "months" | "weeks" | "days";
 export interface IReminder {
@@ -32,8 +40,7 @@ export interface IMessageInput extends IMessageScheduling {
 
 export interface IMessageMetaDetails {
   group: Group;
-
-  sentAt: Date;
+  sendAt: Date;
   sentBy: User;
   sentById: string;
 
@@ -45,11 +52,18 @@ export interface IMessageMetaDetails {
   lastUpdatedBy: User;
   lastUpdatedById: string;
 }
+
 export type Message = IMessageInput &
   IMessageMetaDetails & {
     id: string;
     status: "draft" | "sent" | "scheduled" | "failed";
   };
+
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(10, "10 s"),
+  analytics: true,
+});
 
 export const messageRouter = createTRPCRouter({
   getMessageById: protectedProcedure
@@ -59,7 +73,7 @@ export const messageRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      return await ctx.db.message.findUnique({
+      const message = await ctx.db.message.findUnique({
         where: { id: input.messageId },
         include: {
           sentBy: true,
@@ -67,5 +81,231 @@ export const messageRouter = createTRPCRouter({
           reminders: true,
         },
       });
+
+      if (!message) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Message not found",
+        });
+      }
+
+      return message;
+    }),
+  update: protectedProcedure
+    .input(
+      z
+        .object({
+          id: z.string().optional(),
+          status: z.enum(["draft", "scheduled", "sent", "failed"]),
+          content: z.string().max(500).min(1),
+          isScheduled: z.boolean(),
+          scheduledDate: z.date().nullish(),
+          isRecurring: z.boolean(),
+          recurringNum: z.number().positive().int().max(36).nullish(),
+          recurringPeriod: z
+            .enum(["years", "months", "weeks", "days"])
+            .nullish(),
+          isReminders: z.boolean(),
+          reminders: z.array(reminderSchema).max(6).nullish(),
+          saveRecipientState: z.boolean(),
+          recipients: z.record(z.string(), z.boolean()),
+        })
+        .refine(
+          (data) => {
+            if (data.isScheduled && data.scheduledDate === undefined) {
+              return false;
+            }
+            if (
+              data.isRecurring &&
+              (data.recurringNum === undefined ||
+                data.recurringPeriod === undefined)
+            ) {
+              return false;
+            }
+            if (
+              data.isReminders &&
+              (data.reminders === undefined || data.reminders?.length === 0)
+            ) {
+              return false;
+            }
+
+            return true;
+          },
+          {
+            message:
+              "Required fields are missing based on the conditional selections.",
+            path: [
+              "scheduledDate",
+              "recurringNum",
+              "recurringPeriod",
+              "reminders",
+            ],
+          },
+        ),
+    )
+    .mutation(
+      async ({
+        ctx,
+        input: { reminders, saveRecipientState, recipients, ...data },
+      }) => {
+        if (!data.id) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Message ID is required",
+          });
+        }
+
+        const existingMessage = await ctx.db.message.findUnique({
+          where: { id: data.id },
+          include: {
+            reminders: {
+              select: { id: true, num: true, period: true },
+            },
+            recipients: true,
+          },
+        });
+
+        if (!existingMessage) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Message not found",
+          });
+        }
+
+        if (existingMessage?.status === "sent") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Cannot edit a sent message",
+          });
+        }
+
+        try {
+          log("Updating message \n");
+          const result = await ctx.db.$transaction(async (prisma) => {
+            // update group member snapshot
+            await Promise.all(
+              Object.entries(recipients).map(
+                async ([memberSnapshotId, isRecipient]) => {
+                  const recipient = existingMessage.recipients.find(
+                    (r) => r.id === memberSnapshotId,
+                  );
+
+                  if (!recipient) {
+                    throw new TRPCError({
+                      code: "INTERNAL_SERVER_ERROR",
+                    });
+                  }
+
+                  if (saveRecipientState) {
+                    await prisma.member.update({
+                      where: { id: recipient.memberId },
+                      data: { isRecipient },
+                    });
+                  }
+
+                  if (recipient?.isRecipient === isRecipient) return null;
+                  return prisma.memberSnapshot.update({
+                    where: { id: memberSnapshotId },
+                    data: { isRecipient },
+                  });
+                },
+              ),
+            );
+
+            // update group member
+            if (saveRecipientState) {
+              await Promise.all(
+                Object.entries(recipients).map(
+                  async ([memberSnapshotId, isRecipient]) => {
+                    const recipient = existingMessage.recipients.find(
+                      (r) => r.id === memberSnapshotId,
+                    );
+
+                    if (recipient?.isRecipient === isRecipient) return null;
+                    return prisma.memberSnapshot.update({
+                      where: { id: memberSnapshotId },
+                      data: { isRecipient },
+                    });
+                  },
+                ),
+              );
+            }
+
+            // reminders
+            if (!reminders?.length && existingMessage.reminders?.length) {
+              await prisma.reminder.deleteMany({
+                where: { messageId: data.id },
+              });
+            } else if (
+              !existingMessage.reminders?.length &&
+              reminders?.length
+            ) {
+              await Promise.all(
+                reminders.map((reminder) => {
+                  return prisma.reminder.create({
+                    data: {
+                      ...reminder,
+                      message: { connect: { id: data.id } },
+                    },
+                  });
+                }),
+              );
+            } else {
+              const remindersToDelete = existingMessage.reminders
+                .filter((r) => !reminders!.some((newR) => newR.id === r.id))
+                .map((r) => r.id);
+              if (remindersToDelete.length) {
+                await prisma.reminder.deleteMany({
+                  where: { id: { in: remindersToDelete } },
+                });
+              }
+
+              await Promise.all(
+                reminders?.map((reminder) => {
+                  return prisma.reminder.upsert({
+                    where: { id: reminder?.id ?? "" },
+                    update: { ...reminder },
+                    create: {
+                      ...reminder,
+                      message: { connect: { id: data.id } },
+                    },
+                  });
+                }) ?? [],
+              );
+            }
+
+            const updatedMessage = await prisma.message.update({
+              where: { id: data.id },
+              data,
+            });
+
+            log("Message updated \n");
+            return updatedMessage;
+
+            // TODO actual send logic + cron jobs
+          });
+          return result;
+        } catch (err) {
+          console.error(err);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to update message",
+          });
+        }
+      },
+    ),
+  delete: protectedProcedure
+    .input(z.object({ messageId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const { success } = await ratelimit.limit(userId);
+      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
+
+      return ctx.db.message.delete({
+        where: { id: input.messageId },
+      });
+
+      // TODO: cancel send jobs if any
     }),
 });

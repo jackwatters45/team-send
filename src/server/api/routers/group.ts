@@ -7,7 +7,7 @@ import { type Member } from "./contact";
 
 import { type Message } from "./message";
 import { TRPCError } from "@trpc/server";
-import { groupMembersFormSchema } from "@/components/group/group-members-form/groupMembersSchema";
+import { groupMembersFormSchema } from "@/components/group/GroupMembersForm";
 
 export interface IGroupBase {
   id: string;
@@ -17,11 +17,11 @@ export interface IGroupBase {
 }
 
 export interface IGroupPreview extends IGroupBase {
-  members?: Member[];
+  members: Member[];
 }
 
 export interface IGroupHistory extends IGroupBase {
-  messages?: Message[];
+  messages: Message[];
 }
 
 export interface IGroupSettings extends IGroupBase {
@@ -58,9 +58,9 @@ export const groupRouter = createTRPCRouter({
           include: { contact: true },
         },
         messages: {
-          select: { sentAt: true, content: true },
-          where: { sentAt: { not: undefined } },
-          orderBy: { sentAt: "desc" },
+          select: { sendAt: true, content: true },
+          where: { sendAt: { not: undefined } },
+          orderBy: { sendAt: "desc" },
           take: 1,
         },
       },
