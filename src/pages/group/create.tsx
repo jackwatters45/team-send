@@ -32,8 +32,8 @@ export default function CreateGroup() {
 
   const router = useRouter();
   const { mutate } = api.group.create.useMutation({
-    onSuccess: (data) => {
-      void router.push(`/`); // TODO change
+    onSuccess: async (data) => {
+      await router.push(`/`); // TODO change
       toast({
         title: "Group Created",
         description: `Group "${data.name}" has been created.`,
@@ -51,16 +51,22 @@ export default function CreateGroup() {
     },
   });
 
+  const onSubmit = form.handleSubmit((data) => {
+    toast({
+      title: "Creating Group",
+      description: "Please wait while we create the group.",
+    });
+
+    mutate(data);
+  });
+
   return (
     <PageLayout
       title={"Create New Group"}
       description={"Add members to your group and send them messages."}
     >
       <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit((data) => mutate(data))}
-          className="w-full"
-        >
+        <form onSubmit={onSubmit} className="w-full">
           <section className="flex flex-col-reverse items-center lg:flex-row lg:justify-between lg:gap-12">
             <div className="flex w-full  flex-col gap-8 px-4 py-4  sm:px-0 lg:max-w-lg">
               <FormInput<GroupMembersFormSchema>

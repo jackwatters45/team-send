@@ -2,6 +2,7 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/router";
 import Link from "next/link";
+import React from "react";
 import { parsePhoneNumber } from "libphonenumber-js";
 import type {
   GetServerSidePropsContext,
@@ -54,8 +55,6 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
-import useLoadingToast from "@/hooks/useLoadingToast";
-import React from "react";
 
 export default function EditMessage({ messageId }: MessageDetailsProps) {
   const { data } = api.message.getMessageById.useQuery({ messageId });
@@ -121,13 +120,6 @@ export default function EditMessage({ messageId }: MessageDetailsProps) {
       });
     },
   });
-  useLoadingToast({
-    isLoading: isUpdating,
-    toastOptions: {
-      title: "Updating Message",
-      description: "Please wait while we update your message.",
-    },
-  });
 
   const onSubmit = (formData: GroupMessageType) => {
     if (formData.isScheduled === "yes" && !formData.scheduledDate) {
@@ -161,6 +153,11 @@ export default function EditMessage({ messageId }: MessageDetailsProps) {
       formData.recurringNum = null;
       formData.recurringPeriod = null;
     }
+
+    toast({
+      title: "Updating Message",
+      description: "Please wait while we update your message.",
+    });
 
     mutate({
       ...formData,

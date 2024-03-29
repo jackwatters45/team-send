@@ -59,7 +59,14 @@ export default function Home() {
       });
     },
   });
-  const handleDelete = (groupId: string) => mutate({ groupId });
+  const handleDelete = (groupId: string) => {
+    toast({
+      title: "Deleting group",
+      description: "Please wait while we delete the group.",
+    });
+
+    mutate({ groupId });
+  };
 
   const groupsColumns = getGroupColumns(handleDelete);
   const { table } = useDataTable({

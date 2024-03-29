@@ -40,7 +40,6 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import { ConfirmDeleteDialog } from "@/components/ui/alert-dialog";
 import { useRouter } from "next/router";
-import useLoadingToast from "@/hooks/useLoadingToast";
 
 export default function GroupHistory({
   groupId,
@@ -67,66 +66,68 @@ export default function GroupHistory({
       });
     },
   });
-  const handleDelete = (messageId: string) => deleteMessage({ messageId });
-
-  const { mutate: sendMessage, isLoading: isSending } =
-    api.message.send.useMutation({
-      onSuccess: (data) => {
-        void ctx.group.getGroupHistoryById.invalidate();
-        toast({
-          title: "Message Sent",
-          description: `Message "${data.id}" has been sent.`,
-        });
-      },
-      onError: (error) => {
-        // TODO need to offer some details on why it failed + what to do
-        const errorMessage = error.data?.zodError?.fieldErrors?.content;
-        toast({
-          title: "Retry Send Message Failed",
-          description:
-            errorMessage?.[0] ??
-            "An error occurred while trying to send the message.",
-          variant: "destructive",
-        });
-      },
+  const handleDelete = (messageId: string) => {
+    toast({
+      title: "Deleting Message",
+      description: "Please wait while we delete the message.",
     });
-  const handleSend = (messageId: string) => sendMessage({ messageId });
 
-  useLoadingToast({
-    isLoading: isSending,
-    toastOptions: {
+    deleteMessage({ messageId });
+  };
+
+  const { mutate: sendMessage } = api.message.send.useMutation({
+    onSuccess: (data) => {
+      void ctx.group.getGroupHistoryById.invalidate();
+      toast({
+        title: "Message Sent",
+        description: `Message "${data.id}" has been sent.`,
+      });
+    },
+    onError: (error) => {
+      // TODO need to offer some details on why it failed + what to do
+      const errorMessage = error.data?.zodError?.fieldErrors?.content;
+      toast({
+        title: "Retry Send Message Failed",
+        description:
+          errorMessage?.[0] ??
+          "An error occurred while trying to send the message.",
+        variant: "destructive",
+      });
+    },
+  });
+  const handleSend = (messageId: string) => {
+    toast({
       title: "Sending Message",
       description: "Please wait while we send your message.",
-    },
-  });
+    });
+
+    sendMessage({ messageId });
+  };
 
   const router = useRouter();
-  const { mutate: duplicateMessage, isLoading: isDuplicating } =
-    api.message.duplicate.useMutation({
-      onSuccess: (data) => {
-        void router.push(`/group/${data.groupId}/message/${data.id}/edit`);
-      },
-      onError: (error) => {
-        const errorMessage = error.data?.zodError?.fieldErrors?.content;
-        toast({
-          title: "Duplicate Message Failed",
-          description:
-            errorMessage?.[0] ??
-            "An error occurred while trying to duplicate the message. Please try again.",
-          variant: "destructive",
-        });
-      },
-    });
-  const handleDuplicate = (messageId: string) =>
-    duplicateMessage({ messageId });
-
-  useLoadingToast({
-    isLoading: isDuplicating,
-    toastOptions: {
-      title: "Duplicating Message",
-      description: "Please wait while we duplicate your message.",
+  const { mutate: duplicateMessage } = api.message.duplicate.useMutation({
+    onSuccess: (data) => {
+      void router.push(`/group/${data.groupId}/message/${data.id}/edit`);
+    },
+    onError: (error) => {
+      const errorMessage = error.data?.zodError?.fieldErrors?.content;
+      toast({
+        title: "Duplicate Message Failed",
+        description:
+          errorMessage?.[0] ??
+          "An error occurred while trying to duplicate the message. Please try again.",
+        variant: "destructive",
+      });
     },
   });
+  const handleDuplicate = (messageId: string) => {
+    toast({
+      title: "Duplicating Message",
+      description: "Please wait while we duplicate your message.",
+    });
+
+    duplicateMessage({ messageId });
+  };
 
   const historyTableColumns = getHistoryTableColumns({
     groupId,
@@ -151,9 +152,7 @@ export default function GroupHistory({
     },
   });
 
-  if (!data) {
-    return <div>404</div>;
-  }
+  if (!data) return <div>404</div>;
 
   return (
     <GroupLayout group={data.group}>
