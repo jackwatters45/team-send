@@ -39,9 +39,9 @@ import {
 } from "@/components/ui/data-table";
 import { toast } from "@/components/ui/use-toast";
 import { ConfirmDeleteDialog } from "@/components/ui/alert-dialog";
+import { useRouter } from "next/router";
+import useLoadingToast from "@/hooks/useLoadingToast";
 
-// fd
-// duplicate -> create new message with same content minus send part -> navigate to edit page
 export default function GroupHistory({
   groupId,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
@@ -58,25 +58,82 @@ export default function GroupHistory({
     },
     onError: (error) => {
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
-      if (errorMessage?.[0]) {
-        toast({
-          title: "Message Delete Failed",
-          description: errorMessage[0],
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Message Delete Failed",
-          description:
-            "An error occurred while deleting the message. Please try again.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Message Delete Failed",
+        description:
+          errorMessage?.[0] ??
+          "An error occurred while deleting the message. Please try again.",
+        variant: "destructive",
+      });
     },
   });
   const handleDelete = (messageId: string) => deleteMessage({ messageId });
 
-  const historyTableColumns = getHistoryTableColumns({ groupId, handleDelete });
+  const { mutate: sendMessage, isLoading: isSending } =
+    api.message.send.useMutation({
+      onSuccess: (data) => {
+        void ctx.group.getGroupHistoryById.invalidate();
+        toast({
+          title: "Message Sent",
+          description: `Message "${data.id}" has been sent.`,
+        });
+      },
+      onError: (error) => {
+        // TODO need to offer some details on why it failed + what to do
+        const errorMessage = error.data?.zodError?.fieldErrors?.content;
+        toast({
+          title: "Retry Send Message Failed",
+          description:
+            errorMessage?.[0] ??
+            "An error occurred while trying to send the message.",
+          variant: "destructive",
+        });
+      },
+    });
+  const handleSend = (messageId: string) => sendMessage({ messageId });
+
+  useLoadingToast({
+    isLoading: isSending,
+    toastOptions: {
+      title: "Sending Message",
+      description: "Please wait while we send your message.",
+    },
+  });
+
+  const router = useRouter();
+  const { mutate: duplicateMessage, isLoading: isDuplicating } =
+    api.message.duplicate.useMutation({
+      onSuccess: (data) => {
+        void router.push(`/group/${data.groupId}/message/${data.id}/edit`);
+      },
+      onError: (error) => {
+        const errorMessage = error.data?.zodError?.fieldErrors?.content;
+        toast({
+          title: "Duplicate Message Failed",
+          description:
+            errorMessage?.[0] ??
+            "An error occurred while trying to duplicate the message. Please try again.",
+          variant: "destructive",
+        });
+      },
+    });
+  const handleDuplicate = (messageId: string) =>
+    duplicateMessage({ messageId });
+
+  useLoadingToast({
+    isLoading: isDuplicating,
+    toastOptions: {
+      title: "Duplicating Message",
+      description: "Please wait while we duplicate your message.",
+    },
+  });
+
+  const historyTableColumns = getHistoryTableColumns({
+    groupId,
+    handleDelete,
+    handleSend,
+    handleDuplicate,
+  });
   const { table } = useDataTable({
     columns: historyTableColumns,
     data: data?.messages ?? [],
@@ -156,9 +213,13 @@ export const getServerSideProps = async (
 function getHistoryTableColumns({
   groupId,
   handleDelete,
+  handleSend,
+  handleDuplicate,
 }: {
   groupId: string;
   handleDelete: (messageId: string) => void;
+  handleSend: (messageId: string) => void;
+  handleDuplicate: (messageId: string) => void;
 }): ColumnDef<RouterOutputs["group"]["getAll"][number]["messages"][number]>[] {
   return [
     {
@@ -287,11 +348,6 @@ function getHistoryTableColumns({
               Copy message ID
               <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem>
-              Duplicate message
-              <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
-            </DropdownMenuItem>
             <DropdownMenuItem>
               <Link
                 href={`/group/${groupId}/message/${row.getValue<string>("id")}`}
@@ -299,6 +355,13 @@ function getHistoryTableColumns({
               >
                 View message details
               </Link>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem
+              onClick={() => handleDuplicate(row.getValue("id"))}
+            >
+              Duplicate message
+              <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
             </DropdownMenuItem>
             {row.getValue<string>("status") !== "sent" && (
               <DropdownMenuItem>
@@ -308,6 +371,22 @@ function getHistoryTableColumns({
                 >
                   Edit message
                 </Link>
+              </DropdownMenuItem>
+            )}
+            {row.getValue<string>("status") === "failed" && (
+              <DropdownMenuItem onClick={() => handleSend(row.getValue("id"))}>
+                Retry send message
+              </DropdownMenuItem>
+            )}
+            {row.getValue<string>("status") === "draft" && (
+              <DropdownMenuItem onClick={() => handleSend(row.getValue("id"))}>
+                Send message
+              </DropdownMenuItem>
+            )}
+            <DropdownMenuSeparator />
+            {row.getValue<string>("status") === "scheduled" && (
+              <DropdownMenuItem onClick={() => handleSend(row.getValue("id"))}>
+                Send message now
               </DropdownMenuItem>
             )}
             <ConfirmDeleteDialog

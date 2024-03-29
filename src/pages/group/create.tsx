@@ -41,20 +41,13 @@ export default function CreateGroup() {
     },
     onError: (error) => {
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
-      if (errorMessage?.[0]) {
-        toast({
-          title: "Group Creation Failed",
-          description: errorMessage[0],
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Group Creation Failed",
-          description:
-            "An error occurred while creating the group. Please try again.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Group Creation Failed",
+        description:
+          errorMessage?.[0] ??
+          "An error occurred while creating the group. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
