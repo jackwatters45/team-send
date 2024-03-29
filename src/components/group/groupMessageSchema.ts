@@ -15,6 +15,7 @@ export const groupMessageSchema = z
   .object({
     id: z.string().optional(),
     status: z.enum(["draft", "scheduled", "sent", "failed"]),
+    isDraft: z.enum(["no", "yes"]),
     content: z.string().max(500).min(1),
     isScheduled: z.enum(["no", "yes"]),
     scheduledDate: z.date().nullish(),

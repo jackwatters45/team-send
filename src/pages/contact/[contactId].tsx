@@ -38,9 +38,6 @@ const contactBaseSchema = z.object({
   notes: z.string().nullish(),
 });
 
-// TODO commits
-// make index protect + make sure create is fine
-// TODO add userId to pages
 export default function Contact({ contactId }: ContactProps) {
   const { data } = api.contact.getContactById.useQuery({ contactId });
 
@@ -64,20 +61,13 @@ export default function Contact({ contactId }: ContactProps) {
     },
     onError: (error) => {
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
-      if (errorMessage?.[0]) {
-        toast({
-          title: "Contact Update Failed",
-          description: errorMessage[0],
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Contact Update Failed",
-          description:
-            "An error occurred while updating the contact. Please try again.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Contact Update Failed",
+        description:
+          errorMessage?.[0] ??
+          "An error occurred while updating the contact. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 

@@ -50,20 +50,13 @@ export default function Home() {
     },
     onError: (error) => {
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
-      if (errorMessage?.[0]) {
-        toast({
-          title: "Failed to delete group",
-          description: errorMessage[0],
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Failed to delete group",
-          description:
-            "There was an error deleting the group. Please try again.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Failed to delete group",
+        description:
+          errorMessage?.[0] ??
+          "There was an error deleting the group. Please try again.",
+        variant: "destructive",
+      });
     },
   });
   const handleDelete = (groupId: string) => mutate({ groupId });
