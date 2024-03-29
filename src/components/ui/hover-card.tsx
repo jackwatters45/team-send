@@ -66,9 +66,8 @@ function UserHoverableCell({ user }: IUserHoverableCellProps) {
           </Avatar>
           <div className="space-y-1">
             <h4 className="text-sm font-semibold">{user.name}</h4>
-            {/* TODO something more better */}
             <p className="text-xs">
-              The React Framework – created and maintained by @vercel.
+              {user.username ?? user.email ?? user.phone ?? user.id}
             </p>
           </div>
         </div>

@@ -49,6 +49,7 @@ export default function Group({
     resolver: zodResolver(groupMessageSchema),
     defaultValues: {
       content: "",
+      isDraft: "no",
       isScheduled: "no",
       scheduledDate: undefined,
       isRecurring: "no",
@@ -66,7 +67,7 @@ export default function Group({
     form.setValue("recipients", rowSelection);
   }, [rowSelection, form]);
 
-  // TODO definitely a lot more considerations here
+  // add from edit message
   const onSubmit = (data: GroupMessageType) => {
     if (data.isReminders === "yes" && data.reminders?.length === 0) {
       form.setValue("isReminders", "no");
@@ -109,7 +110,7 @@ export default function Group({
             control={form.control}
             name="message"
             label="Message"
-            description="This message will be sent to all selected group members."
+            description="This message will be sent to all selected group members"
             placeholder="Enter a message"
             required={true}
           />
@@ -125,13 +126,13 @@ export default function Group({
               <p className="text-sm text-stone-500 dark:text-stone-400">
                 Selected users will receive this message. You can change
                 recipients by selecting or deselecting users using the
-                checkboxes below.
+                checkboxes below
               </p>
             </div>
             <CheckboxInput<GroupMessageSchema>
               name="saveRecipientState"
               label="Save recipient state for group"
-              description="Recipients you choose for this message will become the new default for this group."
+              description="Recipients you choose for this message will become the new default for this group"
               control={form.control}
             />
             <GroupMembersTable table={table} />

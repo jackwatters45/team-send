@@ -1,11 +1,14 @@
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/router";
+import Link from "next/link";
+import { parsePhoneNumber } from "libphonenumber-js";
 import type {
   GetServerSidePropsContext,
   InferGetServerSidePropsType,
 } from "next";
 import { type UseFormReturn, useForm } from "react-hook-form";
+import type { ColumnDef } from "@tanstack/react-table";
 
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { getInitialSelectedMembers } from "@/lib/utils";
@@ -40,6 +43,18 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
+import { HoverableCell } from "@/components/ui/hover-card";
+import { Checkbox } from "@/components/ui/checkbox";
+import {
+  DataTableColumnHeader,
+  DataTableRowActions,
+} from "@/components/ui/data-table";
+import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+} from "@/components/ui/dropdown-menu";
+import useLoadingToast from "@/hooks/useLoadingToast";
 
 export default function EditMessage({ messageId }: MessageDetailsProps) {
   const { data } = api.message.getMessageById.useQuery({ messageId });
@@ -49,6 +64,7 @@ export default function EditMessage({ messageId }: MessageDetailsProps) {
     defaultValues: {
       id: messageId,
       status: data?.status,
+      isDraft: data?.status === "draft" ? "yes" : "no",
       content: data?.content,
       isScheduled: data?.isScheduled ? "yes" : "no",
       scheduledDate: data?.scheduledDate,
@@ -95,45 +111,22 @@ export default function EditMessage({ messageId }: MessageDetailsProps) {
     },
     onError: (error) => {
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
-      if (errorMessage?.[0]) {
-        toast({
-          title: "Message Update Failed",
-          description: errorMessage[0],
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Message Update Failed",
-          description:
-            "An error occurred while updating the message. Please try again.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Message Update Failed",
+        description:
+          errorMessage?.[0] ??
+          "An error occurred while updating the message. Please try again.",
+        variant: "destructive",
+      });
     },
   });
-
-  const [updatingToast, setUpdatingToast] =
-    useState<ReturnType<typeof toast>>();
-  useEffect(() => {
-    if (isUpdating && !updatingToast) {
-      setUpdatingToast(
-        toast({
-          title: "Updating Message",
-          description: "Please wait while we update your message.",
-        }),
-      );
-    } else if (updatingToast && !isUpdating) {
-      updatingToast.dismiss();
-      setUpdatingToast(undefined);
-    }
-
-    return () => {
-      if (updatingToast) {
-        updatingToast.dismiss();
-        setUpdatingToast(undefined);
-      }
-    };
-  }, [updatingToast, isUpdating]);
+  useLoadingToast({
+    isLoading: isUpdating,
+    toastOptions: {
+      title: "Updating Message",
+      description: "Please wait while we update your message.",
+    },
+  });
 
   const onSubmit = (formData: GroupMessageType) => {
     if (formData.isScheduled === "yes" && !formData.scheduledDate) {
@@ -151,8 +144,6 @@ export default function EditMessage({ messageId }: MessageDetailsProps) {
           .map((reminder) => [`${reminder.num}-${reminder.period}`, reminder]),
       ).values(),
     );
-
-    console.log(formData.reminders);
 
     if (formData.isReminders === "yes" && !formData.reminders?.length) {
       formData.isReminders = "no";
@@ -179,8 +170,8 @@ export default function EditMessage({ messageId }: MessageDetailsProps) {
   };
 
   const { mutate: deleteMessage } = api.message.delete.useMutation({
-    onSuccess: (data) => {
-      void router.push(`/group/${data.groupId}/history`);
+    onSuccess: async (data) => {
+      await router.push(`/group/${data.groupId}/history`);
       toast({
         title: "Message Deleted",
         description: `Message "${data.id}" has been deleted.`,
@@ -213,7 +204,7 @@ export default function EditMessage({ messageId }: MessageDetailsProps) {
   return (
     <PageLayout
       title={`Edit Message ${messageId}`}
-      description={`Status: ${data?.status.charAt(0).toUpperCase() + data?.status.slice(1)}`}
+      description={`Current Status: ${data?.status.charAt(0).toUpperCase() + data?.status.slice(1)}`}
       rightSidebar={<DeleteButton onClick={handleDelete} />}
     >
       <Form {...form}>
@@ -227,7 +218,7 @@ export default function EditMessage({ messageId }: MessageDetailsProps) {
             control={form.control}
             name="content"
             label="Message"
-            description="This message will be sent to all selected group members."
+            description="This message will be sent to all selected group members"
             placeholder="Enter a message"
             required={true}
           />
@@ -243,13 +234,13 @@ export default function EditMessage({ messageId }: MessageDetailsProps) {
               <p className="text-sm text-stone-500 dark:text-stone-400">
                 Selected users will receive this message. You can change
                 recipients by selecting or deselecting users using the
-                checkboxes below.
+                checkboxes below
               </p>
             </div>
             <CheckboxInput<GroupMessageSchema>
               name="saveRecipientState"
               label="Save recipient state for group"
-              description="Recipients you choose for this message will become the new default for this group."
+              description="Recipients you choose for this message will become the new default for this group"
               control={form.control}
             />
             <GroupMembersTable table={table} />
@@ -329,24 +320,6 @@ type MessageDetailsProps = InferGetServerSidePropsType<
   typeof getServerSideProps
 >;
 
-import type { ColumnDef } from "@tanstack/react-table";
-
-import { Checkbox } from "@/components/ui/checkbox";
-
-import { HoverableCell } from "@/components/ui/hover-card";
-import {
-  DataTableColumnHeader,
-  DataTableRowActions,
-} from "@/components/ui/data-table";
-import {
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-} from "@/components/ui/dropdown-menu";
-import Link from "next/link";
-import { parsePhoneNumber } from "libphonenumber-js";
-import { useEffect, useState } from "react";
-
 const getGroupMembersColumns = (
   form: UseFormReturn<GroupMessageType>,
 ): ColumnDef<MemberBaseContact>[] => {
@@ -361,7 +334,6 @@ const getGroupMembersColumns = (
           }
           onCheckedChange={(value) => {
             table.toggleAllPageRowsSelected(!!value);
-            // TODO
           }}
           aria-label="Select all"
           name="select-all"

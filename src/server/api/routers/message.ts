@@ -180,7 +180,6 @@ export const messageRouter = createTRPCRouter({
         }
 
         try {
-          log("Updating message \n");
           const result = await ctx.db.$transaction(async (prisma) => {
             // update group member snapshot
             await Promise.all(
@@ -279,7 +278,6 @@ export const messageRouter = createTRPCRouter({
               data,
             });
 
-            log("Message updated \n");
             return updatedMessage;
 
             // TODO actual send logic + cron jobs
@@ -302,10 +300,105 @@ export const messageRouter = createTRPCRouter({
       const { success } = await ratelimit.limit(userId);
       if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
 
-      return ctx.db.message.delete({
+      return await ctx.db.message.delete({
         where: { id: input.messageId },
       });
 
       // TODO: cancel send jobs if any
+    }),
+  duplicate: protectedProcedure
+    .input(z.object({ messageId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const { success } = await ratelimit.limit(userId);
+      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
+
+      const existingMessage = await ctx.db.message.findUnique({
+        where: { id: input.messageId },
+        select: {
+          content: true,
+          groupId: true,
+          sentById: true,
+          createdById: true,
+          lastUpdatedById: true,
+          isScheduled: true,
+          scheduledDate: true,
+          isRecurring: true,
+          recurringNum: true,
+          recurringPeriod: true,
+          isReminders: true,
+        },
+      });
+
+      if (!existingMessage) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Message not found",
+        });
+      }
+
+      const existingReminders = await ctx.db.reminder.findMany({
+        where: { messageId: input.messageId },
+      });
+
+      const existingRecipients = await ctx.db.memberSnapshot.findMany({
+        where: { messageId: input.messageId },
+      });
+
+      const newReminders = existingReminders.map((reminder) => ({
+        ...reminder,
+        id: undefined,
+        messageId: undefined,
+      }));
+
+      const newRecipients = existingRecipients.map((recipient) => ({
+        ...recipient,
+        id: undefined,
+        messageId: undefined,
+      }));
+
+      return await ctx.db.message.create({
+        data: {
+          ...existingMessage,
+          status: "draft",
+          recipients: { create: newRecipients },
+          reminders: { create: newReminders },
+        },
+      });
+    }),
+  send: protectedProcedure
+    .input(z.object({ messageId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const { success } = await ratelimit.limit(userId);
+      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
+
+      const existingMessage = await ctx.db.message.findUnique({
+        where: { id: input.messageId },
+        include: { recipients: true, reminders: true },
+      });
+
+      if (!existingMessage) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Message not found",
+        });
+      }
+
+      if (existingMessage?.status === "sent") {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Message has already been sent",
+        });
+      }
+
+      // TODO actual send logic + cron jobs
+
+      return await ctx.db.message.update({
+        where: { id: input.messageId },
+        data: { status: "sent", sendAt: new Date() },
+      });
     }),
 });

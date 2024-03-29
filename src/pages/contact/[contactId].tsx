@@ -24,23 +24,12 @@ import { toast } from "@/components/ui/use-toast";
 
 const contactBaseSchema = z.object({
   id: z.string(),
-  name: z.string().min(1, "Name is required"),
-  email: z
-    .string()
-    .or(
-      z
-        .string()
-        .email()
-        .refine((val) => val !== "", "Invalid email"),
-    )
-    .nullish(),
-  phone: z.string().nullish(),
-  notes: z.string().nullish(),
+  name: z.string().optional(),
+  email: z.string().email().optional(),
+  phone: z.string().optional(),
+  notes: z.string().optional(),
 });
 
-// TODO commits
-// make index protect + make sure create is fine
-// TODO add userId to pages
 export default function Contact({ contactId }: ContactProps) {
   const { data } = api.contact.getContactById.useQuery({ contactId });
 
@@ -64,20 +53,13 @@ export default function Contact({ contactId }: ContactProps) {
     },
     onError: (error) => {
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
-      if (errorMessage?.[0]) {
-        toast({
-          title: "Contact Update Failed",
-          description: errorMessage[0],
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Contact Update Failed",
-          description:
-            "An error occurred while updating the contact. Please try again.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Contact Update Failed",
+        description:
+          errorMessage?.[0] ??
+          "An error occurred while updating the contact. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 

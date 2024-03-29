@@ -2,7 +2,8 @@ import * as React from "react";
 import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 
 import { cn } from "@/lib/utils";
-import { buttonVariants } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { DropdownMenuShortcut } from "./dropdown-menu";
 
 const AlertDialog = AlertDialogPrimitive.Root;
 
@@ -124,6 +125,40 @@ const AlertDialogCancel = React.forwardRef<
 ));
 AlertDialogCancel.displayName = AlertDialogPrimitive.Cancel.displayName;
 
+interface ConfirmDeleteDialogProps {
+  triggerText: string;
+  onConfirm: () => void;
+}
+const ConfirmDeleteDialog = ({
+  triggerText,
+  onConfirm,
+}: ConfirmDeleteDialogProps) => (
+  <AlertDialog>
+    <AlertDialogTrigger asChild className="w-full">
+      <Button
+        className="h-fit select-none items-center rounded-sm px-2 py-1.5 text-sm font-normal outline-none transition-colors hover:bg-stone-100 focus:bg-stone-100 focus:text-stone-900 dark:hover:bg-stone-800 dark:hover:text-stone-50 dark:focus:bg-stone-800 dark:focus:text-stone-50"
+        variant="ghost"
+      >
+        {triggerText}
+        <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+      </Button>
+    </AlertDialogTrigger>
+    <AlertDialogContent>
+      <AlertDialogHeader>
+        <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+        <AlertDialogDescription>
+          This action cannot be undone. This will permanently delete your
+          account and remove your data from our servers.
+        </AlertDialogDescription>
+      </AlertDialogHeader>
+      <AlertDialogFooter>
+        <AlertDialogCancel>Cancel</AlertDialogCancel>
+        <AlertDialogAction onClick={onConfirm}>Continue</AlertDialogAction>
+      </AlertDialogFooter>
+    </AlertDialogContent>
+  </AlertDialog>
+);
+
 export {
   AlertDialog,
   AlertDialogPortal,
@@ -136,4 +171,5 @@ export {
   AlertDialogDescription,
   AlertDialogAction,
   AlertDialogCancel,
+  ConfirmDeleteDialog,
 };
