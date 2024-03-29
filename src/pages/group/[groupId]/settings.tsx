@@ -1,14 +1,15 @@
 import { GroupLayout } from "@/layouts/GroupLayout";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { api } from "@/utils/api";
+import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { useRouter } from "next/router";
 import type {
   GetServerSidePropsContext,
   InferGetServerSidePropsType,
 } from "next";
-import * as z from "zod";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { useForm } from "react-hook-form";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
+import type { Control, FieldValues, Path } from "react-hook-form";
 
 import { getServerAuthSession } from "@/server/auth";
 import { extractInitials } from "@/lib/utils";
@@ -27,14 +28,16 @@ import {
 import { toast } from "@/components/ui/use-toast";
 import { CheckboxInput, FormInput } from "@/components/ui/form-inputs";
 import { Button } from "@/components/ui/button";
+import { Separator } from "@/components/ui/separator";
 
 const groupSettingsSchema = z.object({
+  groupId: z.string(),
   name: z.string().max(40),
   description: z.string().max(100).optional(),
   image: z.string().optional(),
   "image-file": z.string().optional(),
-  phone: z.boolean(),
-  email: z.boolean(),
+  usePhone: z.boolean(),
+  useEmail: z.boolean(),
   "change-global": z.boolean(),
 });
 type GroupSettingsFormType = z.infer<typeof groupSettingsSchema>;
@@ -48,32 +51,91 @@ export default function GroupSettings({
   const form = useForm<GroupSettingsFormType>({
     resolver: zodResolver(groupSettingsSchema),
     defaultValues: {
+      groupId: data?.id ?? "",
       name: data?.name ?? "",
       description: data?.description ?? "",
-      image: data?.image ?? "",
+      image: data?.image ?? undefined,
       "image-file": "",
-      phone: data?.phone ?? false,
-      email: data?.email ?? false,
+      usePhone: data?.usePhone ?? false,
+      useEmail: data?.useEmail ?? false,
       "change-global": false,
+    },
+  });
+
+  const ctx = api.useUtils();
+  const { mutate: updateSettings } = api.group.updateSettings.useMutation({
+    onSuccess: async (data) => {
+      void ctx.group.getGroupById.invalidate({ groupId: data.id });
+      toast({
+        title: "Group Settings Updated",
+        description: `Group "${data.id}" settings has been successfully updated.`,
+      });
+    },
+    onError: (error) => {
+      const errorMessage = error.data?.zodError?.fieldErrors?.content;
+      toast({
+        title: "Failed to update group",
+        description:
+          errorMessage?.[0] ??
+          "There was an error updating group settings. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 
   const onSubmit = (data: z.infer<typeof groupSettingsSchema>) => {
     toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
+      title: "Updating Group Settings",
+      description: "Please wait while we update the group settings.",
     });
+
+    updateSettings(data);
   };
 
-  const [parent] = useAutoAnimate();
+  const router = useRouter();
+  const { mutate: archiveGroup } = api.group.archive.useMutation({
+    onSuccess: async (data) => {
+      await router.push(`/`); // TODO change
+      toast({
+        title: "Group Archived",
+        description: `Group "${data.id}" has been archived.`,
+      });
+    },
+    onError: (error) => {
+      const errorMessage = error.data?.zodError?.fieldErrors?.content;
+      toast({
+        title: "Failed to archive group",
+        description:
+          errorMessage?.[0] ??
+          "There was an error archiving the group. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+  const handleArchive = () => archiveGroup({ groupId });
 
-  if (!data) {
-    return null;
-  }
+  const { mutate: deleteGroup } = api.group.delete.useMutation({
+    onSuccess: async (data) => {
+      await router.push(`/`); // TODO change
+      toast({
+        title: "Group Deleted",
+        description: `Group "${data.id}" has been deleted.`,
+      });
+    },
+    onError: (error) => {
+      const errorMessage = error.data?.zodError?.fieldErrors?.content;
+      toast({
+        title: "Failed to delete group",
+        description:
+          errorMessage?.[0] ??
+          "There was an error deleting the group. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+  const handleDelete = () => deleteGroup({ groupId });
+
+  if (!data) return null;
 
   return (
     <GroupLayout group={data}>
@@ -89,7 +151,6 @@ export default function GroupSettings({
         <form
           onSubmit={form.handleSubmit(onSubmit)}
           className="flex flex-col gap-8 py-4 sm:gap-6"
-          ref={parent}
         >
           <div className="flex justify-between gap-12">
             <div className="flex-1">
@@ -129,51 +190,28 @@ export default function GroupSettings({
             placeholder="Enter a Group Description (optional)"
           />
           <div className="pt-8">
-            <div className="rounded-md border p-4 dark:border-stone-700">
-              <h3 className="border-b text-lg font-medium tracking-tight dark:border-stone-500 dark:border-opacity-20">
+            <div className="rounded-md border p-4 dark:border-stone-800 dark:bg-stone-900/25">
+              <h3 className=" text-lg font-medium tracking-tight ">
                 Connections
               </h3>
-              <div className="flex flex-col gap-6 pt-6">
-                <FormField
+              <FormDescription>
+                Choose how you want to connect with members of this group. You
+                will not be able to send messages when no connections are turned
+                on.
+              </FormDescription>
+              {/* TODO dynamically show available connections */}
+              <div className="flex flex-col gap-5 pt-5">
+                <ConnectionSwitchInput
+                  name="usePhone"
                   control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem className="flex w-full flex-row items-center justify-between rounded-lg border p-4 dark:border-stone-800">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Phone</FormLabel>
-                        <FormDescription>
-                          Send texts from your twilio number to members of this
-                          group.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
+                  label="Phone"
+                  description="Send texts from your twilio number to members of this group."
                 />
-                <FormField
+                <ConnectionSwitchInput
+                  name="useEmail"
                   control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem className="flex w-full flex-row items-center justify-between rounded-lg border p-4 dark:border-stone-800">
-                      <div className="space-y-0.5">
-                        <FormLabel className="text-base">Email</FormLabel>
-                        <FormDescription>
-                          Send emails via Nodemailer to members of this group.
-                        </FormDescription>
-                      </div>
-                      <FormControl>
-                        <Switch
-                          checked={field.value}
-                          onCheckedChange={field.onChange}
-                        />
-                      </FormControl>
-                    </FormItem>
-                  )}
+                  label="Email"
+                  description="Send emails via Nodemailer to members of this group."
                 />
               </div>
               <CheckboxInput
@@ -184,42 +222,83 @@ export default function GroupSettings({
               />
             </div>
           </div>
-          <div>
-            <Button type="submit" className="">
+          <div className="flex pt-4">
+            <Button type="submit" className="flex-1">
               Save changes
             </Button>
           </div>
         </form>
-        <div className="pt-8">
-          <div className="border-b border-red-300/80 dark:border-red-800/80">
-            <h3 className="text-xl font-semibold">Danger Zone</h3>
-          </div>
-          <div className="pt-6">
-            <div className="rounded-md border border-red-300/80 dark:border-red-800/80">
-              <DangerZoneCard
-                title="Transfer ownership"
-                description="Transfer ownership of this group to another account."
-                buttonTitle="Transfer"
-                onClick={() => console.log("TODO")}
-              />
-              <DangerZoneCard
-                title="Archive this group"
-                description="Archive this group and make read-only."
-                buttonTitle="Archive group"
-                onClick={() => console.log("TODO")}
-              />
-              <DangerZoneCard
-                title="Delete this group"
-                description="Deleting a group will erase all message history."
-                buttonTitle="Delete group"
-                onClick={() => console.log("TODO")}
-                isLast={true}
-              />
-            </div>
+      </Form>
+      <div className="pt-12" />
+      <Separator />
+      <div className="pt-16">
+        <div className="rounded-md border border-red-300/80 p-4 dark:border-red-800/80 dark:bg-stone-900/20">
+          <h3 className="text-xl font-semibold ">Danger Zone</h3>
+          <div className="flex flex-col gap-5 pt-4">
+            {/* <DangerZoneCard
+              title="Transfer ownership"
+              description="Transfer ownership of this group to another account."
+              buttonTitle="Transfer"
+              onClick={() => console.log("TODO")}
+            /> */}
+            <DangerZoneCard
+              title="Archive this group"
+              description="Archive this group and make read-only."
+              buttonTitle="Archive group"
+              dialog={{
+                title: "Archive group",
+                description:
+                  "Are you sure you want to archive this group? This will make the group read-only.",
+                confirmText: "Archive",
+                onConfirm: handleArchive,
+              }}
+            />
+            <DangerZoneCard
+              title="Delete this group"
+              description="Deleting a group will erase all message history."
+              buttonTitle="Delete group"
+              dialog={{
+                title: "Delete group",
+                description:
+                  "Are you sure you want to delete this group? This action cannot be undone.",
+                confirmText: "Delete",
+                onConfirm: handleDelete,
+              }}
+            />
           </div>
         </div>
-      </Form>
+      </div>
     </GroupLayout>
+  );
+}
+
+function ConnectionSwitchInput<T extends FieldValues>({
+  name,
+  control,
+  label,
+  description,
+}: {
+  name: Path<T>;
+  control: Control<T>;
+  label: string;
+  description: string;
+}) {
+  return (
+    <FormField
+      control={control}
+      name={name}
+      render={({ field }) => (
+        <FormItem className="flex w-full flex-row items-center justify-between rounded-lg border p-4 dark:border-stone-800 dark:bg-stone-950">
+          <div className="space-y-0.5">
+            <FormLabel className="text-base">{label}</FormLabel>
+            <FormDescription>{description}</FormDescription>
+          </div>
+          <FormControl>
+            <Switch checked={field.value} onCheckedChange={field.onChange} />
+          </FormControl>
+        </FormItem>
+      )}
+    />
   );
 }
 

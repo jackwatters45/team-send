@@ -55,6 +55,7 @@ import {
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 import useLoadingToast from "@/hooks/useLoadingToast";
+import React from "react";
 
 export default function EditMessage({ messageId }: MessageDetailsProps) {
   const { data } = api.message.getMessageById.useQuery({ messageId });

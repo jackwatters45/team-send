@@ -16,8 +16,8 @@ model Group {
   members  Member[]
   messages Message[]
 
-  phone Boolean @default(true)
-  email Boolean @default(true)
+  usePhone Boolean @default(true)
+  useEmail Boolean @default(true)
 
   addedGroupIds String[]
 
@@ -26,6 +26,8 @@ model Group {
 
   createdBy   User   @relation(fields: [createdById], references: [id])
   createdById String
+
+  isArchived Boolean @default(false)
 }
 
 model Contact {

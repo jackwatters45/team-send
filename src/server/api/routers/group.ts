@@ -25,8 +25,8 @@ export interface IGroupHistory extends IGroupBase {
 }
 
 export interface IGroupSettings extends IGroupBase {
-  phone: boolean;
-  email: boolean;
+  usePhone: boolean;
+  useEmail: boolean;
 }
 
 export interface IGroupMetaDetails {
@@ -221,8 +221,81 @@ export const groupRouter = createTRPCRouter({
       const { success } = await ratelimit.limit(userId);
       if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
 
-      return ctx.db.group.delete({
+      return await ctx.db.group.delete({
         where: { id: input.groupId },
       });
+    }),
+  archive: protectedProcedure
+    .input(z.object({ groupId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const { success } = await ratelimit.limit(userId);
+      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
+
+      const archivedGroup = await ctx.db.group.update({
+        where: { id: input.groupId },
+        data: { isArchived: true },
+      });
+
+      if (!archivedGroup) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Group not found" });
+      }
+
+      return archivedGroup;
+    }),
+
+  updateSettings: protectedProcedure
+    .input(
+      z.object({
+        groupId: z.string(),
+        name: z.string().max(40),
+        description: z.string().max(100).optional(),
+        image: z.string().optional(),
+        "image-file": z.string().optional(),
+        usePhone: z.boolean(),
+        useEmail: z.boolean(),
+        "change-global": z.boolean(),
+      }),
+    )
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const { success } = await ratelimit.limit(userId);
+      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
+
+      const group = await ctx.db.group.update({
+        where: { id: input.groupId },
+        data: {
+          name: input.name,
+          description: input.description,
+          image: input["image-file"] ?? input.image,
+          usePhone: input.usePhone,
+          useEmail: input.useEmail,
+        },
+      });
+
+      if (!group) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Group not found" });
+      }
+
+      if (input["change-global"]) {
+        const updateAll = await ctx.db.group.updateMany({
+          where: { createdBy: { id: userId } },
+          data: {
+            usePhone: input.usePhone,
+            useEmail: input.useEmail,
+          },
+        });
+
+        if (!updateAll) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to update all group connections",
+          });
+        }
+      }
+
+      return group;
     }),
 });
