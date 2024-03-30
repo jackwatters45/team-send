@@ -7,7 +7,10 @@ import { type Member } from "./contact";
 
 import { type Message } from "./message";
 import { TRPCError } from "@trpc/server";
-import { groupMembersFormSchema } from "@/components/group/GroupMembersForm";
+import { groupSettingsSchema } from "@/lib/schemas/groupSettingsSchema";
+import { groupMembersFormSchema } from "@/lib/schemas/groupMembersFormSchema";
+import { createGroupSchema } from "@/lib/schemas/createGroupSchema";
+import { log } from "console";
 
 export interface IGroupBase {
   id: string;
@@ -149,7 +152,7 @@ export const groupRouter = createTRPCRouter({
     }),
 
   create: protectedProcedure
-    .input(groupMembersFormSchema)
+    .input(createGroupSchema)
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
@@ -246,18 +249,7 @@ export const groupRouter = createTRPCRouter({
     }),
 
   updateSettings: protectedProcedure
-    .input(
-      z.object({
-        groupId: z.string(),
-        name: z.string().max(40),
-        description: z.string().max(100).optional(),
-        image: z.string().optional(),
-        "image-file": z.string().optional(),
-        usePhone: z.boolean(),
-        useEmail: z.boolean(),
-        "change-global": z.boolean(),
-      }),
-    )
+    .input(groupSettingsSchema)
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
@@ -294,6 +286,47 @@ export const groupRouter = createTRPCRouter({
             message: "Failed to update all group connections",
           });
         }
+      }
+
+      return group;
+    }),
+  updateMembers: protectedProcedure
+    .input(groupMembersFormSchema)
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const { success } = await ratelimit.limit(userId);
+      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
+
+      log("input", input);
+
+      return input;
+
+      const members = await Promise.all(
+        input.members.map(async (member) => {
+          // if no id, create new contact + member
+          //  if id, update contact + member
+        }),
+      );
+
+      const group = await ctx.db.group.update({
+        where: { id: input.groupId },
+        data: {
+          addedGroupIds: input.addedGroupIds,
+          // members: input.members.map((member) => ({
+          //   connectOrCreate: {
+          //     where: { id: member.contact.id },
+          //     create: {
+          //       ...member.contact,
+          //       createdBy: { connect: { id: userId } },
+          //     },
+          //   },
+          // })),
+        },
+      });
+
+      if (!group) {
+        throw new TRPCError({ code: "NOT_FOUND", message: "Group not found" });
       }
 
       return group;

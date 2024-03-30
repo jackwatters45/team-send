@@ -7,16 +7,17 @@ import { zodResolver } from "@hookform/resolvers/zod";
 
 import { createContact } from "@/lib/utils";
 import { api } from "@/utils/api";
+import { getServerAuthSession } from "@/server/auth";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
+import {
+  type GroupMembersFormType,
+  groupMembersFormSchema,
+} from "@/lib/schemas/groupMembersFormSchema";
 
 import { toast } from "@/components/ui/use-toast";
 import { GroupLayout } from "@/layouts/GroupLayout";
 import { Form } from "@/components/ui/form";
-import GroupMembersFormContent, {
-  type GroupMembersFormType,
-  groupMembersFormSchema,
-} from "@/components/group/GroupMembersForm";
-import { getServerAuthSession } from "@/server/auth";
+import GroupMembersFormContent from "@/components/group/GroupMembersForm";
 
 export default function GroupMembers({
   groupId,
@@ -26,23 +27,40 @@ export default function GroupMembers({
   const form = useForm<GroupMembersFormType>({
     resolver: zodResolver(groupMembersFormSchema),
     defaultValues: {
-      name: data?.name ?? "",
-      description: data?.description ?? "",
-      image: data?.image ?? "",
+      groupId,
       members: data?.members ?? [createContact()],
       addedGroupIds: data?.addedGroupIds ?? [],
     },
   });
 
+  const ctx = api.useUtils();
+  const { mutate } = api.group.updateMembers.useMutation({
+    onSuccess: async () => {
+      void ctx.group.getGroupById.invalidate({ groupId });
+      toast({
+        title: "Group Members Updated",
+        description: `Group "${groupId}" members has been successfully updated.`,
+      });
+    },
+    onError: (error) => {
+      const errorMessage = error.data?.zodError?.fieldErrors?.content;
+      toast({
+        title: "Failed to update group members",
+        description:
+          errorMessage?.[0] ??
+          "There was an error updating group members. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: GroupMembersFormType) => {
     toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
+      title: "Updating Group Members",
+      description: "Please wait while we update the group members.",
     });
+
+    mutate(data);
   };
 
   if (!data) {
