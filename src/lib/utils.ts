@@ -16,7 +16,10 @@ export function extractInitials(text: string, numInitials = 2): string {
     return "";
   }
 
-  const words = text.trim().split(/\s+/);
+  const words = text
+    .replace(/[^a-zA-Z\s]+/g, "")
+    .trim()
+    .split(/\s+/);
 
   if (words.length === 1) {
     return words[0]!.slice(0, numInitials).toUpperCase();
