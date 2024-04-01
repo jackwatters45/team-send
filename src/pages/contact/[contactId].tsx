@@ -24,10 +24,10 @@ import { toast } from "@/components/ui/use-toast";
 
 const contactBaseSchema = z.object({
   id: z.string(),
-  name: z.string().optional(),
+  name: z.string().min(1).max(40).optional(),
   email: z.string().email().optional(),
   phone: z.string().optional(),
-  notes: z.string().optional(),
+  notes: z.string().max(5280).optional(),
 });
 
 export default function Contact({ contactId }: ContactProps) {
@@ -101,7 +101,12 @@ export default function Contact({ contactId }: ContactProps) {
             placeholder="Notes"
             control={form.control}
           />
-          <Button type="submit">Save Changes</Button>
+          <Button
+            type="submit"
+            disabled={!form.formState.isDirty || !form.formState.isValid}
+          >
+            Save Changes
+          </Button>
         </form>
       </Form>
       <div className="border-b lg:hidden dark:border-stone-500 dark:border-opacity-20" />

@@ -15,9 +15,9 @@ export const memberSchema = z.object({
       .optional()
       .nullable(),
     phone: z.string().optional().nullable(),
-    notes: z.string().max(100).optional().nullable(),
+    notes: z.string().max(5280).optional().nullable(),
     id: z.string().optional(),
   }),
-  memberNotes: z.string().max(100).optional().nullable(),
+  memberNotes: z.string().max(5280).optional().nullable(),
   isRecipient: z.boolean(),
 });

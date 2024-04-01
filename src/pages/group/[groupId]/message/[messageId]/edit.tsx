@@ -93,7 +93,7 @@ export default function EditMessage({ messageId }: MessageDetailsProps) {
   });
 
   const router = useRouter();
-  const { mutate, isLoading: isUpdating } = api.message.update.useMutation({
+  const { mutate } = api.message.update.useMutation({
     onSuccess: async (data) => {
       await router.push(`/group/${data.groupId}/message/${data.id}`);
       if (data.status === "sent") {
@@ -219,7 +219,10 @@ export default function EditMessage({ messageId }: MessageDetailsProps) {
             placeholder="Enter a message"
             required={true}
           />
-          <Button type="submit" disabled={isUpdating}>
+          <Button
+            type="submit"
+            disabled={!form.formState.isDirty || !form.formState.isValid}
+          >
             {form.watch("isScheduled") === "yes"
               ? "Schedule Message"
               : "Send Message"}

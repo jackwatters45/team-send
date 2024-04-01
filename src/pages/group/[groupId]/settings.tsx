@@ -32,7 +32,7 @@ import { Separator } from "@/components/ui/separator";
 
 const groupSettingsSchema = z.object({
   groupId: z.string(),
-  name: z.string().max(40),
+  name: z.string().min(1).max(40),
   description: z.string().max(100).optional(),
   image: z.string().optional(),
   "image-file": z.string().optional(),
@@ -66,10 +66,6 @@ export default function GroupSettings({
   const { mutate: updateSettings } = api.group.updateSettings.useMutation({
     onSuccess: async (data) => {
       void ctx.group.getGroupById.invalidate({ groupId: data.id });
-      toast({
-        title: "Group Settings Updated",
-        description: `Group "${data.id}" settings have been successfully updated.`,
-      });
     },
     onError: (error) => {
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
@@ -84,11 +80,6 @@ export default function GroupSettings({
   });
 
   const onSubmit = (data: z.infer<typeof groupSettingsSchema>) => {
-    toast({
-      title: "Updating Group Settings",
-      description: "Please wait while we update the group settings.",
-    });
-
     updateSettings(data);
   };
 

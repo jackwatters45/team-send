@@ -17,7 +17,7 @@ import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
 
 const userSettingsSchema = z.object({
-  name: z.string().max(40),
+  name: z.string().max(40).min(1),
   image: z.string().optional(),
   "image-file": z.string().optional(),
   email: z.string().email(),
@@ -143,7 +143,11 @@ export default function AccountProfile() {
             placeholder="Add your phone number"
           />
           <div className="py-4">
-            <Button type="submit" className="w-full">
+            <Button
+              type="submit"
+              className="w-full"
+              disabled={!form.formState.isDirty || !form.formState.isValid}
+            >
               Save
             </Button>
           </div>
