@@ -8,7 +8,7 @@ import { type User } from "./auth";
 import { type Group } from "./group";
 import { type Member } from "./contact";
 import { TRPCError } from "@trpc/server";
-import { reminderSchema } from "@/components/group/groupMessageSchema";
+import { reminderSchema } from "@/lib/schemas/reminderSchema.ts";
 
 const log = debug("team-send:api:message");
 

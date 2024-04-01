@@ -78,8 +78,8 @@ async function createGroup(userId: string, contactIds: string[]) {
         description: faker.company.catchPhrase(),
         image: faker.image.avatar(),
         addedGroupIds: [],
-        phone: true,
-        email: true,
+        usePhone: true,
+        useEmail: true,
         createdBy: { connect: { id: userId } },
       },
     });

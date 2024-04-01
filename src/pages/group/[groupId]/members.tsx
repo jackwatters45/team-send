@@ -32,20 +32,12 @@ export default function GroupMembers({
       addedGroupIds: data?.addedGroupIds ?? [],
     },
   });
-
-  const ctx = api.useUtils();
+  
   const { mutate } = api.group.updateMembers.useMutation({
-    onSuccess: async () => {
-      void ctx.group.getGroupById.invalidate({ groupId });
-      toast({
-        title: "Group Members Updated",
-        description: `Group "${groupId}" members has been successfully updated.`,
-      });
-    },
     onError: (error) => {
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
       toast({
-        title: "Failed to update group members",
+        title: "Failed to update members",
         description:
           errorMessage?.[0] ??
           "There was an error updating group members. Please try again.",
@@ -54,14 +46,7 @@ export default function GroupMembers({
     },
   });
 
-  const onSubmit = (data: GroupMembersFormType) => {
-    toast({
-      title: "Updating Group Members",
-      description: "Please wait while we update the group members.",
-    });
-
-    mutate(data);
-  };
+  const onSubmit = (data: GroupMembersFormType) => mutate(data);
 
   if (!data) {
     return null;

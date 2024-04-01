@@ -7,20 +7,21 @@ import { getServerAuthSession } from "@/server/auth";
 import { api } from "@/utils/api";
 import { createContact, extractInitials } from "@/lib/utils";
 
-import GroupMembersFormContent, {
-  type GroupMembersFormSchema,
-  type GroupMembersFormType,
-  groupMembersFormSchema,
-} from "@/components/group/GroupMembersForm";
+import GroupMembersFormContent from "@/components/group/GroupMembersForm";
 import { toast } from "@/components/ui/use-toast";
 import PageLayout from "@/layouts/PageLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FormInput } from "@/components/ui/form-inputs";
 import { Form } from "@/components/ui/form";
+import {
+  type CreateGroupFormType,
+  createGroupSchema,
+} from "@/lib/schemas/createGroupSchema";
+import { type GroupMembersFormReturn } from "@/lib/schemas/groupMembersFormSchema";
 
 export default function CreateGroup() {
-  const form = useForm<GroupMembersFormType>({
-    resolver: zodResolver(groupMembersFormSchema),
+  const form = useForm<CreateGroupFormType>({
+    resolver: zodResolver(createGroupSchema),
     defaultValues: {
       name: "",
       description: "",
@@ -69,7 +70,7 @@ export default function CreateGroup() {
         <form onSubmit={onSubmit} className="w-full">
           <section className="flex flex-col-reverse items-center lg:flex-row lg:justify-between lg:gap-12">
             <div className="flex w-full  flex-col gap-8 px-4 py-4  sm:px-0 lg:max-w-lg">
-              <FormInput<GroupMembersFormSchema>
+              <FormInput<typeof createGroupSchema>
                 control={form.control}
                 name="image"
                 label="Group Avatar"
@@ -77,14 +78,14 @@ export default function CreateGroup() {
                 accept=".png, .jpg, .jpeg"
                 className="dark:file:text-white"
               />
-              <FormInput<GroupMembersFormSchema>
+              <FormInput<typeof createGroupSchema>
                 control={form.control}
                 name="name"
                 label="Name"
                 placeholder="Enter a Group Name"
                 required={true}
               />
-              <FormInput<GroupMembersFormSchema>
+              <FormInput<typeof createGroupSchema>
                 control={form.control}
                 name="description"
                 label="Description"
@@ -103,7 +104,7 @@ export default function CreateGroup() {
           <section className="flex flex-col gap-6 pt-16">
             <GroupMembersFormContent
               title={"Add Members"}
-              form={form}
+              form={form as unknown as GroupMembersFormReturn}
               submitText={"Create Group"}
             />
           </section>

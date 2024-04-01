@@ -68,13 +68,13 @@ export default function GroupSettings({
       void ctx.group.getGroupById.invalidate({ groupId: data.id });
       toast({
         title: "Group Settings Updated",
-        description: `Group "${data.id}" settings has been successfully updated.`,
+        description: `Group "${data.id}" settings have been successfully updated.`,
       });
     },
     onError: (error) => {
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
       toast({
-        title: "Failed to update group",
+        title: "Failed to update settings",
         description:
           errorMessage?.[0] ??
           "There was an error updating group settings. Please try again.",

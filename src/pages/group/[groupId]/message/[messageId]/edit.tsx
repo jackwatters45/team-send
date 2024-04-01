@@ -1,8 +1,8 @@
+import React from "react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/router";
 import Link from "next/link";
-import React from "react";
 import { parsePhoneNumber } from "libphonenumber-js";
 import type {
   GetServerSidePropsContext,
@@ -20,19 +20,13 @@ import { getServerAuthSession } from "@/server/auth";
 import useDataTable from "@/hooks/useDataTable";
 import { db } from "@/server/db";
 
+import PageLayout from "@/layouts/PageLayout";
 import GroupMembersTable from "@/components/group/GroupMembersTable";
 import { MessageSettings } from "@/components/group/MessageSettings";
-import {
-  defaultReminder,
-  groupMessageSchema,
-  type GroupMessageSchema,
-  type GroupMessageType,
-} from "@/components/group/groupMessageSchema";
 import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import { CheckboxInput, FormTextarea } from "@/components/ui/form-inputs";
 import { toast } from "@/components/ui/use-toast";
-import PageLayout from "@/layouts/PageLayout";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -55,12 +49,17 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
+import {
+  type MessageFormType,
+  messageFormSchema,
+} from "@/lib/schemas/messageSchema";
+import { defaultReminder } from "@/lib/schemas/reminderSchema.ts";
 
 export default function EditMessage({ messageId }: MessageDetailsProps) {
   const { data } = api.message.getMessageById.useQuery({ messageId });
 
-  const form = useForm<GroupMessageType>({
-    resolver: zodResolver(groupMessageSchema),
+  const form = useForm<MessageFormType>({
+    resolver: zodResolver(messageFormSchema),
     defaultValues: {
       id: messageId,
       status: data?.status,
@@ -121,7 +120,7 @@ export default function EditMessage({ messageId }: MessageDetailsProps) {
     },
   });
 
-  const onSubmit = (formData: GroupMessageType) => {
+  const onSubmit = (formData: MessageFormType) => {
     if (formData.isScheduled === "yes" && !formData.scheduledDate) {
       formData.isScheduled = "no";
     }
@@ -235,7 +234,7 @@ export default function EditMessage({ messageId }: MessageDetailsProps) {
                 checkboxes below
               </p>
             </div>
-            <CheckboxInput<GroupMessageSchema>
+            <CheckboxInput<typeof messageFormSchema>
               name="saveRecipientState"
               label="Save recipient state for group"
               description="Recipients you choose for this message will become the new default for this group"
@@ -319,7 +318,7 @@ type MessageDetailsProps = InferGetServerSidePropsType<
 >;
 
 const getGroupMembersColumns = (
-  form: UseFormReturn<GroupMessageType>,
+  form: UseFormReturn<MessageFormType>,
 ): ColumnDef<MemberBaseContact>[] => {
   return [
     {

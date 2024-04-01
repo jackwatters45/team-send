@@ -3,37 +3,38 @@ import {
   DateTimeInput,
   NumPeriodInputs,
 } from "@/components/ui/form-inputs";
-import {
-  type GroupMessageType,
-  type GroupMessageSchema,
-  defaultReminder,
-} from "./groupMessageSchema";
+
 import { type UseFormReturn } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { MinusCircledIcon } from "@radix-ui/react-icons";
+import {
+  type MessageFormType,
+  type messageFormSchema,
+} from "@/lib/schemas/messageSchema";
+import { defaultReminder } from "@/lib/schemas/reminderSchema.ts";
 
 interface IMessageSettingsProps {
-  form: UseFormReturn<GroupMessageType>;
+  form: UseFormReturn<MessageFormType>;
 }
 export function MessageSettings({ form }: IMessageSettingsProps) {
   const reminders = form.watch("reminders") ?? [];
 
   return (
     <>
-      <BooleanSelect<GroupMessageSchema>
+      <BooleanSelect<typeof messageFormSchema>
         control={form.control}
         name="isDraft"
         label="Save as Draft"
         description="Toggle to save this message as a draft"
       />
-      <BooleanSelect<GroupMessageSchema>
+      <BooleanSelect<typeof messageFormSchema>
         control={form.control}
         name="isScheduled"
         label="Scheduled"
         description="Schedule messages to be sent at a specific date and time"
       />
       {form.watch("isScheduled") === "yes" && (
-        <DateTimeInput<GroupMessageSchema>
+        <DateTimeInput<typeof messageFormSchema>
           control={form.control}
           name="scheduledDate"
           label="Scheduled Date"
@@ -41,7 +42,7 @@ export function MessageSettings({ form }: IMessageSettingsProps) {
       )}
       {form.watch("isScheduled") === "yes" && form.watch("scheduledDate") && (
         <>
-          <BooleanSelect<GroupMessageSchema>
+          <BooleanSelect<typeof messageFormSchema>
             control={form.control}
             name="isReminders"
             label="Reminders"
@@ -54,7 +55,7 @@ export function MessageSettings({ form }: IMessageSettingsProps) {
               </div>
               {reminders.map((reminder, index) => (
                 <div key={index} className="flex items-start gap-4">
-                  <NumPeriodInputs<GroupMessageSchema>
+                  <NumPeriodInputs<typeof messageFormSchema>
                     control={form.control}
                     numName={`reminders.${index}.num`}
                     periodName={`reminders.${index}.period`}
@@ -96,7 +97,7 @@ export function MessageSettings({ form }: IMessageSettingsProps) {
           )}
         </>
       )}
-      <BooleanSelect<GroupMessageSchema>
+      <BooleanSelect<typeof messageFormSchema>
         control={form.control}
         name="isRecurring"
         label="Recurring"
@@ -107,7 +108,7 @@ export function MessageSettings({ form }: IMessageSettingsProps) {
           <div className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
             Recurring every
           </div>
-          <NumPeriodInputs<GroupMessageSchema>
+          <NumPeriodInputs<typeof messageFormSchema>
             control={form.control}
             numName="recurringNum"
             periodName="recurringPeriod"

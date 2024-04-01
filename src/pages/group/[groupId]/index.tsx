@@ -8,7 +8,15 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useEffect } from "react";
 
 import { api } from "@/utils/api";
+import {
+  type MessageFormType,
+  messageFormSchema,
+} from "@/lib/schemas/messageSchema";
+import { defaultReminder } from "@/lib/schemas/reminderSchema.ts";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
+import { getServerAuthSession } from "@/server/auth";
+import { getInitialSelectedMembers } from "@/lib/utils";
+import useDataTable from "@/hooks/useDataTable";
 
 import { GroupLayout } from "@/layouts/GroupLayout";
 import { Form, FormDescription } from "@/components/ui/form";
@@ -17,18 +25,8 @@ import { Button } from "@/components/ui/button";
 import GroupMembersTable from "@/components/group/GroupMembersTable";
 import { toast } from "@/components/ui/use-toast";
 import { CheckboxInput, FormTextarea } from "@/components/ui/form-inputs";
-import {
-  type GroupMessageSchema,
-  type GroupMessageType,
-  defaultReminder,
-  groupMessageSchema,
-} from "@/components/group/groupMessageSchema";
-import { getServerAuthSession } from "@/server/auth";
-import { getInitialSelectedMembers } from "@/lib/utils";
-import useDataTable from "@/hooks/useDataTable";
 import { groupMembersColumns } from "@/components/group/groupMembersColumns";
 
-// TODO
 export default function Group({
   groupId,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
@@ -46,8 +44,8 @@ export default function Group({
     },
   });
 
-  const form = useForm<GroupMessageType>({
-    resolver: zodResolver(groupMessageSchema),
+  const form = useForm<MessageFormType>({
+    resolver: zodResolver(messageFormSchema),
     defaultValues: {
       content: "",
       isDraft: "no",
@@ -69,7 +67,7 @@ export default function Group({
   }, [rowSelection, form]);
 
   // add from edit message
-  const onSubmit = (data: GroupMessageType) => {
+  const onSubmit = (data: MessageFormType) => {
     if (data.isReminders === "yes" && data.reminders?.length === 0) {
       form.setValue("isReminders", "no");
     }
@@ -115,11 +113,16 @@ export default function Group({
             placeholder="Enter a message"
             required={true}
           />
-          <Button type="submit">
+
+          <Button
+            type="submit"
+            disabled={!form.formState.isDirty || !form.formState.isValid}
+          >
             {form.watch("isScheduled") === "yes"
               ? "Schedule Message"
               : "Send Message"}
           </Button>
+
           <div className="border-b dark:border-stone-500 dark:border-opacity-20" />
           <div>
             <div>
@@ -130,7 +133,7 @@ export default function Group({
                 checkboxes below
               </p>
             </div>
-            <CheckboxInput<GroupMessageSchema>
+            <CheckboxInput<typeof messageFormSchema>
               name="saveRecipientState"
               label="Save recipient state for group"
               description="Recipients you choose for this message will become the new default for this group"

@@ -1,14 +1,17 @@
 import { useForm, type UseFormReturn } from "react-hook-form";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { MinusCircledIcon, PlusCircledIcon } from "@radix-ui/react-icons";
 import { useDebounce } from "use-debounce";
 import { parsePhoneNumber } from "libphonenumber-js";
-import { z } from "zod";
 
 import { createContact, extractInitials } from "@/lib/utils";
 import { api } from "@/utils/api";
 import type { ContactBaseWithId } from "@/server/api/routers/contact";
+import type {
+  GroupMembersFormType,
+  groupMembersFormSchema,
+} from "@/lib/schemas/groupMembersFormSchema";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -23,10 +26,10 @@ import {
 } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
 
-type FormReturn = UseFormReturn<GroupMembersFormType>;
+type GroupMembersFormReturn = UseFormReturn<GroupMembersFormType>;
 
 interface GroupMembersFormProps extends GroupMemberHeaderProps {
-  form: FormReturn;
+  form: GroupMembersFormReturn;
   submitText: string;
 }
 
@@ -40,7 +43,12 @@ export default function GroupMembersFormContent({
       <GroupMemberHeader title={title} />
       <GroupMemberList form={form} />
       <GroupMembersRecents form={form} />
-      <Button type="submit">{submitText}</Button>
+      <Button
+        type="submit"
+        disabled={!form.formState.isDirty || !form.formState.isValid}
+      >
+        {submitText}
+      </Button>
     </>
   );
 }
@@ -49,12 +57,12 @@ interface GroupMemberHeaderProps {
   title: string;
 }
 function GroupMemberHeader({ title }: GroupMemberHeaderProps) {
-  const csvRef = useRef<HTMLInputElement>(null);
+  // const csvRef = useRef<HTMLInputElement>(null);
 
   return (
     <div className="flex items-end justify-between border-b pb-1  text-xl font-semibold dark:border-stone-500 dark:border-opacity-20">
       <span>{title}</span>
-      <label htmlFor="csv-file-input" className="mb-1">
+      {/* <label htmlFor="csv-file-input" className="mb-1">
         <Button
           type="button"
           variant="secondary"
@@ -71,12 +79,12 @@ function GroupMemberHeader({ title }: GroupMemberHeaderProps) {
           accept=".csv"
           ref={csvRef}
         />
-      </label>
+      </label> */}
     </div>
   );
 }
 
-function GroupMemberList({ form }: { form: FormReturn }) {
+function GroupMemberList({ form }: { form: GroupMembersFormReturn }) {
   const [parent] = useAutoAnimate();
 
   return (
@@ -100,26 +108,26 @@ function GroupMemberList({ form }: { form: FormReturn }) {
                 </FormItem>
               )}
             />
-            <FormInput<GroupMembersFormSchema>
+            <FormInput<typeof groupMembersFormSchema>
               control={form.control}
               name={`members.${index}.contact.name`}
               placeholder="Name"
             />
-            <FormInput<GroupMembersFormSchema>
+            <FormInput<typeof groupMembersFormSchema>
               control={form.control}
               name={`members.${index}.contact.email`}
               type="email"
               required={false}
               placeholder="Email"
             />
-            <FormInput<GroupMembersFormSchema>
+            <FormInput<typeof groupMembersFormSchema>
               control={form.control}
               name={`members.${index}.contact.phone`}
               type="tel"
               placeholder="Phone"
             />
             <div className="lg:flex-1">
-              <FormInput<GroupMembersFormSchema>
+              <FormInput<typeof groupMembersFormSchema>
                 control={form.control}
                 name={`members.${index}.memberNotes`}
                 placeholder="Notes"
@@ -162,7 +170,7 @@ function GroupMemberList({ form }: { form: FormReturn }) {
   );
 }
 
-function GroupMembersRecents({ form }: { form: FormReturn }) {
+function GroupMembersRecents({ form }: { form: GroupMembersFormReturn }) {
   const recentSearch = useForm({ defaultValues: { recentsSearch: "" } });
 
   const [search] = useDebounce(recentSearch.watch("recentsSearch"), 500);
@@ -196,7 +204,7 @@ function GroupMembersRecents({ form }: { form: FormReturn }) {
 
 interface RecentResultsProps {
   search: string;
-  form: FormReturn;
+  form: GroupMembersFormReturn;
 }
 
 function RecentContactsResults({ search, form }: RecentResultsProps) {
@@ -362,36 +370,3 @@ function RecentSearchResultPlaceholder() {
     </Skeleton>
   );
 }
-
-const memberSchema = z.object({
-  contact: z.object({
-    name: z.string().max(40),
-    email: z
-      .string()
-      .or(
-        z
-          .string()
-          .email()
-          .refine((val) => val !== "", "Invalid email"),
-      )
-      .optional()
-      .nullable(),
-    phone: z.string().optional().nullable(),
-    notes: z.string().max(100).optional().nullable(),
-    id: z.string().optional(),
-  }),
-  memberNotes: z.string().max(100).optional().nullable(),
-  isRecipient: z.boolean(),
-});
-
-export const groupMembersFormSchema = z.object({
-  name: z.string().max(40),
-  description: z.string().max(100).optional(),
-  image: z.string().optional(),
-  members: z.array(memberSchema),
-  addedGroupIds: z.array(z.string()),
-});
-
-export type GroupMembersFormType = z.infer<typeof groupMembersFormSchema>;
-
-export type GroupMembersFormSchema = typeof groupMembersFormSchema;

@@ -1,16 +1,18 @@
 import { z } from "zod";
 import { Ratelimit } from "@upstash/ratelimit";
 import { Redis } from "@upstash/redis";
+import debug from "debug";
 
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { type Member } from "./contact";
 
 import { type Message } from "./message";
 import { TRPCError } from "@trpc/server";
-import { groupSettingsSchema } from "@/lib/schemas/groupSettingsSchema";
-import { groupMembersFormSchema } from "@/lib/schemas/groupMembersFormSchema";
 import { createGroupSchema } from "@/lib/schemas/createGroupSchema";
-import { log } from "console";
+import { groupMembersFormSchema } from "@/lib/schemas/groupMembersFormSchema";
+import { groupSettingsSchema } from "@/lib/schemas/groupSettingsSchema";
+
+const log = debug("team-send:api:group");
 
 export interface IGroupBase {
   id: string;
@@ -150,7 +152,6 @@ export const groupRouter = createTRPCRouter({
         });
       }
     }),
-
   create: protectedProcedure
     .input(createGroupSchema)
     .mutation(async ({ ctx, input }) => {
@@ -298,37 +299,83 @@ export const groupRouter = createTRPCRouter({
       const { success } = await ratelimit.limit(userId);
       if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
 
-      log("input", input);
-
-      return input;
-
-      const members = await Promise.all(
-        input.members.map(async (member) => {
-          // if no id, create new contact + member
-          //  if id, update contact + member
-        }),
-      );
-
-      const group = await ctx.db.group.update({
+      const group = await ctx.db.group.findUnique({
         where: { id: input.groupId },
-        data: {
-          addedGroupIds: input.addedGroupIds,
-          // members: input.members.map((member) => ({
-          //   connectOrCreate: {
-          //     where: { id: member.contact.id },
-          //     create: {
-          //       ...member.contact,
-          //       createdBy: { connect: { id: userId } },
-          //     },
-          //   },
-          // })),
-        },
+        include: { members: true },
       });
 
       if (!group) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Group not found" });
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Group not found",
+        });
       }
 
-      return group;
+      try {
+        const result = await ctx.db.$transaction(async (prisma) => {
+          if (input.addedGroupIds !== group.addedGroupIds) {
+            await prisma.group.update({
+              where: { id: input.groupId },
+              data: { addedGroupIds: input.addedGroupIds },
+            });
+          }
+
+          const existingMemberIds = group.members.map(({ id }) => id);
+          const updatedMemberIds = input.members.map(({ id }) => id);
+          const memberIdsToDelete = existingMemberIds.filter(
+            (id) => !updatedMemberIds.includes(id),
+          );
+
+          await prisma.member.deleteMany({
+            where: {
+              id: { in: memberIdsToDelete },
+            },
+          });
+
+          const updatedGroup = await prisma.group.update({
+            where: { id: input.groupId },
+            data: { addedGroupIds: input?.addedGroupIds },
+          });
+
+          const memberUpserts = await Promise.all(
+            input.members.map(async ({ contact, ...member }) => {
+              const contactUpsert = await prisma.contact.upsert({
+                where: { id: contact.id },
+                update: { ...contact },
+                create: { ...contact, createdBy: { connect: { id: userId } } },
+              });
+
+              if (member?.id) {
+                return prisma.member.update({
+                  where: { id: member?.id },
+                  data: {
+                    isRecipient: member.isRecipient,
+                    memberNotes: member.memberNotes,
+                  },
+                });
+              }
+
+              return prisma.member.create({
+                data: {
+                  isRecipient: member.isRecipient,
+                  memberNotes: member.memberNotes,
+                  contact: { connect: { id: contactUpsert.id } },
+                  group: { connect: { id: input.groupId } },
+                },
+              });
+            }),
+          );
+
+          return {
+            members: memberUpserts,
+            ...updatedGroup,
+          };
+        });
+
+        return result;
+      } catch (err) {
+        console.error(err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+      }
     }),
 });
