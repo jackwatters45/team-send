@@ -15,48 +15,48 @@ import { Form, FormDescription } from "@/components/ui/form";
 import { FormInput } from "@/components/ui/form-inputs";
 import { toast } from "@/components/ui/use-toast";
 import { Button } from "@/components/ui/button";
-
-const userSettingsSchema = z.object({
-  name: z.string().max(40).min(1),
-  image: z.string().optional(),
-  "image-file": z.string().optional(),
-  email: z.string().email(),
-  phone: z.string().optional(),
-  username: z.string(),
-});
-
-type UserSettingsFormSchema = typeof userSettingsSchema;
-
-type UserSettingsFormType = z.infer<typeof userSettingsSchema>;
+import {
+  type UserSettingsFormType,
+  userSettingsFormSchema,
+} from "@/lib/schemas/userSettingsSchema";
 
 export default function AccountProfile() {
   const { data: user } = api.auth.getCurrentUser.useQuery();
 
   const form = useForm<UserSettingsFormType>({
-    resolver: zodResolver(userSettingsSchema),
+    resolver: zodResolver(userSettingsFormSchema),
     defaultValues: {
       name: user?.name ?? "",
       image: user?.image ?? "",
-      "image-file": "",
+      imageFile: undefined,
       email: user?.email ?? "",
       username: user?.username ?? "",
     },
   });
 
-  const onSubmit = (data: UserSettingsFormType) => {
-    toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
-    });
+  const ctx = api.useUtils();
+  const { mutate } = api.auth.updateProfile.useMutation({
+    onSuccess: () => {
+      ctx.auth.getCurrentUser.invalidate();
+    },
+    onError: (error) => {
+      const errorMessage = error.data?.zodError?.fieldErrors?.content;
+      toast({
+        title: "Failed to update profile",
+        description:
+          errorMessage?.[0] ??
+          error.message ??
+          "There was an error updating user profile. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const onSubmit = ({ image, imageFile, ...data }: UserSettingsFormType) => {
+    mutate({ ...data, image: imageFile ?? image });
   };
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return null;
 
   return (
     <AccountLayout
@@ -95,9 +95,9 @@ export default function AccountProfile() {
           </div>
           <div className="flex justify-between gap-12">
             <div className="flex-1">
-              <FormInput<UserSettingsFormSchema>
-                name="image-file"
-                label="Group Avatar"
+              <FormInput<typeof userSettingsFormSchema>
+                name="imageFile"
+                label="Avatar"
                 type="file"
                 accept=".png, .jpg, .jpeg"
                 className="dark:file:text-white "
@@ -106,11 +106,11 @@ export default function AccountProfile() {
             </div>
             {(form.watch("name") ??
               form.watch("image") ??
-              form.watch("image-file")) && (
+              form.watch("imageFile")) && (
               <Avatar className="h-20 w-20">
                 <AvatarImage
-                  src={form.watch("image-file") ?? form.watch("image")}
-                  alt="Group Avatar"
+                  src={form.watch("imageFile") || form.watch("image")}
+                  alt="User Avatar"
                 />
                 <AvatarFallback className="text-4xl font-medium ">
                   {extractInitials(form.watch("name"))}
@@ -118,25 +118,25 @@ export default function AccountProfile() {
               </Avatar>
             )}
           </div>
-          <FormInput<UserSettingsFormSchema>
+          <FormInput<typeof userSettingsFormSchema>
             control={form.control}
             name="name"
             label="Name"
             placeholder="Add your full Name"
           />
-          <FormInput<UserSettingsFormSchema>
+          <FormInput<typeof userSettingsFormSchema>
             control={form.control}
             name="username"
             label="Username"
             placeholder="Add a Username"
           />
-          <FormInput<UserSettingsFormSchema>
+          <FormInput<typeof userSettingsFormSchema>
             control={form.control}
             name="email"
             label="Email"
             placeholder="Add your email"
           />
-          <FormInput<UserSettingsFormSchema>
+          <FormInput<typeof userSettingsFormSchema>
             control={form.control}
             name="phone"
             label="Phone"

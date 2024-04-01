@@ -264,7 +264,7 @@ export const groupRouter = createTRPCRouter({
             data: {
               name: input.name,
               description: input.description,
-              image: input["image-file"] ?? input.image,
+              image: input.imageFile ?? input.image,
               usePhone: input.usePhone,
               useEmail: input.useEmail,
             },

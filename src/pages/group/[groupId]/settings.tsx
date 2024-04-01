@@ -29,19 +29,10 @@ import { toast } from "@/components/ui/use-toast";
 import { CheckboxInput, FormInput } from "@/components/ui/form-inputs";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-
-const groupSettingsSchema = z.object({
-  groupId: z.string(),
-  name: z.string().min(1).max(40),
-  description: z.string().max(100).optional(),
-  image: z.string().optional(),
-  "image-file": z.string().optional(),
-  usePhone: z.boolean(),
-  useEmail: z.boolean(),
-  "change-global": z.boolean(),
-});
-type GroupSettingsFormType = z.infer<typeof groupSettingsSchema>;
-type GroupSettingsFormSchema = typeof groupSettingsSchema;
+import {
+  GroupSettingsFormType,
+  groupSettingsSchema,
+} from "@/lib/schemas/groupSettingsSchema";
 
 export default function GroupSettings({
   groupId,
@@ -55,7 +46,7 @@ export default function GroupSettings({
       name: data?.name ?? "",
       description: data?.description ?? "",
       image: data?.image ?? undefined,
-      "image-file": "",
+      imageFile: undefined,
       usePhone: data?.usePhone ?? false,
       useEmail: data?.useEmail ?? false,
       "change-global": false,
@@ -79,7 +70,7 @@ export default function GroupSettings({
     },
   });
 
-  const onSubmit = (data: z.infer<typeof groupSettingsSchema>) => {
+  const onSubmit = (data: GroupSettingsFormType) => {
     updateSettings(data);
   };
 
@@ -145,8 +136,8 @@ export default function GroupSettings({
         >
           <div className="flex justify-between gap-12">
             <div className="flex-1">
-              <FormInput<GroupSettingsFormSchema>
-                name="image-file"
+              <FormInput<typeof groupSettingsSchema>
+                name="imageFile"
                 label="Group Avatar"
                 type="file"
                 accept=".png, .jpg, .jpeg"
@@ -156,10 +147,10 @@ export default function GroupSettings({
             </div>
             {(form.watch("name") ??
               form.watch("image") ??
-              form.watch("image-file")) && (
+              form.watch("imageFile")) && (
               <Avatar className="h-20 w-20">
                 <AvatarImage
-                  src={form.watch("image-file") ?? form.watch("image")}
+                  src={form.watch("imageFile") || form.watch("image")}
                   alt="Group Avatar"
                 />
                 <AvatarFallback className="text-4xl font-medium ">
@@ -168,13 +159,13 @@ export default function GroupSettings({
               </Avatar>
             )}
           </div>
-          <FormInput<GroupSettingsFormSchema>
+          <FormInput<typeof groupSettingsSchema>
             control={form.control}
             name="name"
             label="Name"
             placeholder="Enter a Group Name"
           />
-          <FormInput<GroupSettingsFormSchema>
+          <FormInput<typeof groupSettingsSchema>
             control={form.control}
             name="description"
             label="Description"

@@ -1,4 +1,12 @@
-import { createTRPCRouter, protectedProcedure } from "../trpc";
+import { Ratelimit } from "@upstash/ratelimit";
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { Redis } from "@upstash/redis";
+import { TRPCError } from "@trpc/server";
+import debug from "debug";
+import { userSettingsSchema } from "@/lib/schemas/userSettingsSchema";
+import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+
+const log = debug("team-send:api:auth");
 
 // Auth
 export interface Account {
@@ -67,8 +75,14 @@ export type User = IUserDetails &
   IUserMetaDetails &
   IUserActivity;
 
+const ratelimit = new Ratelimit({
+  redis: Redis.fromEnv(),
+  limiter: Ratelimit.slidingWindow(3, "10 s"),
+  analytics: true,
+});
+
 export const authRouter = createTRPCRouter({
-  getCurrentUser: protectedProcedure.query(({ ctx }) => {
+  getCurrentUser: publicProcedure.query(({ ctx }) => {
     const userId = ctx.session?.user.id;
 
     if (!userId) {
@@ -79,4 +93,43 @@ export const authRouter = createTRPCRouter({
       where: { id: userId },
     });
   }),
+  updateProfile: protectedProcedure
+    .input(userSettingsSchema)
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      const { success } = await ratelimit.limit(userId);
+      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
+
+      try {
+        const updatedUser = await ctx.db.user.update({
+          where: { id: ctx.session.user.id },
+          data: input,
+        });
+
+        if (!updatedUser) {
+          throw new TRPCError({ code: "NOT_FOUND" });
+        }
+
+        return updatedUser;
+      } catch (error) {
+        log(error);
+
+        if (error instanceof PrismaClientKnownRequestError) {
+          if (error.code === "P2002") {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: `Username "${input.username}" is already taken. Please choose a different one.`,
+            });
+          } else {
+            throw new TRPCError({
+              code: "INTERNAL_SERVER_ERROR",
+              message: error.message,
+            });
+          }
+        } else {
+          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        }
+      }
+    }),
 });
