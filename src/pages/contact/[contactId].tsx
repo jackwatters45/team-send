@@ -12,7 +12,7 @@ import { getServerAuthSession } from "@/server/auth";
 import { api } from "@/utils/api";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { type ContactBaseWithId } from "@/server/api/routers/contact";
-import { extractInitials } from "@/lib/utils";
+import { extractInitials, truncateText } from "@/lib/utils";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import PageLayout from "@/layouts/PageLayout";
@@ -45,12 +45,6 @@ export default function Contact({ contactId }: ContactProps) {
   });
 
   const { mutate } = api.contact.update.useMutation({
-    onSuccess: (data) => {
-      toast({
-        title: "Contact Updated",
-        description: `Contact "${data.name}" has been updated.`,
-      });
-    },
     onError: (error) => {
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
       toast({
@@ -69,54 +63,58 @@ export default function Contact({ contactId }: ContactProps) {
 
   return (
     <PageLayout title={data?.name} description={`Contact ID: ${contactId}`}>
-      <Form {...form}>
-        <form
-          onSubmit={form.handleSubmit((data) => mutate(data))}
-          className="flex w-full flex-col gap-8"
-        >
-          <h2 className="text-lg font-semibold">Edit Details</h2>
-          <FormInput
-            label="Name"
-            name="name"
-            placeholder="Name"
-            control={form.control}
-          />
-          <FormInput
-            label="Email"
-            name="email"
-            placeholder="Email"
-            type="email"
-            control={form.control}
-          />
-          <FormInput
-            label="Phone"
-            name="phone"
-            placeholder="Phone"
-            type="tel"
-            control={form.control}
-          />
-          <FormTextarea
-            label="Notes"
-            name="notes"
-            placeholder="Notes"
-            control={form.control}
-          />
-          <Button
-            type="submit"
-            disabled={!form.formState.isDirty || !form.formState.isValid}
+      <div className="flex-1">
+        <Form {...form}>
+          <form
+            onSubmit={form.handleSubmit((data) => mutate(data))}
+            className="flex w-full flex-col gap-8"
           >
-            Save Changes
-          </Button>
-        </form>
-      </Form>
+            <h2 className="text-lg font-semibold">Edit Details</h2>
+            <FormInput
+              label="Name"
+              name="name"
+              placeholder="Name"
+              control={form.control}
+            />
+            <FormInput
+              label="Email"
+              name="email"
+              placeholder="Email"
+              type="email"
+              control={form.control}
+            />
+            <FormInput
+              label="Phone"
+              name="phone"
+              placeholder="Phone"
+              type="tel"
+              control={form.control}
+            />
+            <FormTextarea
+              label="Notes"
+              name="notes"
+              placeholder="Notes"
+              control={form.control}
+            />
+            {form.formState.isDirty && (
+              <Button
+                type="submit"
+                disabled={!form.formState.isDirty || !form.formState.isValid}
+              >
+                Save Changes
+              </Button>
+            )}
+          </form>
+        </Form>
+      </div>
       <div className="border-b lg:hidden dark:border-stone-500 dark:border-opacity-20" />
-      {data.groups && data.groups.length > 0 ? (
+      {data.members?.length > 0 && (
         <div className="lg:w-1/3">
           <div className="font-semibold">Groups</div>
           <div className="space-y-2">
-            {data.groups.map((group, i) => {
+            {data.members.map(({ id, group, memberNotes }, i) => {
               return (
-                <Fragment key={group?.id}>
+                <Fragment key={id}>
                   <Link
                     href={`/group/${group?.id}`}
                     className="flex items-center gap-2 rounded-md p-2"
@@ -135,18 +133,28 @@ export default function Contact({ contactId }: ContactProps) {
                       <div className="text-xs">
                         {group.members.length} members
                       </div>
-                      <div className="text-xs text-stone-500">
-                        {group.description}
+                      <div className="flex gap-1 text-xs text-stone-500">
+                        <span className="font-semibold">Notes:</span>
+                        <span>{truncateText(memberNotes ?? "", 30)}</span>
                       </div>
+                      {/* {!!memberNotes ? (
+                      <HoverCard>
+                      <HoverCardTrigger className="flex gap-1 text-xs text-stone-500"> */}
+                      {/* </HoverCardTrigger>
+                          <HoverCardContent className="text-xs">
+                            {memberNotes}
+                          </HoverCardContent>
+                        </HoverCard>
+                      ) : null} */}
                     </div>
                   </Link>
-                  {i !== data.groups.length - 1 && <Separator />}
+                  {i !== data.members.length - 1 && <Separator />}
                 </Fragment>
               );
             })}
           </div>
         </div>
-      ) : null}
+      )}
     </PageLayout>
   );
 }

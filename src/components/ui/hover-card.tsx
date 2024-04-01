@@ -1,7 +1,12 @@
 import * as React from "react";
 import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
 
-import { cn, extractInitials, formatRelativeDateAndTime } from "@/lib/utils";
+import {
+  cn,
+  extractInitials,
+  formatRelativeDateAndTime,
+  truncateText,
+} from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
 import { type User } from "@/server/api/routers/auth";
 import { parsePhoneNumber } from "libphonenumber-js";
@@ -33,19 +38,14 @@ HoverCardContent.displayName = HoverCardPrimitive.Content.displayName;
 
 interface HoverableCellProps {
   value: string | null | undefined;
-  truncateLength?: number;
+  truncLength?: number;
 }
-function HoverableCell({ value, truncateLength = 20 }: HoverableCellProps) {
+function HoverableCell({ value, truncLength = 20 }: HoverableCellProps) {
   if (!value) return null;
-
-  const triggerText =
-    value?.length > truncateLength
-      ? `${value.slice(0, truncateLength)}...`
-      : value;
 
   return (
     <HoverCard>
-      <HoverCardTrigger>{triggerText}</HoverCardTrigger>
+      <HoverCardTrigger>{truncateText(value, truncLength)}</HoverCardTrigger>
       <HoverCardContent className="text-xs">{value}</HoverCardContent>
     </HoverCard>
   );

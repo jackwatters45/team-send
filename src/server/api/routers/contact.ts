@@ -65,9 +65,18 @@ export const contactRouter = createTRPCRouter({
         },
       });
 
-      const groups = await ctx.db.group.findMany({
-        where: { members: { some: { contactId: input.contactId } } },
-        include: { members: true },
+      const members = await ctx.db.member.findMany({
+        where: { contactId: input.contactId },
+        include: {
+          group: {
+            select: {
+              id: true,
+              name: true,
+              image: true,
+              members: { select: { id: true } },
+            },
+          },
+        },
       });
 
       if (!contact) {
@@ -77,7 +86,7 @@ export const contactRouter = createTRPCRouter({
         });
       }
 
-      return { ...contact, groups };
+      return { ...contact, members };
     }),
   getRecentContacts: protectedProcedure
     .input(

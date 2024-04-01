@@ -123,3 +123,9 @@ export function formatShortRelativeDate(dateInput: string | Date): string {
 
   return formattedDate;
 }
+
+export function truncateText(value: string, truncLength = 20) {
+  return value.length > truncLength
+    ? `${value.slice(0, truncLength)}...`
+    : value;
+}
