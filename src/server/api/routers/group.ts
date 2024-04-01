@@ -257,39 +257,51 @@ export const groupRouter = createTRPCRouter({
       const { success } = await ratelimit.limit(userId);
       if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
 
-      const group = await ctx.db.group.update({
-        where: { id: input.groupId },
-        data: {
-          name: input.name,
-          description: input.description,
-          image: input["image-file"] ?? input.image,
-          usePhone: input.usePhone,
-          useEmail: input.useEmail,
-        },
-      });
+      try {
+        const result = await ctx.db.$transaction(async (prisma) => {
+          const group = await prisma.group.update({
+            where: { id: input.groupId },
+            data: {
+              name: input.name,
+              description: input.description,
+              image: input["image-file"] ?? input.image,
+              usePhone: input.usePhone,
+              useEmail: input.useEmail,
+            },
+          });
 
-      if (!group) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Group not found" });
-      }
+          if (!group) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: "Group not found",
+            });
+          }
 
-      if (input["change-global"]) {
-        const updateAll = await ctx.db.group.updateMany({
-          where: { createdBy: { id: userId } },
-          data: {
-            usePhone: input.usePhone,
-            useEmail: input.useEmail,
-          },
+          if (input["change-global"]) {
+            const updateAll = await prisma.group.updateMany({
+              where: { createdBy: { id: userId } },
+              data: {
+                usePhone: input.usePhone,
+                useEmail: input.useEmail,
+              },
+            });
+
+            if (!updateAll) {
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to update all group connections",
+              });
+            }
+          }
+
+          return group;
         });
 
-        if (!updateAll) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to update all group connections",
-          });
-        }
+        return result;
+      } catch (err) {
+        console.error(err);
+        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
       }
-
-      return group;
     }),
   updateMembers: protectedProcedure
     .input(groupMembersFormSchema)

@@ -192,7 +192,9 @@ export default function EditMessage({ messageId }: MessageDetailsProps) {
       }
     },
   });
-  const handleDelete = () => deleteMessage({ messageId });
+  const handleDelete = () => {
+    deleteMessage({ messageId });
+  };
 
   const [parent] = useAutoAnimate();
 
