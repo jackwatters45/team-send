@@ -58,12 +58,12 @@ export default function UserNav() {
               <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
             </DropdownMenuItem>
           </Link>
-          <Link href="/account/billing">
+          {/* <Link href="/account/billing">
             <DropdownMenuItem>
               Billing
               <DropdownMenuShortcut>⇧⌘B</DropdownMenuShortcut>
             </DropdownMenuItem>
-          </Link>
+          </Link> */}
           <Link href="/account/settings">
             <DropdownMenuItem>
               Settings

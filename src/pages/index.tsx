@@ -45,7 +45,7 @@ export default function Home() {
       void ctx.group.getAll.invalidate();
       toast({
         title: "Group Deleted",
-        description: `Group "${data.id}" has been deleted.`,
+        description: `Group "${data?.id}" has been deleted.`,
       });
     },
     onError: (error) => {
@@ -54,6 +54,7 @@ export default function Home() {
         title: "Failed to delete group",
         description:
           errorMessage?.[0] ??
+          error.message ??
           "There was an error deleting the group. Please try again.",
         variant: "destructive",
       });

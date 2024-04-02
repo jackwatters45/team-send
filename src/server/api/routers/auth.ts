@@ -121,7 +121,7 @@ export const authRouter = createTRPCRouter({
           });
         }
 
-        handleError(error);
+        throw handleError(error);
       }
     }),
 });

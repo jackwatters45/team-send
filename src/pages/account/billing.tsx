@@ -5,6 +5,7 @@ import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { api } from "@/utils/api";
 
 import { AccountLayout } from "@/layouts/AccountLayout";
+import ComingSoon from "@/components/ui/coming-soon";
 
 export default function AccountBilling() {
   const { data: user } = api.auth.getCurrentUser.useQuery();
@@ -16,7 +17,7 @@ export default function AccountBilling() {
       title="User Billing"
       description={"Update your payment methods and manage your subscriptions."}
     >
-      <div>Billing for {user.id}</div>
+      <ComingSoon />
     </AccountLayout>
   );
 }

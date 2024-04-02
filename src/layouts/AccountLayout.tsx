@@ -5,10 +5,10 @@ const sidebarNavItems = [
     title: "Profile",
     href: `/account/profile`,
   },
-  {
-    title: "Billing",
-    href: `/account/billing`,
-  },
+  // {
+  //   title: "Billing",
+  //   href: `/account/billing`,
+  // },
   {
     title: "Settings",
     href: `/account/settings`,

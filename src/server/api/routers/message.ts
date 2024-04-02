@@ -90,7 +90,7 @@ export const messageRouter = createTRPCRouter({
 
         return message;
       } catch (err) {
-        handleError(err);
+        throw handleError(err);
       }
     }),
   update: protectedProcedure
@@ -283,7 +283,7 @@ export const messageRouter = createTRPCRouter({
           });
           return result;
         } catch (err) {
-          handleError(err);
+          throw handleError(err);
         }
       },
     ),
@@ -302,7 +302,7 @@ export const messageRouter = createTRPCRouter({
         // TODO: cancel send jobs if any (might need a transaction)
         return message;
       } catch (err) {
-        handleError(err);
+        throw handleError(err);
       }
     }),
   duplicate: protectedProcedure
@@ -361,7 +361,7 @@ export const messageRouter = createTRPCRouter({
           },
         });
       } catch (err) {
-        handleError(err);
+        throw handleError(err);
       }
     }),
   send: protectedProcedure
@@ -393,7 +393,7 @@ export const messageRouter = createTRPCRouter({
           data: { status: "sent", sendAt: new Date() },
         });
       } catch (err) {
-        handleError(err);
+        throw handleError(err);
       }
     }),
 });

@@ -68,7 +68,7 @@ export const groupRouter = createTRPCRouter({
         },
       });
     } catch (err) {
-      handleError(err);
+      throw handleError(err);
     }
   }),
   getGroupHistoryById: protectedProcedure
@@ -124,7 +124,7 @@ export const groupRouter = createTRPCRouter({
 
         return group;
       } catch (err) {
-        handleError(err);
+        throw handleError(err);
       }
     }),
   getRecentGroups: protectedProcedure
@@ -163,7 +163,7 @@ export const groupRouter = createTRPCRouter({
           });
         }
       } catch (error) {
-        handleError(error);
+        throw handleError(error);
       }
     }),
   create: protectedProcedure
@@ -224,7 +224,7 @@ export const groupRouter = createTRPCRouter({
 
         return result;
       } catch (err) {
-        handleError(err);
+        throw handleError(err);
       }
     }),
   delete: protectedProcedure
@@ -239,7 +239,7 @@ export const groupRouter = createTRPCRouter({
           where: { id: input.groupId, createdBy: { id: userId } },
         });
       } catch (err) {
-        handleError(err);
+        throw handleError(err);
       }
     }),
   archive: protectedProcedure
@@ -259,7 +259,7 @@ export const groupRouter = createTRPCRouter({
 
         return archivedGroup;
       } catch (err) {
-        handleError(err);
+        throw handleError(err);
       }
     }),
   updateSettings: protectedProcedure
@@ -306,7 +306,7 @@ export const groupRouter = createTRPCRouter({
 
         return result;
       } catch (err) {
-        handleError(err);
+        throw handleError(err);
       }
     }),
   updateMembers: protectedProcedure
@@ -383,7 +383,7 @@ export const groupRouter = createTRPCRouter({
 
         return result;
       } catch (err) {
-        handleError(err);
+        throw handleError(err);
       }
     }),
 });

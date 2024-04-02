@@ -23,13 +23,8 @@ const config = {
     "@typescript-eslint/no-unused-vars": [
       "warn",
       {
-        args: "all",
         argsIgnorePattern: "^(_|log)",
-        caughtErrors: "all",
-        caughtErrorsIgnorePattern: "^(_|log)",
-        destructuredArrayIgnorePattern: "^(_|log)",
         varsIgnorePattern: "^(_|log)",
-        ignoreRestSiblings: true,
       },
     ],
     "@typescript-eslint/require-await": "off",

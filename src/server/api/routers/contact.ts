@@ -92,7 +92,7 @@ export const contactRouter = createTRPCRouter({
 
         return { ...contact, members };
       } catch (error) {
-        handleError(error);
+        throw handleError(error);
       }
     }),
   getRecentContacts: protectedProcedure
@@ -143,7 +143,7 @@ export const contactRouter = createTRPCRouter({
           });
         }
       } catch (error) {
-        handleError(error);
+        throw handleError(error);
       }
     }),
   update: protectedProcedure
@@ -184,7 +184,7 @@ export const contactRouter = createTRPCRouter({
 
         return contact;
       } catch (error) {
-        handleError(error);
+        throw handleError(error);
       }
     }),
 });
