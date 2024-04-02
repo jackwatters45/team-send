@@ -49,9 +49,7 @@ export default function GroupMembers({
 
   const onSubmit = (data: GroupMembersFormType) => mutate(data);
 
-  if (!data) {
-    return null;
-  }
+  if (!data) return null;
 
   return (
     <GroupLayout group={data}>

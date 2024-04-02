@@ -208,7 +208,11 @@ export default function GroupSettings({
             </div>
           </div>
           <div className="flex pt-4">
-            <Button type="submit" className="flex-1">
+            <Button
+              type="submit"
+              disabled={!form.formState.isDirty || !form.formState.isValid}
+              className="flex-1"
+            >
               Save changes
             </Button>
           </div>

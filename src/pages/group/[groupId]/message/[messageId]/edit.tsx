@@ -61,6 +61,7 @@ export default function EditMessage({
 }: MessageDetailsProps) {
   const { data } = api.message.getMessageById.useQuery({ messageId });
 
+  const [isTableDirty, setIsTableDirty] = React.useState(false);
   const form = useForm<MessageFormType>({
     resolver: zodResolver(messageFormSchema),
     defaultValues: {
@@ -82,7 +83,7 @@ export default function EditMessage({
     },
   });
 
-  const columns = getRecipientsColumns(form);
+  const columns = getRecipientsColumns({ form, setIsTableDirty });
   const { table } = useDataTable({
     columns,
     data: data?.recipients ?? [],
@@ -191,9 +192,7 @@ export default function EditMessage({
       });
     },
   });
-  const handleDelete = () => {
-    deleteMessage({ messageId });
-  };
+  const handleDelete = () => deleteMessage({ messageId });
 
   const [parent] = useAutoAnimate();
 
@@ -222,7 +221,10 @@ export default function EditMessage({
           />
           <Button
             type="submit"
-            disabled={!form.formState.isDirty || !form.formState.isValid}
+            disabled={
+              !(isTableDirty || form.formState.isDirty) ||
+              !form.formState.isValid
+            }
           >
             {form.watch("isScheduled") === "yes"
               ? "Schedule Message"
@@ -322,9 +324,13 @@ type MessageDetailsProps = InferGetServerSidePropsType<
   typeof getServerSideProps
 >;
 
-const getRecipientsColumns = (
-  form: UseFormReturn<MessageFormType>,
-): ColumnDef<MemberBaseContact>[] => {
+const getRecipientsColumns = ({
+  form,
+  setIsTableDirty,
+}: {
+  form: UseFormReturn<MessageFormType>;
+  setIsTableDirty: React.Dispatch<React.SetStateAction<boolean>>;
+}): ColumnDef<MemberBaseContact>[] => {
   return [
     {
       id: "select",
@@ -336,6 +342,14 @@ const getRecipientsColumns = (
           }
           onCheckedChange={(value) => {
             table.toggleAllPageRowsSelected(!!value);
+            form.setValue(
+              "recipients",
+              Object.keys(form.getValues("recipients")).reduce(
+                (acc, key) => ({ ...acc, [key]: !!value }),
+                {},
+              ),
+            );
+            setIsTableDirty(true);
           }}
           aria-label="Select all"
           name="select-all"
@@ -350,8 +364,9 @@ const getRecipientsColumns = (
               row.toggleSelected(!!value);
               form.setValue("recipients", {
                 ...form.getValues("recipients"),
-                [row.original.id]: !row.getIsSelected(),
+                [row.original.id]: !!value,
               });
+              setIsTableDirty(true);
             }}
             aria-label="Select row"
             name="select-row"

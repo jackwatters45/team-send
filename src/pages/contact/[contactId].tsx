@@ -98,10 +98,7 @@ export default function Contact({ contactId }: ContactProps) {
               control={form.control}
             />
             {form.formState.isDirty && (
-              <Button
-                type="submit"
-                disabled={!form.formState.isDirty || !form.formState.isValid}
-              >
+              <Button type="submit" disabled={!form.formState.isValid}>
                 Save Changes
               </Button>
             )}
