@@ -18,9 +18,10 @@ import {
   type UserSettingsFormType,
   userSettingsFormSchema,
 } from "@/lib/schemas/userSettingsSchema";
+import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
 export default function AccountProfile() {
-  const { data: user } = api.auth.getCurrentUser.useQuery();
+  const { data: user, error } = api.auth.getCurrentUser.useQuery();
 
   const form = useForm<UserSettingsFormType>({
     resolver: zodResolver(userSettingsFormSchema),
@@ -55,7 +56,7 @@ export default function AccountProfile() {
     mutate({ ...data, image: imageFile ?? image });
   };
 
-  if (!user) return null;
+  if (!user) return renderErrorComponent(error);
 
   return (
     <AccountLayout

@@ -3,6 +3,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { useEffect } from "react";
 import { parsePhoneNumber } from "libphonenumber-js";
+import { TRPCClientError } from "@trpc/client";
 import Link from "next/link";
 import type {
   GetServerSidePropsContext,
@@ -40,11 +41,12 @@ import {
   DropdownMenuSeparator,
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
+import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
 export default function Group({
   groupId,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-  const { data } = api.group.getGroupById.useQuery({ groupId });
+  const { data, error } = api.group.getGroupById.useQuery({ groupId });
 
   const ctx = api.useUtils();
   const { mutate: deleteMember } = api.member.delete.useMutation({
@@ -122,9 +124,7 @@ export default function Group({
 
   const [parent] = useAutoAnimate();
 
-  if (!data) {
-    return <div>404</div>;
-  }
+  if (!data) return renderErrorComponent(error);
 
   return (
     <GroupLayout group={data}>
@@ -151,7 +151,6 @@ export default function Group({
             placeholder="Enter a message"
             required={true}
           />
-
           <Button
             type="submit"
             disabled={!form.formState.isDirty || !form.formState.isValid}
@@ -160,7 +159,6 @@ export default function Group({
               ? "Schedule Message"
               : "Send Message"}
           </Button>
-
           <div className="border-b dark:border-stone-500 dark:border-opacity-20" />
           <div>
             <div>
@@ -196,9 +194,7 @@ export const getServerSideProps = async (
   }
 
   const groupId = context.params?.groupId;
-  if (typeof groupId !== "string") {
-    throw new Error("Invalid slug");
-  }
+  if (typeof groupId !== "string") throw new TRPCClientError("Invalid slug");
 
   const helpers = genSSRHelpers(session);
   await helpers.group.getGroupById.prefetch({ groupId });

@@ -1,5 +1,3 @@
-"use client";
-
 import type { GetServerSideProps } from "next";
 import type { ColumnDef } from "@tanstack/react-table";
 
@@ -36,9 +34,10 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDeleteDialog } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
+import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
 export default function Home() {
-  const { data } = api.group.getAll.useQuery();
+  const { data, error } = api.group.getAll.useQuery();
 
   const ctx = api.useUtils();
   const { mutate } = api.group.delete.useMutation({
@@ -79,9 +78,7 @@ export default function Home() {
     },
   });
 
-  if (!data) {
-    return null;
-  }
+  if (!data) return renderErrorComponent(error);
 
   return (
     <Layout>
@@ -106,12 +103,7 @@ export default function Home() {
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const session = await getServerAuthSession(context);
   if (!session) {
-    return {
-      redirect: {
-        destination: "/login",
-        permanent: false,
-      },
-    };
+    return { redirect: { destination: "/login", permanent: false } };
   }
 
   const helpers = genSSRHelpers(session);

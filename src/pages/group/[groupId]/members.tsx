@@ -4,6 +4,7 @@ import type {
 } from "next";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { TRPCClientError } from "@trpc/client";
 
 import { createContact } from "@/lib/utils";
 import { api } from "@/utils/api";
@@ -18,11 +19,12 @@ import { toast } from "@/components/ui/use-toast";
 import { GroupLayout } from "@/layouts/GroupLayout";
 import { Form } from "@/components/ui/form";
 import GroupMembersFormContent from "@/components/group/GroupMembersForm";
+import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
 export default function GroupMembers({
   groupId,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-  const { data } = api.group.getGroupById.useQuery({ groupId });
+  const { data, error } = api.group.getGroupById.useQuery({ groupId });
 
   const form = useForm<GroupMembersFormType>({
     resolver: zodResolver(groupMembersFormSchema),
@@ -49,7 +51,7 @@ export default function GroupMembers({
 
   const onSubmit = (data: GroupMembersFormType) => mutate(data);
 
-  if (!data) return null;
+  if (!data) return renderErrorComponent(error);
 
   return (
     <GroupLayout group={data}>
@@ -74,15 +76,11 @@ export const getServerSideProps = async (
 ) => {
   const session = await getServerAuthSession(context);
   if (!session) {
-    return {
-      redirect: { destination: "/login", permanent: false },
-    };
+    return { redirect: { destination: "/login", permanent: false } };
   }
 
   const groupId = context.params?.groupId;
-  if (typeof groupId !== "string") {
-    throw new Error("Invalid slug");
-  }
+  if (typeof groupId !== "string") throw new TRPCClientError("Invalid slug");
 
   const helpers = genSSRHelpers(session);
   await helpers.group.getGroupById.prefetch({ groupId });

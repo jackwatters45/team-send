@@ -4,6 +4,8 @@ import type {
 } from "next";
 import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
+import { TRPCClientError } from "@trpc/client";
+import { useRouter } from "next/router";
 
 import { api } from "@/utils/api";
 import type { RouterOutputs } from "@/utils/api";
@@ -39,12 +41,12 @@ import {
 } from "@/components/ui/data-table";
 import { toast } from "@/components/ui/use-toast";
 import { ConfirmDeleteDialog } from "@/components/ui/alert-dialog";
-import { useRouter } from "next/router";
+import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
 export default function GroupHistory({
   groupId,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-  const { data } = api.group.getGroupHistoryById.useQuery({ groupId });
+  const { data, error } = api.group.getGroupHistoryById.useQuery({ groupId });
 
   const ctx = api.useUtils();
   const { mutate: deleteMessage } = api.message.delete.useMutation({
@@ -155,7 +157,7 @@ export default function GroupHistory({
     },
   });
 
-  if (!data) return <div>404</div>;
+  if (!data) return renderErrorComponent(error);
 
   return (
     <GroupLayout group={data.group}>
@@ -191,15 +193,11 @@ export const getServerSideProps = async (
 ) => {
   const session = await getServerAuthSession(context);
   if (!session) {
-    return {
-      redirect: { destination: "/login", permanent: false },
-    };
+    return { redirect: { destination: "/login", permanent: false } };
   }
 
   const groupId = context.params?.groupId;
-  if (typeof groupId !== "string") {
-    throw new Error("Invalid slug");
-  }
+  if (typeof groupId !== "string") throw new TRPCClientError("Invalid slug");
 
   const helpers = genSSRHelpers(session);
   await helpers.group.getGroupHistoryById.prefetch({ groupId });

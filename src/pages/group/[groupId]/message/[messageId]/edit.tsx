@@ -9,6 +9,7 @@ import type {
   InferGetServerSidePropsType,
 } from "next";
 import { type UseFormReturn, useForm } from "react-hook-form";
+import { TRPCClientError } from "@trpc/client";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
@@ -54,12 +55,13 @@ import {
   messageFormSchema,
 } from "@/lib/schemas/messageSchema";
 import { defaultReminder } from "@/lib/schemas/reminderSchema.ts";
+import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
 export default function EditMessage({
   groupId,
   messageId,
 }: MessageDetailsProps) {
-  const { data } = api.message.getMessageById.useQuery({ messageId });
+  const { data, error } = api.message.getMessageById.useQuery({ messageId });
 
   const [isTableDirty, setIsTableDirty] = React.useState(false);
   const form = useForm<MessageFormType>({
@@ -196,7 +198,7 @@ export default function EditMessage({
 
   const [parent] = useAutoAnimate();
 
-  if (!data) return <div>404</div>;
+  if (!data) return renderErrorComponent(error);
 
   return (
     <PageLayout
@@ -282,16 +284,14 @@ export const getServerSideProps = async (
 ) => {
   const session = await getServerAuthSession(context);
   if (!session) {
-    return {
-      redirect: { destination: "/login", permanent: false },
-    };
+    return { redirect: { destination: "/login", permanent: false } };
   }
 
   const messageId = context.params?.messageId;
   const groupId = context.params?.groupId;
 
   if (typeof messageId !== "string" || typeof groupId !== "string") {
-    throw new Error("Invalid slug");
+    throw new TRPCClientError("Invalid slug");
   }
 
   const message = await db.message.findUnique({

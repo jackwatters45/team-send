@@ -4,6 +4,7 @@ import type {
   GetServerSidePropsContext,
   InferGetServerSidePropsType,
 } from "next";
+import { TRPCClientError } from "@trpc/client";
 
 import { getServerAuthSession } from "@/server/auth";
 import { cn } from "@/lib/utils";
@@ -19,10 +20,6 @@ import {
 
 type LoginProps = InferGetServerSidePropsType<typeof getServerSideProps>;
 export default function Login({ providers, error }: LoginProps) {
-  if (!providers) {
-    throw new Error("Incorrect NEXTAUTH_URL or no providers added");
-  }
-
   return (
     <div
       className="flex h-screen items-center justify-center bg-stone-100
@@ -108,6 +105,9 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
   }
 
   const providers = await getProviders();
+  if (!providers) {
+    throw new TRPCClientError("Incorrect NEXTAUTH_URL or no providers added");
+  }
 
   return {
     props: { providers: providers ?? [], error: ctx.query.error ?? null },

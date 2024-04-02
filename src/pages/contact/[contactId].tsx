@@ -3,6 +3,7 @@ import { Fragment } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { TRPCClientError } from "@trpc/client";
 import type {
   GetServerSidePropsContext,
   InferGetServerSidePropsType,
@@ -21,6 +22,7 @@ import { Form } from "@/components/ui/form";
 import { FormInput, FormTextarea } from "@/components/ui/form-inputs";
 import { Button } from "@/components/ui/button";
 import { toast } from "@/components/ui/use-toast";
+import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
 const contactBaseSchema = z.object({
   id: z.string(),
@@ -31,7 +33,7 @@ const contactBaseSchema = z.object({
 });
 
 export default function Contact({ contactId }: ContactProps) {
-  const { data } = api.contact.getContactById.useQuery({ contactId });
+  const { data, error } = api.contact.getContactById.useQuery({ contactId });
 
   const form = useForm<ContactBaseWithId>({
     resolver: zodResolver(contactBaseSchema),
@@ -58,9 +60,7 @@ export default function Contact({ contactId }: ContactProps) {
     },
   });
 
-  if (!data) {
-    return <div>404</div>;
-  }
+  if (!data) return renderErrorComponent(error);
 
   return (
     <PageLayout title={data?.name} description={`Contact ID: ${contactId}`}>
@@ -164,7 +164,7 @@ export const getServerSideProps = async (
 ) => {
   const contactId = context.params?.contactId;
   if (typeof contactId !== "string") {
-    throw new Error("Invalid slug");
+    throw new TRPCClientError("Invalid slug");
   }
 
   const session = await getServerAuthSession(context);

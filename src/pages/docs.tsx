@@ -1,10 +1,5 @@
-import ComingSoon from "@/components/ui/coming-soon";
-import Layout from "@/layouts/Layout";
+import ComingSoon from "@/components/error/ComingSoon";
 
 export default function Docs() {
-  return (
-    <Layout>
-      <ComingSoon />
-    </Layout>
-  );
+  return <ComingSoon />;
 }

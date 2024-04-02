@@ -8,6 +8,7 @@ import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { getServerAuthSession } from "@/server/auth";
 import type { ColumnDef } from "@tanstack/react-table";
 import { parsePhoneNumber } from "libphonenumber-js";
+import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
 import { getInitialSelectedMembers } from "@/lib/utils";
 import { api } from "@/utils/api";
@@ -31,12 +32,13 @@ import {
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/use-toast";
 import { useRouter } from "next/router";
+import { TRPCClientError } from "@trpc/client";
 
 export default function MessageDetails({
   messageId,
   groupId,
 }: MessageDetailsProps) {
-  const { data } = api.message.getMessageById.useQuery({ messageId });
+  const { data, error } = api.message.getMessageById.useQuery({ messageId });
 
   const router = useRouter();
   const { mutate: deleteMessage } = api.message.delete.useMutation({
@@ -74,9 +76,7 @@ export default function MessageDetails({
     },
   });
 
-  if (!data) {
-    return <div>404</div>;
-  }
+  if (!data) return renderErrorComponent(error);
 
   return (
     <PageLayout
@@ -173,16 +173,14 @@ export const getServerSideProps = async (
 ) => {
   const session = await getServerAuthSession(context);
   if (!session) {
-    return {
-      redirect: { destination: "/login", permanent: false },
-    };
+    return { redirect: { destination: "/login", permanent: false } };
   }
 
   const messageId = context.params?.messageId;
   const groupId = context.params?.groupId;
 
   if (typeof messageId !== "string" || typeof groupId !== "string") {
-    throw new Error("Invalid slug");
+    throw new TRPCClientError("Invalid slug");
   }
 
   const helpers = genSSRHelpers(session);

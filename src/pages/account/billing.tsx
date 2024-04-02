@@ -5,19 +5,22 @@ import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { api } from "@/utils/api";
 
 import { AccountLayout } from "@/layouts/AccountLayout";
-import ComingSoon from "@/components/ui/coming-soon";
+import ComingSoon from "@/components/error/ComingSoon";
+import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
 export default function AccountBilling() {
-  const { data: user } = api.auth.getCurrentUser.useQuery();
+  const { data: user, error } = api.auth.getCurrentUser.useQuery();
 
-  if (!user) return <div>404</div>;
+  if (!user) return renderErrorComponent(error);
+
+  return <ComingSoon />;
 
   return (
     <AccountLayout
       title="User Billing"
       description={"Update your payment methods and manage your subscriptions."}
     >
-      <ComingSoon />
+      Billing...
     </AccountLayout>
   );
 }
@@ -25,9 +28,7 @@ export default function AccountBilling() {
 export const getServerSideProps: GetServerSideProps = async (context) => {
   const session = await getServerAuthSession(context);
   if (!session) {
-    return {
-      redirect: { destination: "/login", permanent: false },
-    };
+    return { redirect: { destination: "/login", permanent: false } };
   }
 
   const helpers = genSSRHelpers(session);

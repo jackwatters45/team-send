@@ -6,17 +6,16 @@ import { getServerAuthSession } from "@/server/auth";
 
 import { SettingActionItem } from "@/components/ui/setting-action-item";
 import { AccountLayout } from "@/layouts/AccountLayout";
+import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
 export default function AccountSettings() {
-  const { data: user } = api.auth.getCurrentUser.useQuery();
+  const { data: user, error } = api.auth.getCurrentUser.useQuery();
 
   const handleExport = () => {
     console.log("Export data");
   };
 
-  if (!user) {
-    return null;
-  }
+  if (!user) return renderErrorComponent(error);
 
   return (
     <AccountLayout

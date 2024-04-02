@@ -9,6 +9,7 @@ import type {
   InferGetServerSidePropsType,
 } from "next";
 import type { Control, FieldValues, Path } from "react-hook-form";
+import { TRPCClientError } from "@trpc/client";
 
 import { getServerAuthSession } from "@/server/auth";
 import { extractInitials } from "@/lib/utils";
@@ -32,11 +33,12 @@ import {
   type GroupSettingsFormType,
   groupSettingsSchema,
 } from "@/lib/schemas/groupSettingsSchema";
+import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
 export default function GroupSettings({
   groupId,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-  const { data } = api.group.getGroupById.useQuery({ groupId });
+  const { data, error } = api.group.getGroupById.useQuery({ groupId });
 
   const form = useForm<GroupSettingsFormType>({
     resolver: zodResolver(groupSettingsSchema),
@@ -119,7 +121,7 @@ export default function GroupSettings({
   });
   const handleDelete = () => deleteGroup({ groupId });
 
-  if (!data) return null;
+  if (!data) return renderErrorComponent(error);
 
   return (
     <GroupLayout group={data}>
@@ -300,9 +302,7 @@ export const getServerSideProps = async (
   }
 
   const groupId = context.params?.groupId;
-  if (typeof groupId !== "string") {
-    throw new Error("Invalid slug");
-  }
+  if (typeof groupId !== "string") throw new TRPCClientError("Invalid slug");
 
   const helpers = genSSRHelpers(session);
   await helpers.group.getGroupById.prefetch({ groupId });
