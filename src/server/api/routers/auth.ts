@@ -1,10 +1,11 @@
-import { Ratelimit } from "@upstash/ratelimit";
-import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
-import { Redis } from "@upstash/redis";
-import { TRPCError } from "@trpc/server";
 import debug from "debug";
+
+import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
+import { TRPCError } from "@trpc/server";
 import { userSettingsSchema } from "@/lib/schemas/userSettingsSchema";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
+import { useRateLimit } from "@/server/helpers/rateLimit";
+import { handleError } from "@/server/helpers/handleError";
 
 const log = debug("team-send:api:auth");
 
@@ -75,21 +76,15 @@ export type User = IUserDetails &
   IUserMetaDetails &
   IUserActivity;
 
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(3, "10 s"),
-  analytics: true,
-});
-
 export const authRouter = createTRPCRouter({
-  getCurrentUser: publicProcedure.query(({ ctx }) => {
+  getCurrentUser: publicProcedure.query(async ({ ctx }) => {
     const userId = ctx.session?.user.id;
 
-    if (!userId) {
-      return null;
-    }
+    if (!userId) return null;
 
-    return ctx.db.user.findUnique({
+    await useRateLimit(userId);
+
+    return await ctx.db.user.findUnique({
       where: { id: userId },
     });
   }),
@@ -98,38 +93,35 @@ export const authRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const { success } = await ratelimit.limit(userId);
-      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
-
       try {
+        await useRateLimit(userId);
+
         const updatedUser = await ctx.db.user.update({
           where: { id: ctx.session.user.id },
           data: input,
         });
 
         if (!updatedUser) {
-          throw new TRPCError({ code: "NOT_FOUND" });
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: `User with id ${userId} not found`,
+          });
         }
 
         return updatedUser;
       } catch (error) {
-        log(error);
-
-        if (error instanceof PrismaClientKnownRequestError) {
-          if (error.code === "P2002") {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: `Username "${input.username}" is already taken. Please choose a different one.`,
-            });
-          } else {
-            throw new TRPCError({
-              code: "INTERNAL_SERVER_ERROR",
-              message: error.message,
-            });
-          }
-        } else {
-          throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        if (
+          error instanceof PrismaClientKnownRequestError &&
+          error.code === "P2002"
+        ) {
+          log("Username already taken: %O", error);
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `Username "${input.username}" is already taken. Please choose a different one.`,
+          });
         }
+
+        handleError(error);
       }
     }),
 });

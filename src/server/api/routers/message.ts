@@ -9,6 +9,9 @@ import { type Group } from "./group";
 import { type Member } from "./contact";
 import { TRPCError } from "@trpc/server";
 import { reminderSchema } from "@/lib/schemas/reminderSchema.ts";
+import { useRateLimit } from "@/server/helpers/rateLimit";
+import { handleError } from "@/server/helpers/handleError";
+import { aw } from "node_modules/@upstash/redis/zmscore-5d82e632";
 
 const log = debug("team-send:api:message");
 
@@ -67,29 +70,28 @@ const ratelimit = new Ratelimit({
 
 export const messageRouter = createTRPCRouter({
   getMessageById: protectedProcedure
-    .input(
-      z.object({
-        messageId: z.string(),
-      }),
-    )
+    .input(z.object({ messageId: z.string() }))
     .query(async ({ ctx, input }) => {
-      const message = await ctx.db.message.findUnique({
-        where: { id: input.messageId },
-        include: {
-          sentBy: true,
-          recipients: { include: { contact: true } },
-          reminders: true,
-        },
-      });
+      const userId = ctx.session.user.id;
 
-      if (!message) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Message not found",
+      try {
+        await useRateLimit(userId);
+
+        const message = await ctx.db.message.findUnique({
+          where: { id: input.messageId, createdById: userId },
+          include: {
+            sentBy: true,
+            recipients: { include: { contact: true } },
+            reminders: true,
+          },
         });
-      }
 
-      return message;
+        if (!message) return throwMessageNotFoundError(input.messageId);
+
+        return message;
+      } catch (err) {
+        handleError(err);
+      }
     }),
   update: protectedProcedure
     .input(
@@ -155,31 +157,28 @@ export const messageRouter = createTRPCRouter({
           });
         }
 
-        const existingMessage = await ctx.db.message.findUnique({
-          where: { id: data.id },
-          include: {
-            reminders: {
-              select: { id: true, num: true, period: true },
-            },
-            recipients: true,
-          },
-        });
-
-        if (!existingMessage) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Message not found",
-          });
-        }
-
-        if (existingMessage?.status === "sent") {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Cannot edit a sent message",
-          });
-        }
+        const userId = ctx.session.user.id;
 
         try {
+          await useRateLimit(userId);
+
+          const existingMessage = await ctx.db.message.findUnique({
+            where: { id: data.id },
+            include: {
+              reminders: { select: { id: true, num: true, period: true } },
+              recipients: true,
+            },
+          });
+
+          if (!existingMessage) return throwMessageNotFoundError(data.id);
+
+          if (existingMessage?.status === "sent") {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Cannot edit a sent message",
+            });
+          }
+
           const result = await ctx.db.$transaction(async (prisma) => {
             // update group member snapshot
             await Promise.all(
@@ -284,11 +283,7 @@ export const messageRouter = createTRPCRouter({
           });
           return result;
         } catch (err) {
-          console.error(err);
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-            message: "Failed to update message",
-          });
+          handleError(err);
         }
       },
     ),
@@ -297,108 +292,115 @@ export const messageRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const { success } = await ratelimit.limit(userId);
-      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
+      try {
+        await useRateLimit(userId);
 
-      return await ctx.db.message.delete({
-        where: { id: input.messageId },
-      });
+        const message = await ctx.db.message.delete({
+          where: { id: input.messageId },
+        });
 
-      // TODO: cancel send jobs if any
+        // TODO: cancel send jobs if any (might need a transaction)
+        return message;
+      } catch (err) {
+        handleError(err);
+      }
     }),
   duplicate: protectedProcedure
     .input(z.object({ messageId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const { success } = await ratelimit.limit(userId);
-      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
+      try {
+        await useRateLimit(userId);
 
-      const existingMessage = await ctx.db.message.findUnique({
-        where: { id: input.messageId },
-        select: {
-          content: true,
-          groupId: true,
-          sentById: true,
-          createdById: true,
-          lastUpdatedById: true,
-          isScheduled: true,
-          scheduledDate: true,
-          isRecurring: true,
-          recurringNum: true,
-          recurringPeriod: true,
-          isReminders: true,
-        },
-      });
-
-      if (!existingMessage) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Message not found",
+        const existingMessage = await ctx.db.message.findUnique({
+          where: { id: input.messageId },
+          select: {
+            content: true,
+            groupId: true,
+            sentById: true,
+            createdById: true,
+            lastUpdatedById: true,
+            isScheduled: true,
+            scheduledDate: true,
+            isRecurring: true,
+            recurringNum: true,
+            recurringPeriod: true,
+            isReminders: true,
+          },
         });
+
+        if (!existingMessage) return throwMessageNotFoundError(input.messageId);
+
+        const existingReminders = await ctx.db.reminder.findMany({
+          where: { messageId: input.messageId },
+        });
+
+        const existingRecipients = await ctx.db.memberSnapshot.findMany({
+          where: { messageId: input.messageId },
+        });
+
+        const newReminders = existingReminders.map((reminder) => ({
+          ...reminder,
+          id: undefined,
+          messageId: undefined,
+        }));
+
+        const newRecipients = existingRecipients.map((recipient) => ({
+          ...recipient,
+          id: undefined,
+          messageId: undefined,
+        }));
+
+        return await ctx.db.message.create({
+          data: {
+            ...existingMessage,
+            status: "draft",
+            recipients: { create: newRecipients },
+            reminders: { create: newReminders },
+          },
+        });
+      } catch (err) {
+        handleError(err);
       }
-
-      const existingReminders = await ctx.db.reminder.findMany({
-        where: { messageId: input.messageId },
-      });
-
-      const existingRecipients = await ctx.db.memberSnapshot.findMany({
-        where: { messageId: input.messageId },
-      });
-
-      const newReminders = existingReminders.map((reminder) => ({
-        ...reminder,
-        id: undefined,
-        messageId: undefined,
-      }));
-
-      const newRecipients = existingRecipients.map((recipient) => ({
-        ...recipient,
-        id: undefined,
-        messageId: undefined,
-      }));
-
-      return await ctx.db.message.create({
-        data: {
-          ...existingMessage,
-          status: "draft",
-          recipients: { create: newRecipients },
-          reminders: { create: newReminders },
-        },
-      });
     }),
   send: protectedProcedure
     .input(z.object({ messageId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const { success } = await ratelimit.limit(userId);
-      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
+      try {
+        await useRateLimit(userId);
 
-      const existingMessage = await ctx.db.message.findUnique({
-        where: { id: input.messageId },
-        include: { recipients: true, reminders: true },
-      });
-
-      if (!existingMessage) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Message not found",
+        const existingMessage = await ctx.db.message.findUnique({
+          where: { id: input.messageId },
+          include: { recipients: true, reminders: true },
         });
-      }
 
-      if (existingMessage?.status === "sent") {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: "Message has already been sent",
+        if (!existingMessage) return throwMessageNotFoundError(input.messageId);
+
+        if (existingMessage?.status === "sent") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Message has already been sent",
+          });
+        }
+
+        // TODO actual send logic + cron jobs (needs a transaction)
+
+        return await ctx.db.message.update({
+          where: { id: input.messageId },
+          data: { status: "sent", sendAt: new Date() },
         });
+      } catch (err) {
+        handleError(err);
       }
-
-      // TODO actual send logic + cron jobs
-
-      return await ctx.db.message.update({
-        where: { id: input.messageId },
-        data: { status: "sent", sendAt: new Date() },
-      });
     }),
 });
+
+function throwMessageNotFoundError(messageId: string) {
+  throw new TRPCError({
+    code: "NOT_FOUND",
+    message: `Message with id "${messageId}" not found`,
+  });
+}

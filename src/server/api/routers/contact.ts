@@ -1,9 +1,15 @@
+import { z } from "zod";
+import debug from "debug";
+
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import { type Group } from "./group";
 import { type Message } from "./message";
 import { TRPCError } from "@trpc/server";
-import { z } from "zod";
 import type { User } from "./auth";
+import { useRateLimit } from "@/server/helpers/rateLimit";
+import { handleError } from "@/server/helpers/handleError";
+
+const log = debug("team-send:api:contact");
 
 export interface ContactBase {
   name: string;
@@ -58,35 +64,36 @@ export const contactRouter = createTRPCRouter({
     .query(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const contact = await ctx.db.contact.findUnique({
-        where: {
-          id: input.contactId,
-          createdById: userId,
-        },
-      });
+      try {
+        await useRateLimit(userId);
 
-      const members = await ctx.db.member.findMany({
-        where: { contactId: input.contactId },
-        include: {
-          group: {
-            select: {
-              id: true,
-              name: true,
-              image: true,
-              members: { select: { id: true } },
+        const contact = await ctx.db.contact.findUnique({
+          where: {
+            id: input.contactId,
+            createdById: userId,
+          },
+        });
+
+        if (!contact) throwContactNotFoundError(input.contactId);
+
+        const members = await ctx.db.member.findMany({
+          where: { contactId: input.contactId },
+          include: {
+            group: {
+              select: {
+                id: true,
+                name: true,
+                image: true,
+                members: { select: { id: true } },
+              },
             },
           },
-        },
-      });
-
-      if (!contact) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Contact not found",
         });
-      }
 
-      return { ...contact, members };
+        return { ...contact, members };
+      } catch (error) {
+        handleError(error);
+      }
     }),
   getRecentContacts: protectedProcedure
     .input(
@@ -96,35 +103,47 @@ export const contactRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      if (!input.search) {
-        return await ctx.db.contact.findMany({
-          where: { id: { notIn: input.addedContactIds } },
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-            email: true,
-            notes: true,
-          },
-          take: 10,
-          orderBy: { updatedAt: "desc" },
-        });
-      } else {
-        return await ctx.db.contact.findMany({
-          where: {
-            name: { contains: input.search, mode: "insensitive" },
-            id: { notIn: input.addedContactIds },
-          },
-          select: {
-            id: true,
-            name: true,
-            phone: true,
-            email: true,
-            notes: true,
-          },
-          take: 10,
-          orderBy: { updatedAt: "desc" },
-        });
+      const userId = ctx.session.user.id;
+
+      try {
+        await useRateLimit(userId);
+
+        if (!input.search) {
+          return await ctx.db.contact.findMany({
+            where: {
+              id: { notIn: input.addedContactIds },
+              createdById: userId,
+            },
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              email: true,
+              notes: true,
+            },
+            take: 10,
+            orderBy: { updatedAt: "desc" },
+          });
+        } else {
+          return await ctx.db.contact.findMany({
+            where: {
+              name: { contains: input.search, mode: "insensitive" },
+              id: { notIn: input.addedContactIds },
+              createdById: userId,
+            },
+            select: {
+              id: true,
+              name: true,
+              phone: true,
+              email: true,
+              notes: true,
+            },
+            take: 10,
+            orderBy: { updatedAt: "desc" },
+          });
+        }
+      } catch (error) {
+        handleError(error);
       }
     }),
   update: protectedProcedure
@@ -148,23 +167,31 @@ export const contactRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const contact = await ctx.db.contact.update({
-        where: { id: input.id, createdById: userId },
-        data: {
-          name: input.name,
-          email: input.email ?? null,
-          phone: input.phone ?? null,
-          notes: input.notes ?? null,
-        },
-      });
+      try {
+        await useRateLimit(userId);
 
-      if (!contact) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Contact not found",
+        const contact = await ctx.db.contact.update({
+          where: { id: input.id, createdById: userId },
+          data: {
+            name: input.name,
+            email: input.email ?? null,
+            phone: input.phone ?? null,
+            notes: input.notes ?? null,
+          },
         });
-      }
 
-      return contact;
+        if (!contact) throwContactNotFoundError(input.id);
+
+        return contact;
+      } catch (error) {
+        handleError(error);
+      }
     }),
 });
+
+function throwContactNotFoundError(contactId: string) {
+  throw new TRPCError({
+    code: "NOT_FOUND",
+    message: `Contact with id "${contactId}" not found`,
+  });
+}

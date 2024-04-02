@@ -1,6 +1,4 @@
 import { z } from "zod";
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
 import debug from "debug";
 
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
@@ -11,6 +9,8 @@ import { TRPCError } from "@trpc/server";
 import { createGroupSchema } from "@/lib/schemas/createGroupSchema";
 import { groupMembersFormSchema } from "@/lib/schemas/groupMembersFormSchema";
 import { groupSettingsSchema } from "@/lib/schemas/groupSettingsSchema";
+import { handleError } from "@/server/helpers/handleError";
+import { useRateLimit } from "@/server/helpers/rateLimit";
 
 const log = debug("team-send:api:group");
 
@@ -46,57 +46,59 @@ export type Group = IGroupPreview &
   IGroupHistory &
   IGroupMetaDetails;
 
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(10, "10 s"),
-  analytics: true,
-});
-
 export const groupRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 
-    return await ctx.db.group.findMany({
-      where: { createdBy: { id: userId } },
-      include: {
-        members: {
-          include: { contact: true },
+    try {
+      await useRateLimit(userId);
+
+      return await ctx.db.group.findMany({
+        where: { createdBy: { id: userId } },
+        include: {
+          members: {
+            include: { contact: true },
+          },
+          messages: {
+            select: { sendAt: true, content: true },
+            where: { sendAt: { not: undefined } },
+            orderBy: { sendAt: "desc" },
+            take: 1,
+          },
         },
-        messages: {
-          select: { sendAt: true, content: true },
-          where: { sendAt: { not: undefined } },
-          orderBy: { sendAt: "desc" },
-          take: 1,
-        },
-      },
-    });
+      });
+    } catch (err) {
+      handleError(err);
+    }
   }),
   getGroupHistoryById: protectedProcedure
-    .input(
-      z.object({
-        groupId: z.string(),
-      }),
-    )
+    .input(z.object({ groupId: z.string() }))
     .query(async ({ ctx, input }) => {
-      const groupBasicInfo = await ctx.db.group.findUnique({
-        where: { id: input.groupId },
-        select: { id: true, name: true, description: true },
-      });
+      const userId = ctx.session.user.id;
 
-      const messages = await ctx.db.message.findMany({
-        where: { groupId: input.groupId },
-        include: {
-          sentBy: true,
-          recipients: { include: { contact: true } },
-          reminders: true,
-        },
-      });
+      try {
+        await useRateLimit(userId);
 
-      if (!groupBasicInfo) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Group not found" });
+        const groupBasicInfo = await ctx.db.group.findUnique({
+          where: { id: input.groupId, createdBy: { id: userId } },
+          select: { id: true, name: true, description: true },
+        });
+
+        if (!groupBasicInfo) return throwGroupNotFoundError(input.groupId);
+
+        const messages = await ctx.db.message.findMany({
+          where: { groupId: input.groupId },
+          include: {
+            sentBy: true,
+            recipients: { include: { contact: true } },
+            reminders: true,
+          },
+        });
+
+        return { group: groupBasicInfo, messages };
+      } catch (err) {
+        throw handleError(err);
       }
-
-      return { group: groupBasicInfo, messages };
     }),
   getGroupById: protectedProcedure
     .input(
@@ -105,25 +107,25 @@ export const groupRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      // TODO some check to make sure it is the user's group
+      const userId = ctx.session.user.id;
 
-      const group = await ctx.db.group.findUnique({
-        where: { id: input.groupId },
-        include: {
-          members: {
-            include: { contact: true },
-          },
-          messages: {
-            include: { sentBy: true },
-          },
-        },
-      });
+      try {
+        await useRateLimit(userId);
 
-      if (!group) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Group not found" });
+        const group = await ctx.db.group.findUnique({
+          where: { id: input.groupId, createdBy: { id: userId } },
+          include: {
+            members: { include: { contact: true } },
+            messages: { include: { sentBy: true } },
+          },
+        });
+
+        if (!group) return throwGroupNotFoundError(input.groupId);
+
+        return group;
+      } catch (err) {
+        handleError(err);
       }
-
-      return group;
     }),
   getRecentGroups: protectedProcedure
     .input(
@@ -133,23 +135,35 @@ export const groupRouter = createTRPCRouter({
       }),
     )
     .query(async ({ ctx, input }) => {
-      if (!input.search) {
-        return await ctx.db.group.findMany({
-          where: { id: { notIn: input.addedGroupIds } },
-          include: { members: { select: { contact: true } } },
-          take: 10,
-          orderBy: { updatedAt: "desc" },
-        });
-      } else {
-        return await ctx.db.group.findMany({
-          where: {
-            name: { contains: input.search, mode: "insensitive" },
-            id: { notIn: input.addedGroupIds },
-          },
-          include: { members: { select: { contact: true } } },
-          take: 10,
-          orderBy: { updatedAt: "desc" },
-        });
+      const userId = ctx.session.user.id;
+
+      try {
+        await useRateLimit(userId);
+
+        if (!input.search) {
+          return await ctx.db.group.findMany({
+            where: {
+              id: { notIn: input.addedGroupIds },
+              createdBy: { id: userId },
+            },
+            include: { members: { select: { contact: true } } },
+            take: 10,
+            orderBy: { updatedAt: "desc" },
+          });
+        } else {
+          return await ctx.db.group.findMany({
+            where: {
+              name: { contains: input.search, mode: "insensitive" },
+              id: { notIn: input.addedGroupIds },
+              createdBy: { id: userId },
+            },
+            include: { members: { select: { contact: true } } },
+            take: 10,
+            orderBy: { updatedAt: "desc" },
+          });
+        }
+      } catch (error) {
+        handleError(error);
       }
     }),
   create: protectedProcedure
@@ -157,10 +171,9 @@ export const groupRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const { success } = await ratelimit.limit(userId);
-      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
-
       try {
+        await useRateLimit(userId);
+
         const result = await ctx.db.$transaction(async (prisma) => {
           const members = await Promise.all(
             input.members
@@ -194,73 +207,72 @@ export const groupRouter = createTRPCRouter({
                     contact: { connect: { id: contact.id } },
                     memberNotes: member.memberNotes,
                     isRecipient: member.isRecipient,
+                    createdBy: { connect: { id: userId } },
                   };
                 }
               }),
           );
 
-          const group = await prisma.group.create({
+          return await prisma.group.create({
             data: {
               ...input,
               members: { create: members },
               createdBy: { connect: { id: ctx.session.user.id } },
             },
           });
-
-          return group;
         });
 
         return result;
       } catch (err) {
-        console.error(err);
-        throw err;
+        handleError(err);
       }
     }),
-
   delete: protectedProcedure
     .input(z.object({ groupId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const { success } = await ratelimit.limit(userId);
-      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
+      try {
+        await useRateLimit(userId);
 
-      return await ctx.db.group.delete({
-        where: { id: input.groupId },
-      });
+        return await ctx.db.group.delete({
+          where: { id: input.groupId, createdBy: { id: userId } },
+        });
+      } catch (err) {
+        handleError(err);
+      }
     }),
   archive: protectedProcedure
     .input(z.object({ groupId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const { success } = await ratelimit.limit(userId);
-      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
+      try {
+        await useRateLimit(userId);
 
-      const archivedGroup = await ctx.db.group.update({
-        where: { id: input.groupId },
-        data: { isArchived: true },
-      });
+        const archivedGroup = await ctx.db.group.update({
+          where: { id: input.groupId, createdBy: { id: userId } },
+          data: { isArchived: true },
+        });
 
-      if (!archivedGroup) {
-        throw new TRPCError({ code: "NOT_FOUND", message: "Group not found" });
+        if (!archivedGroup) throwGroupNotFoundError(input.groupId);
+
+        return archivedGroup;
+      } catch (err) {
+        handleError(err);
       }
-
-      return archivedGroup;
     }),
-
   updateSettings: protectedProcedure
     .input(groupSettingsSchema)
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const { success } = await ratelimit.limit(userId);
-      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
-
       try {
+        await useRateLimit(userId);
+
         const result = await ctx.db.$transaction(async (prisma) => {
           const group = await prisma.group.update({
-            where: { id: input.groupId },
+            where: { id: input.groupId, createdById: userId },
             data: {
               name: input.name,
               description: input.description,
@@ -270,12 +282,7 @@ export const groupRouter = createTRPCRouter({
             },
           });
 
-          if (!group) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: "Group not found",
-            });
-          }
+          if (!group) return throwGroupNotFoundError(input.groupId);
 
           if (input["change-global"]) {
             const updateAll = await prisma.group.updateMany({
@@ -299,8 +306,7 @@ export const groupRouter = createTRPCRouter({
 
         return result;
       } catch (err) {
-        console.error(err);
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        handleError(err);
       }
     }),
   updateMembers: protectedProcedure
@@ -308,26 +314,19 @@ export const groupRouter = createTRPCRouter({
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
-      const { success } = await ratelimit.limit(userId);
-      if (!success) throw new TRPCError({ code: "TOO_MANY_REQUESTS" });
-
-      const group = await ctx.db.group.findUnique({
-        where: { id: input.groupId },
-        include: { members: true },
-      });
-
-      if (!group) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Group not found",
-        });
-      }
-
       try {
+        await useRateLimit(userId);
+
+        const group = await ctx.db.group.findUnique({
+          where: { id: input.groupId, createdById: userId },
+          include: { members: true },
+        });
+        if (!group) return throwGroupNotFoundError(input.groupId!);
+
         const result = await ctx.db.$transaction(async (prisma) => {
           if (input.addedGroupIds !== group.addedGroupIds) {
             await prisma.group.update({
-              where: { id: input.groupId },
+              where: { id: input.groupId, createdById: userId },
               data: { addedGroupIds: input.addedGroupIds },
             });
           }
@@ -339,20 +338,18 @@ export const groupRouter = createTRPCRouter({
           );
 
           await prisma.member.deleteMany({
-            where: {
-              id: { in: memberIdsToDelete },
-            },
+            where: { id: { in: memberIdsToDelete } },
           });
 
           const updatedGroup = await prisma.group.update({
-            where: { id: input.groupId },
+            where: { id: input.groupId, createdById: userId },
             data: { addedGroupIds: input?.addedGroupIds },
           });
 
           const memberUpserts = await Promise.all(
             input.members.map(async ({ contact, ...member }) => {
               const contactUpsert = await prisma.contact.upsert({
-                where: { id: contact.id },
+                where: { id: contact.id, createdById: userId },
                 update: { ...contact },
                 create: { ...contact, createdBy: { connect: { id: userId } } },
               });
@@ -386,8 +383,14 @@ export const groupRouter = createTRPCRouter({
 
         return result;
       } catch (err) {
-        console.error(err);
-        throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        handleError(err);
       }
     }),
 });
+
+function throwGroupNotFoundError(groupId: string) {
+  throw new TRPCError({
+    code: "NOT_FOUND",
+    message: `Group with id "${groupId}" not found`,
+  });
+}
