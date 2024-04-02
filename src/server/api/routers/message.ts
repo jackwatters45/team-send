@@ -1,6 +1,4 @@
 import { z } from "zod";
-import { Ratelimit } from "@upstash/ratelimit";
-import { Redis } from "@upstash/redis";
 import debug from "debug";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -11,7 +9,6 @@ import { TRPCError } from "@trpc/server";
 import { reminderSchema } from "@/lib/schemas/reminderSchema.ts";
 import { useRateLimit } from "@/server/helpers/rateLimit";
 import { handleError } from "@/server/helpers/handleError";
-import { aw } from "node_modules/@upstash/redis/zmscore-5d82e632";
 
 const log = debug("team-send:api:message");
 
@@ -61,12 +58,6 @@ export type Message = IMessageInput &
     id: string;
     status: "draft" | "sent" | "scheduled" | "failed";
   };
-
-const ratelimit = new Ratelimit({
-  redis: Redis.fromEnv(),
-  limiter: Ratelimit.slidingWindow(10, "10 s"),
-  analytics: true,
-});
 
 export const messageRouter = createTRPCRouter({
   getMessageById: protectedProcedure

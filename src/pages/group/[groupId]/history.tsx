@@ -80,7 +80,7 @@ export default function GroupHistory({
       void ctx.group.getGroupHistoryById.invalidate();
       toast({
         title: "Message Sent",
-        description: `Message "${data.id}" has been sent.`,
+        description: `Message "${data?.id}" has been sent.`,
       });
     },
     onError: (error) => {
@@ -107,7 +107,7 @@ export default function GroupHistory({
   const router = useRouter();
   const { mutate: duplicateMessage } = api.message.duplicate.useMutation({
     onSuccess: (data) => {
-      void router.push(`/group/${data.groupId}/message/${data.id}/edit`);
+      void router.push(`/group/${data?.groupId}/message/${data?.id}/edit`);
     },
     onError: (error) => {
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
@@ -340,9 +340,14 @@ function getHistoryTableColumns({
         return (
           <DataTableRowActions>
             <DropdownMenuItem
-              onClick={() =>
-                navigator.clipboard.writeText(row.getValue<string>("id"))
-              }
+              onClick={async () => {
+                void navigator.clipboard.writeText(row.getValue<string>("id"));
+
+                toast({
+                  title: "Message ID copied",
+                  description: `message ID "${row.getValue<string>("id")}" has been copied to your clipboard.`,
+                });
+              }}
             >
               Copy message ID
               <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>

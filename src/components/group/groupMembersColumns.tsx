@@ -15,6 +15,7 @@ import {
 import type { MemberBaseContact } from "@/server/api/routers/contact";
 import Link from "next/link";
 import { parsePhoneNumber } from "libphonenumber-js";
+import { toast } from "../ui/use-toast";
 
 export const groupMembersColumns: ColumnDef<MemberBaseContact>[] = [
   {
@@ -94,9 +95,14 @@ export const groupMembersColumns: ColumnDef<MemberBaseContact>[] = [
     cell: ({ row }) => (
       <DataTableRowActions>
         <DropdownMenuItem
-          onClick={() =>
-            navigator.clipboard.writeText(row.getValue<string>("id"))
-          }
+          onClick={() => {
+            navigator.clipboard.writeText(row.getValue<string>("id"));
+
+            toast({
+              title: "Member ID copied",
+              description: `member ID "${row.getValue<string>("id")}" has been copied to your clipboard.`,
+            });
+          }}
           className="w-48"
         >
           Copy member ID

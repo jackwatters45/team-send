@@ -29,7 +29,7 @@ export function handleError(error: unknown): TRPCError {
 
   return new TRPCError({
     code: "INTERNAL_SERVER_ERROR",
-    message: `An unexpected error occurred: ${error}`,
+    message: `An unexpected error occurred: ${String(error)}`,
     cause: error,
   });
 }

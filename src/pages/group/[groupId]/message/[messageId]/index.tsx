@@ -29,6 +29,7 @@ import {
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "@/components/ui/use-toast";
 
 export default function MessageDetails({
   messageId,
@@ -234,9 +235,14 @@ const groupMembersColumns: ColumnDef<MemberBaseContact>[] = [
     cell: ({ row }) => (
       <DataTableRowActions>
         <DropdownMenuItem
-          onClick={() =>
-            navigator.clipboard.writeText(row.getValue<string>("id"))
-          }
+          onClick={() => {
+            navigator.clipboard.writeText(row.getValue<string>("id"));
+
+            toast({
+              title: "Copied member ID",
+              description: `Member ID ${row.getValue<string>("id")} has been copied to your clipboard`,
+            });
+          }}
           className="w-48"
         >
           Copy member ID

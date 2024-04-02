@@ -55,7 +55,10 @@ import {
 } from "@/lib/schemas/messageSchema";
 import { defaultReminder } from "@/lib/schemas/reminderSchema.ts";
 
-export default function EditMessage({ messageId }: MessageDetailsProps) {
+export default function EditMessage({
+  groupId,
+  messageId,
+}: MessageDetailsProps) {
   const { data } = api.message.getMessageById.useQuery({ messageId });
 
   const form = useForm<MessageFormType>({
@@ -95,16 +98,16 @@ export default function EditMessage({ messageId }: MessageDetailsProps) {
   const router = useRouter();
   const { mutate } = api.message.update.useMutation({
     onSuccess: async (data) => {
-      await router.push(`/group/${data.groupId}/message/${data.id}`);
-      if (data.status === "sent") {
+      await router.push(`/group/${groupId}/message/${messageId}`);
+      if (data?.status === "sent") {
         toast({
           title: "Message Sent",
-          description: `Message "${data.id}" has been sent.`,
+          description: `Message "${data?.id}" has been sent.`,
         });
       } else {
         toast({
           title: "Message Updated",
-          description: `Message "${data.id}" has been updated.`,
+          description: `Message "${data?.id}" has been updated.`,
         });
       }
     },
@@ -313,6 +316,7 @@ export const getServerSideProps = async (
   return {
     props: {
       trpcState: helpers.dehydrate(),
+      groupId,
       messageId,
     },
   };
@@ -417,21 +421,31 @@ const getGroupMembersColumns = (
       cell: ({ row }) => (
         <DataTableRowActions>
           <DropdownMenuItem
-            onClick={() =>
-              navigator.clipboard.writeText(row.getValue<string>("id"))
-            }
+            onClick={() => {
+              navigator.clipboard.writeText(row.getValue<string>("id"));
+
+              toast({
+                title: "Copied member ID",
+                description: `Member ID ${row.getValue<string>("id")} has been copied to your clipboard`,
+              });
+            }}
             className="w-48"
           >
             Copy member ID
             <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() =>
-              navigator.clipboard.writeText(row.original.contact.id)
-            }
+            onClick={() => {
+              navigator.clipboard.writeText(row.original.contact.id);
+
+              toast({
+                title: "Copied contact ID",
+                description: `Contact ID ${row.original.contact.id} has been copied to your clipboard`,
+              });
+            }}
             className="w-48"
           >
-            Copy member ID
+            Copy contact ID
             <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuSeparator />

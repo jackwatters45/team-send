@@ -1,3 +1,5 @@
+"use client";
+
 import type { GetServerSideProps } from "next";
 import type { ColumnDef } from "@tanstack/react-table";
 
@@ -207,7 +209,14 @@ const getGroupColumns = (
       return (
         <DataTableRowActions>
           <DropdownMenuItem
-            onClick={() => navigator.clipboard.writeText(id)}
+            onClick={() => {
+              navigator.clipboard.writeText(id);
+
+              toast({
+                title: "Group ID copied",
+                description: `group ID "${row.getValue<string>("id")}" has been copied to your clipboard.`,
+              });
+            }}
             className="w-48"
           >
             Copy group ID

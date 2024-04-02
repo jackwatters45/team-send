@@ -225,7 +225,7 @@ async function dropAllTables() {
 
 // not all contacts in each group
 async function main() {
-  await dropAllTables();
+  // await dropAllTables();
 
   // await Promise.all(Array.from({ length: 2 }).map(() => createUser()));
 
@@ -245,7 +245,7 @@ async function main() {
   ).map((c) => c.id);
 
   const groups = await Promise.all(
-    Array.from({ length: 2 }).map(() => createGroup(me.id, contacts)),
+    Array.from({ length: 10 }).map(() => createGroup(me.id, contacts)),
   );
 
   await Promise.all(

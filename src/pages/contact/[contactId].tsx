@@ -133,10 +133,12 @@ export default function Contact({ contactId }: ContactProps) {
                       <div className="text-xs">
                         {group.members.length} members
                       </div>
-                      <div className="flex gap-1 text-xs text-stone-500">
-                        <span className="font-semibold">Notes:</span>
-                        <span>{truncateText(memberNotes ?? "", 30)}</span>
-                      </div>
+                      {!!memberNotes && (
+                        <div className="flex gap-1 text-xs text-stone-500">
+                          <span className="font-semibold">Notes:</span>
+                          <span>{truncateText(memberNotes ?? "", 30)}</span>
+                        </div>
+                      )}
                       {/* {!!memberNotes ? (
                       <HoverCard>
                       <HoverCardTrigger className="flex gap-1 text-xs text-stone-500"> */}
