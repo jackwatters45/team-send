@@ -46,6 +46,7 @@ export default function CreateGroup() {
         title: "Group Creation Failed",
         description:
           errorMessage?.[0] ??
+          error.message ??
           "An error occurred while creating the group. Please try again.",
         variant: "destructive",
       });

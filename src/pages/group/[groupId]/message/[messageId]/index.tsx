@@ -49,9 +49,13 @@ export default function MessageDetails({
       });
     },
     onError: (error) => {
+      const errorMessage = error.data?.zodError?.fieldErrors?.content;
       toast({
         title: "Message deletion failed",
-        description: error.message,
+        description:
+          errorMessage?.[0] ??
+          error.message ??
+          "An error occurred while deleting the message",
         variant: "destructive",
       });
     },

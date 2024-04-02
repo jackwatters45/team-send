@@ -118,6 +118,7 @@ export default function EditMessage({
         title: "Message Update Failed",
         description:
           errorMessage?.[0] ??
+          error.message ??
           "An error occurred while updating the message. Please try again.",
         variant: "destructive",
       });
@@ -180,20 +181,14 @@ export default function EditMessage({
     },
     onError: (error) => {
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
-      if (errorMessage?.[0]) {
-        toast({
-          title: "Message Delete Failed",
-          description: errorMessage[0],
-          variant: "destructive",
-        });
-      } else {
-        toast({
-          title: "Message Delete Failed",
-          description:
-            "An error occurred while deleting the message. Please try again.",
-          variant: "destructive",
-        });
-      }
+      toast({
+        title: "Message Delete Failed",
+        description:
+          errorMessage?.[0] ??
+          error.message ??
+          "An error occurred while deleting the message. Please try again.",
+        variant: "destructive",
+      });
     },
   });
   const handleDelete = () => {

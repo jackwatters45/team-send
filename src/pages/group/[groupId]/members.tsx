@@ -32,7 +32,7 @@ export default function GroupMembers({
       addedGroupIds: data?.addedGroupIds ?? [],
     },
   });
-  
+
   const { mutate } = api.group.updateMembers.useMutation({
     onError: (error) => {
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
@@ -40,6 +40,7 @@ export default function GroupMembers({
         title: "Failed to update members",
         description:
           errorMessage?.[0] ??
+          error.message ??
           "There was an error updating group members. Please try again.",
         variant: "destructive",
       });

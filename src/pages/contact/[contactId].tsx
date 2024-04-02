@@ -51,6 +51,7 @@ export default function Contact({ contactId }: ContactProps) {
         title: "Contact Update Failed",
         description:
           errorMessage?.[0] ??
+          error.message ??
           "An error occurred while updating the contact. Please try again.",
         variant: "destructive",
       });

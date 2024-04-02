@@ -63,6 +63,7 @@ export default function GroupSettings({
         title: "Failed to update settings",
         description:
           errorMessage?.[0] ??
+          error.message ??
           "There was an error updating group settings. Please try again.",
         variant: "destructive",
       });
@@ -88,6 +89,7 @@ export default function GroupSettings({
         title: "Failed to archive group",
         description:
           errorMessage?.[0] ??
+          error.message ??
           "There was an error archiving the group. Please try again.",
         variant: "destructive",
       });
@@ -109,6 +111,7 @@ export default function GroupSettings({
         title: "Failed to delete group",
         description:
           errorMessage?.[0] ??
+          error.message ??
           "There was an error deleting the group. Please try again.",
         variant: "destructive",
       });

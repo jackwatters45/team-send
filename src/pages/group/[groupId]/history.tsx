@@ -61,6 +61,7 @@ export default function GroupHistory({
         title: "Message Delete Failed",
         description:
           errorMessage?.[0] ??
+          error.message ??
           "An error occurred while deleting the message. Please try again.",
         variant: "destructive",
       });
@@ -90,6 +91,7 @@ export default function GroupHistory({
         title: "Retry Send Message Failed",
         description:
           errorMessage?.[0] ??
+          error.message ??
           "An error occurred while trying to send the message.",
         variant: "destructive",
       });
@@ -115,6 +117,7 @@ export default function GroupHistory({
         title: "Duplicate Message Failed",
         description:
           errorMessage?.[0] ??
+          error.message ??
           "An error occurred while trying to duplicate the message. Please try again.",
         variant: "destructive",
       });
