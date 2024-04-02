@@ -5,7 +5,7 @@ import { type RowSelectionState } from "@tanstack/react-table";
 import type {
   MemberBaseContact,
   MemberBaseNewContact,
-} from "@/server/api/routers/contact";
+} from "@/server/api/routers/member";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));

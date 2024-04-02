@@ -7,7 +7,7 @@ export default function ComingSoon() {
             Coming Soon
           </h1>
           <p className="mx-auto max-w-[600px] text-stone-400 md:text-xl/relaxed dark:text-stone-400 dark:text-stone-400">
-            This page is currently under construction. We're adding the
+            This page is currently under construction. We&apos;re adding the
             finishing touches to bring you something special. Coming very soon!
           </p>
         </div>

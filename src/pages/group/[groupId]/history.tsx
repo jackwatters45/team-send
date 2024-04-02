@@ -18,7 +18,7 @@ import {
   DataTableRowActions,
 } from "@/components/ui/data-table";
 import { type User } from "@/server/api/routers/auth";
-import { type Member } from "@/server/api/routers/contact";
+import { type Member } from "@/server/api/routers/member";
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,

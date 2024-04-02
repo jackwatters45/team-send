@@ -3,10 +3,12 @@ import debug from "debug";
 import pLimit from "p-limit";
 
 import { db } from "../src/server/db";
-import type { Contact, Member } from "@/server/api/routers/contact";
+import type { Member } from "@/server/api/routers/member";
+import type { Contact } from "@/server/api/routers/contact";
 import type { IGroupPreview } from "@/server/api/routers/group";
 
 const log = debug("team-send:seed");
+
 const limit = pLimit(5);
 
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -195,7 +197,7 @@ async function createMessage(group: IGroupPreview, userId: string) {
   }
 }
 
-async function dropAllTables() {
+async function _dropAllTables() {
   try {
     await db.memberSnapshot.deleteMany({});
     await db.member.deleteMany({});
@@ -225,7 +227,7 @@ async function dropAllTables() {
 
 // not all contacts in each group
 async function main() {
-  // await dropAllTables();
+  // await _dropAllTables();
 
   // await Promise.all(Array.from({ length: 2 }).map(() => createUser()));
 

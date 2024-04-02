@@ -6,7 +6,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { type RouterOutputs, api } from "@/utils/api";
 import useDataTable from "@/hooks/useDataTable";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
-import type { Member } from "@/server/api/routers/contact";
+import type { Member } from "@/server/api/routers/member";
 import { getServerAuthSession } from "@/server/auth";
 
 import Layout from "@/layouts/Layout";
@@ -41,7 +41,6 @@ export default function Home() {
   const { data } = api.group.getAll.useQuery();
 
   const ctx = api.useUtils();
-
   const { mutate } = api.group.delete.useMutation({
     onSuccess: (data) => {
       void ctx.group.getAll.invalidate();
@@ -209,8 +208,8 @@ const getGroupColumns = (
       return (
         <DataTableRowActions>
           <DropdownMenuItem
-            onClick={() => {
-              navigator.clipboard.writeText(id);
+            onClick={async () => {
+              await navigator.clipboard.writeText(id);
 
               toast({
                 title: "Group ID copied",

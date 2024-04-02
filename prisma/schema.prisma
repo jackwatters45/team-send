@@ -37,10 +37,10 @@ model Contact {
   email String? @unique
   notes String?
 
-  createdAt DateTime @default(now())
   createdBy User     @relation(fields: [createdById], references: [id], onDelete: Cascade)
-
   createdById String
+
+  createdAt DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
   members         Member[]

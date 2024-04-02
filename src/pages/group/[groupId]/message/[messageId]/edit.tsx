@@ -13,7 +13,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { getInitialSelectedMembers } from "@/lib/utils";
-import type { MemberBaseContact } from "@/server/api/routers/contact";
+import type { MemberBaseContact } from "@/server/api/routers/member";
 import { api } from "@/utils/api";
 import type { IReminder, RecurPeriod } from "@/server/api/routers/message";
 import { getServerAuthSession } from "@/server/auth";
@@ -82,8 +82,9 @@ export default function EditMessage({
     },
   });
 
+  const columns = getRecipientsColumns(form);
   const { table } = useDataTable({
-    columns: getGroupMembersColumns(form),
+    columns,
     data: data?.recipients ?? [],
     getRowId: (row: MemberBaseContact) => row.id,
     enableRowSelection: (row) =>
@@ -248,7 +249,7 @@ export default function EditMessage({
               description="Recipients you choose for this message will become the new default for this group"
               control={form.control}
             />
-            <GroupMembersTable table={table} />
+            <GroupMembersTable table={table} columns={columns} />
           </div>
         </form>
       </Form>
@@ -326,7 +327,7 @@ type MessageDetailsProps = InferGetServerSidePropsType<
   typeof getServerSideProps
 >;
 
-const getGroupMembersColumns = (
+const getRecipientsColumns = (
   form: UseFormReturn<MessageFormType>,
 ): ColumnDef<MemberBaseContact>[] => {
   return [
@@ -421,8 +422,8 @@ const getGroupMembersColumns = (
       cell: ({ row }) => (
         <DataTableRowActions>
           <DropdownMenuItem
-            onClick={() => {
-              navigator.clipboard.writeText(row.getValue<string>("id"));
+            onClick={async () => {
+              await navigator.clipboard.writeText(row.getValue<string>("id"));
 
               toast({
                 title: "Copied member ID",
@@ -435,8 +436,8 @@ const getGroupMembersColumns = (
             <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuItem
-            onClick={() => {
-              navigator.clipboard.writeText(row.original.contact.id);
+            onClick={async () => {
+              await navigator.clipboard.writeText(row.original.contact.id);
 
               toast({
                 title: "Copied contact ID",

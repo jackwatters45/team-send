@@ -12,7 +12,7 @@ import { type User } from "@/server/api/routers/auth";
 import { parsePhoneNumber } from "libphonenumber-js";
 import { Separator } from "./separator";
 import { ScrollArea } from "./scroll-area";
-import type { Member } from "@/server/api/routers/contact";
+import type { Member } from "@/server/api/routers/member";
 import Link from "next/link";
 
 const HoverCard = HoverCardPrimitive.Root;

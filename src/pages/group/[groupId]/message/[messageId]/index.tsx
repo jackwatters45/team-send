@@ -11,7 +11,7 @@ import { parsePhoneNumber } from "libphonenumber-js";
 
 import { getInitialSelectedMembers } from "@/lib/utils";
 import { api } from "@/utils/api";
-import type { MemberBaseContact } from "@/server/api/routers/contact";
+import type { MemberBaseContact } from "@/server/api/routers/member";
 import useDataTable from "@/hooks/useDataTable";
 
 import PageLayout from "@/layouts/PageLayout";
@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/use-toast";
+import { useRouter } from "next/router";
 
 export default function MessageDetails({
   messageId,
@@ -37,8 +38,29 @@ export default function MessageDetails({
 }: MessageDetailsProps) {
   const { data } = api.message.getMessageById.useQuery({ messageId });
 
+  const router = useRouter();
+  const { mutate: deleteMessage } = api.message.delete.useMutation({
+    onSuccess: async () => {
+      await router.push(`/group/${groupId}/history`);
+
+      toast({
+        title: "Message deleted",
+        description: `Message ${messageId} has been deleted`,
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Message deletion failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+  const handleDeleteMessage = () => deleteMessage({ messageId });
+
+  const columns = getGroupMembersColumns(handleDeleteMessage);
   const { table } = useDataTable({
-    columns: groupMembersColumns,
+    columns,
     data: data?.recipients ?? [],
     getRowId: (row: MemberBaseContact) => row.id,
     options: {
@@ -132,7 +154,11 @@ export default function MessageDetails({
           <div className="font-semibold">Message Recipients</div>
           <div className="text-sm ">{data.recipients.length} recipients</div>
         </div>
-        <GroupMembersTable table={table} placeholder="Search recipients" />
+        <GroupMembersTable
+          table={table}
+          placeholder="Search recipients"
+          columns={columns}
+        />
       </div>
     </PageLayout>
   );
@@ -171,7 +197,9 @@ type MessageDetailsProps = InferGetServerSidePropsType<
   typeof getServerSideProps
 >;
 
-const groupMembersColumns: ColumnDef<MemberBaseContact>[] = [
+const getGroupMembersColumns = (
+  handleDeleteMessage: () => void,
+): ColumnDef<MemberBaseContact>[] => [
   {
     id: "select",
     cell: ({ row }) => {
@@ -235,8 +263,8 @@ const groupMembersColumns: ColumnDef<MemberBaseContact>[] = [
     cell: ({ row }) => (
       <DataTableRowActions>
         <DropdownMenuItem
-          onClick={() => {
-            navigator.clipboard.writeText(row.getValue<string>("id"));
+          onClick={async () => {
+            await navigator.clipboard.writeText(row.getValue<string>("id"));
 
             toast({
               title: "Copied member ID",
@@ -252,7 +280,7 @@ const groupMembersColumns: ColumnDef<MemberBaseContact>[] = [
         <Link href={`/contact/${row.original.contact.id}`}>
           <DropdownMenuItem>View contact details</DropdownMenuItem>
         </Link>
-        <DropdownMenuItem>
+        <DropdownMenuItem onClick={handleDeleteMessage}>
           Remove from group
           <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
         </DropdownMenuItem>

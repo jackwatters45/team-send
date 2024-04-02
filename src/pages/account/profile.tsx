@@ -1,7 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { CopyIcon } from "@radix-ui/react-icons";
-import { z } from "zod";
 import type { GetServerSideProps } from "next";
 
 import { api } from "@/utils/api";
@@ -37,7 +36,7 @@ export default function AccountProfile() {
   const ctx = api.useUtils();
   const { mutate } = api.auth.updateProfile.useMutation({
     onSuccess: () => {
-      ctx.auth.getCurrentUser.invalidate();
+      void ctx.auth.getCurrentUser.invalidate();
     },
     onError: (error) => {
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
@@ -109,6 +108,7 @@ export default function AccountProfile() {
               form.watch("imageFile")) && (
               <Avatar className="h-20 w-20">
                 <AvatarImage
+                  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
                   src={form.watch("imageFile") || form.watch("image")}
                   alt="User Avatar"
                 />

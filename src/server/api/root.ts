@@ -1,6 +1,7 @@
-import { createTRPCRouter, publicProcedure } from "@/server/api/trpc";
+import { createTRPCRouter } from "@/server/api/trpc";
 import { groupRouter } from "./routers/group";
 import { contactRouter } from "./routers/contact";
+import { memberRouter } from "./routers/member";
 import { authRouter } from "./routers/auth";
 import { messageRouter } from "./routers/message";
 
@@ -14,6 +15,7 @@ export const appRouter = createTRPCRouter({
   contact: contactRouter,
   auth: authRouter,
   message: messageRouter,
+  member: memberRouter,
 });
 
 // export type definition of API

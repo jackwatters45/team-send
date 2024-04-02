@@ -4,7 +4,7 @@ import debug from "debug";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
 import { type User } from "./auth";
 import { type Group } from "./group";
-import { type Member } from "./contact";
+import { type Member } from "./member";
 import { TRPCError } from "@trpc/server";
 import { reminderSchema } from "@/lib/schemas/reminderSchema.ts";
 import { useRateLimit } from "@/server/helpers/rateLimit";

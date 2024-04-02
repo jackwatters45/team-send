@@ -2,7 +2,7 @@ import { z } from "zod";
 import debug from "debug";
 
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { type Member } from "./contact";
+import { type Member } from "./member";
 
 import { type Message } from "./message";
 import { TRPCError } from "@trpc/server";

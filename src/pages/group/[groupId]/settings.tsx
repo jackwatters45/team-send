@@ -1,7 +1,6 @@
 import { GroupLayout } from "@/layouts/GroupLayout";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { api } from "@/utils/api";
-import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
@@ -30,7 +29,7 @@ import { CheckboxInput, FormInput } from "@/components/ui/form-inputs";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import {
-  GroupSettingsFormType,
+  type GroupSettingsFormType,
   groupSettingsSchema,
 } from "@/lib/schemas/groupSettingsSchema";
 
@@ -56,7 +55,7 @@ export default function GroupSettings({
   const ctx = api.useUtils();
   const { mutate: updateSettings } = api.group.updateSettings.useMutation({
     onSuccess: async (data) => {
-      void ctx.group.getGroupById.invalidate({ groupId: data.id });
+      void ctx.group.getGroupById.invalidate({ groupId: data?.id });
     },
     onError: (error) => {
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
@@ -150,6 +149,7 @@ export default function GroupSettings({
               form.watch("imageFile")) && (
               <Avatar className="h-20 w-20">
                 <AvatarImage
+                  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
                   src={form.watch("imageFile") || form.watch("image")}
                   alt="Group Avatar"
                 />
