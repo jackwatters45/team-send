@@ -129,3 +129,9 @@ export function truncateText(value: string, truncLength = 20) {
     ? `${value.slice(0, truncLength)}...`
     : value;
 }
+
+export function camelCaseToSentenceCase(input: string): string {
+  const result = input.replace(/([A-Z])/g, " $1").toLowerCase();
+
+  return result.charAt(0).toUpperCase() + result.slice(1);
+}

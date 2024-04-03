@@ -45,7 +45,7 @@ import {
 } from "@/components/ui/table";
 import { Input } from "./input";
 import { Skeleton } from "./skeleton";
-import { cn } from "@/lib/utils";
+import { camelCaseToSentenceCase, cn } from "@/lib/utils";
 import React from "react";
 
 interface DataTableFilterProps<TData>
@@ -105,7 +105,7 @@ function DataTableColumnOptions<TData>({
                 checked={column.getIsVisible()}
                 onCheckedChange={(value) => column.toggleVisibility(!!value)}
               >
-                {column.id}
+                {camelCaseToSentenceCase(column.id)}
               </DropdownMenuCheckboxItem>
             );
           })}

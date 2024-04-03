@@ -147,7 +147,7 @@ export default function GroupHistory({
       columnVisibility: {
         initial: {
           id: false,
-          sender: false,
+          sentBy: false,
           scheduled: false,
           recurring: false,
           reminders: false,
@@ -295,12 +295,11 @@ function getHistoryTableColumns({
     },
     {
       accessorKey: "sentBy",
-      id: "sender",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Sent By" />
       ),
       cell: ({ row }) => {
-        return <UserHoverableCell user={row.getValue<User>("sender")} />;
+        return <UserHoverableCell user={row.getValue<User>("sentBy")} />;
       },
     },
     {
