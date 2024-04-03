@@ -72,9 +72,7 @@ export default function GroupSettings({
     },
   });
 
-  const onSubmit = (data: GroupSettingsFormType) => {
-    updateSettings(data);
-  };
+  const onSubmit = (data: GroupSettingsFormType) => updateSettings(data);
 
   const router = useRouter();
   const { mutate: archiveGroup } = api.group.archive.useMutation({
@@ -232,7 +230,8 @@ export default function GroupSettings({
               buttonTitle="Transfer"
               onClick={() => console.log("TODO")}
             /> */}
-            <DangerZoneCard
+            {/* TODO uncomment when archiving logic has been implement */}
+            {/* <DangerZoneCard
               title="Archive this group"
               description="Archive this group and make read-only."
               buttonTitle="Archive group"
@@ -243,7 +242,7 @@ export default function GroupSettings({
                 confirmText: "Archive",
                 onConfirm: handleArchive,
               }}
-            />
+            /> */}
             <DangerZoneCard
               title="Delete this group"
               description="Deleting a group will erase all message history."

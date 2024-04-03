@@ -6,6 +6,9 @@ import { userSettingsSchema } from "@/lib/schemas/userSettingsSchema";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { useRateLimit } from "@/server/helpers/rateLimit";
 import { handleError } from "@/server/helpers/handleError";
+import type { Message } from "./message";
+import type { Group } from "./group";
+import type { Contact } from "./contact";
 
 const log = debug("team-send:api:auth");
 
@@ -76,6 +79,14 @@ export type User = IUserDetails &
   IUserMetaDetails &
   IUserActivity;
 
+export type UserExportData = {
+  user: User;
+  accounts: Account[];
+  contacts: Contact[];
+  groups: Group[];
+  messagesSent: Message[];
+};
+
 export const authRouter = createTRPCRouter({
   getCurrentUser: publicProcedure.query(async ({ ctx }) => {
     const userId = ctx.session?.user.id;
@@ -87,6 +98,43 @@ export const authRouter = createTRPCRouter({
     return await ctx.db.user.findUnique({
       where: { id: userId },
     });
+  }),
+  getExportData: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    try {
+      await useRateLimit(userId);
+
+      const user = await ctx.db.user.findUnique({
+        where: { id: userId },
+        include: {
+          groups: {
+            include: {
+              members: true,
+              messages: {
+                include: {
+                  reminders: true,
+                  recipients: true,
+                },
+              },
+            },
+          },
+          contacts: true,
+          account: true,
+        },
+      });
+
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `User with id ${userId} not found`,
+        });
+      }
+
+      return JSON.stringify(user);
+    } catch (error) {
+      throw handleError(error);
+    }
   }),
   updateProfile: protectedProcedure
     .input(userSettingsSchema)
@@ -124,4 +172,37 @@ export const authRouter = createTRPCRouter({
         throw handleError(error);
       }
     }),
+  deleteAccount: protectedProcedure.mutation(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    try {
+      await useRateLimit(userId);
+
+      await ctx.db.user.delete({
+        where: { id: userId },
+      });
+
+      return true;
+    } catch (error) {
+      throw handleError(error);
+    }
+  }),
+  archiveAccount: protectedProcedure.mutation(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    try {
+      await useRateLimit(userId);
+
+      return await ctx.db.user.findUnique({
+        where: { id: userId },
+      });
+
+      // await ctx.db.user.update({
+      // where: { id: userId },
+      // data: { isArchived: true },
+      // });
+    } catch (error) {
+      throw handleError(error);
+    }
+  }),
 });

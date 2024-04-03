@@ -19,10 +19,10 @@ export const SettingActionItem = ({
   return (
     <div
       className={cn(
-        "flex items-center justify-between gap-2 rounded-lg border p-4",
+        "flex items-center justify-between gap-2 rounded-lg border p-4 shadow-sm",
         buttonVariant === "destructive"
-          ? "border-red-300/80 dark:border-red-900/60"
-          : "dark:border-stone-800",
+          ? "border-red-300/75 dark:border-red-900/60"
+          : "border-stone-300 dark:border-stone-800",
       )}
     >
       <div className="space-y-0.5">

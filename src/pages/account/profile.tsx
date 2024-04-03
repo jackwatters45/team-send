@@ -70,9 +70,9 @@ export default function AccountProfile() {
         </div>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="flex flex-col gap-8 py-4 sm:gap-6"
+          className="flex flex-col gap-8 rounded-md bg-stone-100 px-6 py-4 pb-4 pt-6 shadow drop-shadow sm:gap-6 dark:bg-stone-900/50"
         >
-          <div className="flex-1 space-y-3">
+          <div className="flex-1 space-y-3 ">
             <div className="text-sm font-medium leading-none">User ID</div>
             <Button
               className="flex h-10 w-full items-center rounded-md border border-stone-200 bg-white px-3 py-2 text-start text-sm hover:bg-white dark:border-stone-800 dark:bg-stone-900 dark:hover:bg-stone-900"
