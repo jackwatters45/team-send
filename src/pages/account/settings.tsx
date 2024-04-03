@@ -1,7 +1,7 @@
 import { useRouter } from "next/router";
 import type { GetServerSideProps } from "next";
 
-import { api } from "@/utils/api";
+import { type RouterOutputs, api } from "@/utils/api";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { getServerAuthSession } from "@/server/auth";
 
@@ -15,6 +15,104 @@ import { toast } from "@/components/ui/use-toast";
 export default function AccountSettings() {
   const { data: user, error } = api.auth.getCurrentUser.useQuery();
 
+  if (!user) return renderErrorComponent(error);
+
+  return (
+    <AccountLayout
+      title="User Settings"
+      description={"View and edit your settings."}
+    >
+      <div
+        className=" flex flex-col pt-3
+        dark:border-stone-500 dark:border-opacity-20"
+      >
+        <h2 className="text-xl font-semibold tracking-tight">
+          Edit Account Settings
+        </h2>
+        <div className="text-sm text-stone-500 dark:text-stone-400">
+          Make changes to account settings here.
+        </div>
+      </div>
+      <section className="pt-6">
+        <div className="rounded-md bg-stone-100 px-6 py-2 shadow drop-shadow dark:bg-stone-900/50">
+          <div className="flex flex-col pb-4 pt-4">
+            <h2 className="text-lg font-semibold tracking-tight">
+              Connections
+            </h2>
+            <p className="text-xs text-stone-500 dark:text-stone-400">
+              Manage your communication methods.
+            </p>
+          </div>
+          <div className="flex flex-col gap-8 py-4 sm:gap-6">
+            <ConnectEmail user={user} />
+            <ConnectPhone user={user} />
+          </div>
+        </div>
+      </section>
+      <section className="pt-6">
+        <div className="rounded-md bg-stone-100 px-6 py-2 shadow drop-shadow dark:bg-stone-900/50">
+          <div className="flex flex-col pb-4 pt-4">
+            <h2 className="text-lg font-semibold tracking-tight">
+              Account Actions
+            </h2>
+            <p className="text-xs text-stone-500 dark:text-stone-400">
+              Manage your account settings.
+            </p>
+          </div>
+          <div className="flex flex-col gap-8 py-4 sm:gap-6">
+            <ExportAccountData user={user} />
+            <ArchiveAccount />
+            <DeleteAccount />
+          </div>
+        </div>
+      </section>
+    </AccountLayout>
+  );
+}
+
+type SettingsUser = RouterOutputs["auth"]["getCurrentUser"];
+
+function ConnectEmail({ user }: { user: SettingsUser }) {
+  const handleClickConnectEmail = () => {
+    console.log("Connect email");
+  };
+
+  return (
+    <SettingActionItem
+      title="Email"
+      description={
+        user?.nodeMailer
+          ? `Connected via Nodemailer: ${user?.nodeMailer}.`
+          : "Send emails via Nodemailer to members of this group."
+      }
+      actionButtonText={user?.nodeMailer ? "Disconnect" : "Connect"}
+      buttonVariant={user?.nodeMailer ? "destructive" : "default"}
+      onAction={handleClickConnectEmail}
+    />
+  );
+}
+
+function ConnectPhone({ user }: { user: SettingsUser }) {
+  const handleClickConnectPhone = () => {
+    console.log("Connect phone");
+  };
+
+  return (
+    <SettingActionItem
+      title="Phone"
+      description={
+        user?.twilio
+          ? `Connected via Twilio: ${user?.twilio}.`
+          : "Send texts via Twilio to members of this group."
+      }
+      actionButtonText={user?.twilio ? "Disconnect" : "Connect"}
+      buttonVariant={user?.twilio ? "destructive" : "default"}
+      onAction={handleClickConnectPhone}
+    />
+  );
+}
+
+function ExportAccountData({ user }: { user: SettingsUser }) {
   const { refetch } = api.auth.getExportData.useQuery(undefined, {
     enabled: false,
   });
@@ -49,6 +147,17 @@ export default function AccountSettings() {
     });
   };
 
+  return (
+    <SettingActionItem
+      title="Export Your Data"
+      description="Download a file containing your account information for safekeeping."
+      actionButtonText="Export Data"
+      onAction={handleExport}
+    />
+  );
+}
+
+function ArchiveAccount() {
   const router = useRouter();
   const { mutate: archiveAccount } = api.auth.archiveAccount.useMutation({
     onSuccess: async () => {
@@ -68,6 +177,19 @@ export default function AccountSettings() {
   });
   const handleArchiveAccount = () => archiveAccount();
 
+  return (
+    <SettingActionItem
+      title="Archive your account"
+      description="Your account can be restored at any time after it's been archived."
+      actionButtonText="Archive Account"
+      buttonVariant="destructive"
+      onAction={handleArchiveAccount}
+    />
+  );
+}
+
+function DeleteAccount() {
+  const router = useRouter();
   const { mutate: deleteAccount } = api.auth.deleteAccount.useMutation({
     onSuccess: async () => {
       await router.push("/login");
@@ -86,99 +208,14 @@ export default function AccountSettings() {
   });
   const handleDeleteAccount = () => deleteAccount();
 
-  if (!user) return renderErrorComponent(error);
-
   return (
-    <AccountLayout
-      title="User Settings"
-      description={"View and edit your settings."}
-    >
-      <div
-        className=" flex flex-col pt-3
-        dark:border-stone-500 dark:border-opacity-20"
-      >
-        <h2 className="text-xl font-semibold tracking-tight">
-          Edit Account Settings
-        </h2>
-        <div className="text-sm text-stone-500 dark:text-stone-400">
-          Make changes to account settings here.
-        </div>
-      </div>
-      <section className="pt-6">
-        <div className="rounded-md bg-stone-100 px-6 py-2 shadow drop-shadow dark:bg-stone-900/50">
-          <div className="flex flex-col pb-4 pt-4">
-            <h2 className="text-lg font-semibold tracking-tight">
-              Connections
-            </h2>
-            <p className="text-xs text-stone-500 dark:text-stone-400">
-              Manage your communication methods.
-            </p>
-          </div>
-          <div className="flex flex-col gap-8 py-4 sm:gap-6">
-            <SettingActionItem
-              title="Email"
-              description={
-                user.nodeMailer
-                  ? `Connected via Nodemailer: ${user.nodeMailer}.`
-                  : "Send emails via Nodemailer to members of this group."
-              }
-              actionButtonText={user.nodeMailer ? "Disconnect" : "Connect"}
-              buttonVariant={user.nodeMailer ? "destructive" : "default"}
-              onAction={() => {
-                console.log("Connect email");
-              }}
-            />
-            <SettingActionItem
-              title="Phone"
-              description={
-                user.twilio
-                  ? `Connected via Twilio: ${user.twilio}.`
-                  : "Send texts via Twilio to members of this group."
-              }
-              actionButtonText={user.twilio ? "Disconnect" : "Connect"}
-              buttonVariant={user.twilio ? "destructive" : "default"}
-              onAction={() => {
-                console.log("Connect phone");
-              }}
-            />
-          </div>
-        </div>
-      </section>
-      <section className="pt-6">
-        <div className="rounded-md bg-stone-100 px-6 py-2 shadow drop-shadow dark:bg-stone-900/50">
-          <div className="flex flex-col pb-4 pt-4">
-            <h2 className="text-lg font-semibold tracking-tight">
-              Account Actions
-            </h2>
-            <p className="text-xs text-stone-500 dark:text-stone-400">
-              Manage your account settings.
-            </p>
-          </div>
-          <div className="flex flex-col gap-8 py-4 sm:gap-6">
-            <SettingActionItem
-              title="Export Your Data"
-              description="Download a file containing your account information for safekeeping."
-              actionButtonText="Export Data"
-              onAction={handleExport}
-            />
-            <SettingActionItem
-              title="Archive your account"
-              description="Your account can be restored at any time after it's been archived."
-              actionButtonText="Archive Account"
-              buttonVariant="destructive"
-              onAction={handleArchiveAccount}
-            />
-            <SettingActionItem
-              title="Delete your account"
-              description="Once you delete your account, there is no going back. Please be certain."
-              actionButtonText="Delete Account"
-              buttonVariant="destructive"
-              onAction={handleDeleteAccount}
-            />
-          </div>
-        </div>
-      </section>
-    </AccountLayout>
+    <SettingActionItem
+      title="Delete your account"
+      description="Once you delete your account, there is no going back. Please be certain."
+      actionButtonText="Delete Account"
+      buttonVariant="destructive"
+      onAction={handleDeleteAccount}
+    />
   );
 }
 
