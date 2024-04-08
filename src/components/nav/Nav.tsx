@@ -55,7 +55,7 @@ export default function Nav() {
           <NavigationMenuItem>
             <SearchButton />
           </NavigationMenuItem>
-          <NavigationMenuItem>
+          <NavigationMenuItem style={{ lineHeight: "0" }}>
             <UserNav />
           </NavigationMenuItem>
         </div>
