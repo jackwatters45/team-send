@@ -45,6 +45,16 @@ export const env = createEnv({
 
     UPSTASH_REDIS_REST_URL: z.string().url(),
     UPSTASH_REDIS_REST_TOKEN: z.string(),
+
+    TWILIO_ACCOUNT_SID: z.string().min(34).max(34),
+    TWILIO_AUTH_TOKEN: z.string().min(32).max(32),
+    TWILIO_PHONE_NUMBER: z
+      .string()
+      .regex(/^\+1\d{10}$/, "Phone number should be in E.164 format")
+      .min(12)
+      .max(12),
+
+    GROUPME_ACCESS_TOKEN: z.string(),
   },
 
   /**
@@ -54,6 +64,13 @@ export const env = createEnv({
    */
   client: {
     // NEXT_PUBLIC_CLIENTVAR: z.string(),
+    NEXT_PUBLIC_GROUPME_REDIRECT_URI: z
+      .string()
+      .url("Redirect URI should be a valid URL")
+      .startsWith("https://oauth.groupme.com/oauth/authorize?client_id=", {
+        message:
+          "Redirect URI should start with https://oauth.groupme.com/oauth/authorize?client_id=",
+      }),
   },
 
   /**
@@ -83,6 +100,14 @@ export const env = createEnv({
 
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+
+    TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
+    TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
+    TWILIO_PHONE_NUMBER: process.env.TWILIO_PHONE_NUMBER,
+
+    GROUPME_ACCESS_TOKEN: process.env.GROUPME_ACCESS_TOKEN,
+    NEXT_PUBLIC_GROUPME_REDIRECT_URI:
+      process.env.NEXT_PUBLIC_GROUPME_REDIRECT_URI,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

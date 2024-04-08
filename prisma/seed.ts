@@ -25,8 +25,6 @@ async function createUser() {
           lastName: name.split(" ")[1],
         }),
         image: faker.image.avatar(),
-        nodeMailer: faker.string.uuid(),
-        twilio: faker.string.uuid(),
       },
     });
   } catch (e) {
@@ -140,7 +138,7 @@ async function createReminder({ messageId }: { messageId: string }) {
   }
 }
 
-async function createMessage(group: IGroupPreview, userId: string) {
+export async function createMessage(group: IGroupPreview, userId: string) {
   try {
     const randomPastDate = faker.date.past();
     const randomFutureDate = faker.date.future();
@@ -225,14 +223,21 @@ async function _dropAllTables() {
   }
 }
 
-// not all contacts in each group
 async function main() {
-  // await _dropAllTables();
+  await _dropAllTables();
 
   // await Promise.all(Array.from({ length: 2 }).map(() => createUser()));
 
-  const me = await db.user.findUnique({
+  const me = await db.user.upsert({
     where: { email: "jack.watters@me.com" },
+    update: {},
+    create: {
+      name: "Jack Watters",
+      email: "jack.watters@me.com",
+      phone: "+14155552671",
+      username: "jackwatters",
+      image: faker.image.avatar(),
+    },
   });
 
   if (!me) {

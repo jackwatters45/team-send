@@ -1,4 +1,5 @@
 import debug from "debug";
+import { google } from "googleapis";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
@@ -9,6 +10,11 @@ import { handleError } from "@/server/helpers/handleError";
 import type { Message } from "./message";
 import type { Group } from "./group";
 import type { Contact } from "./contact";
+import { env } from "@/env";
+import { smsFormSchema } from "@/lib/schemas/smsSchema";
+import { z } from "zod";
+
+const GoogleOAuth2 = google.auth.OAuth2;
 
 const log = debug("team-send:api:auth");
 
@@ -56,8 +62,8 @@ export interface IUserDetails {
 }
 
 export interface IUserConnections {
-  nodeMailer?: string;
-  twilio?: string;
+  emailConfig?: string;
+  smsConfig?: string;
 }
 
 export interface IUserMetaDetails {
@@ -97,6 +103,7 @@ export const authRouter = createTRPCRouter({
 
     return await ctx.db.user.findUnique({
       where: { id: userId },
+      include: { emailConfig: true, smsConfig: true, groupMeConfig: true },
     });
   }),
   getExportData: protectedProcedure.query(async ({ ctx }) => {
@@ -201,6 +208,208 @@ export const authRouter = createTRPCRouter({
       // where: { id: userId },
       // data: { isArchived: true },
       // });
+    } catch (error) {
+      throw handleError(error);
+    }
+  }),
+  connectEmail: protectedProcedure.mutation(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    try {
+      await useRateLimit(userId);
+
+      const user = await ctx.db.user.findUnique({
+        where: { id: userId },
+        include: { account: true, emailConfig: true },
+      });
+
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `User with id ${userId} not found`,
+        });
+      }
+
+      if (!!user.emailConfig) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Email is already connected`,
+        });
+      }
+
+      const oauth2Client = new GoogleOAuth2(
+        env.GOOGLE_ID_DEV,
+        env.GOOGLE_SECRET_DEV,
+        "http://localhost:3000/account/settings",
+      );
+
+      const scopes = [
+        "https://www.googleapis.com/auth/userinfo.profile",
+        "https://www.googleapis.com/auth/userinfo.email",
+        "https://www.googleapis.com/auth/gmail.send",
+      ];
+
+      const authorizationUrl = oauth2Client.generateAuthUrl({
+        access_type: "offline",
+        scope: scopes,
+        prompt: "consent",
+        include_granted_scopes: true,
+      });
+
+      return authorizationUrl;
+    } catch (error) {
+      throw handleError(error);
+    }
+  }),
+  disconnectEmail: protectedProcedure.mutation(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    try {
+      await useRateLimit(userId);
+
+      return await ctx.db.emailConfig.delete({
+        where: { userId: userId },
+      });
+    } catch (error) {
+      throw handleError(error);
+    }
+  }),
+  connectSms: protectedProcedure
+    .input(smsFormSchema)
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      try {
+        await useRateLimit(userId);
+
+        const user = await ctx.db.user.findUnique({
+          where: { id: userId },
+          include: { smsConfig: true },
+        });
+
+        if (!user) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: `User with id ${userId} not found`,
+          });
+        }
+
+        if (!!user.smsConfig) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `SMS already connected`,
+          });
+        }
+
+        return await ctx.db.smsConfig.create({
+          data: {
+            user: { connect: { id: userId } },
+            accountSid: input.accountSid,
+            authToken: input.authToken,
+            phoneNumber: input.phoneNumber,
+          },
+        });
+      } catch (error) {
+        throw handleError(error);
+      }
+    }),
+  connectSmsDefault: protectedProcedure.mutation(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    try {
+      await useRateLimit(userId);
+
+      const user = await ctx.db.user.findUnique({
+        where: { id: userId },
+        include: { smsConfig: true },
+      });
+
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `User with id ${userId} not found`,
+        });
+      }
+
+      if (!!user.smsConfig) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `SMS already connected`,
+        });
+      }
+
+      return await ctx.db.smsConfig.create({
+        data: {
+          user: { connect: { id: userId } },
+          accountSid: env.TWILIO_ACCOUNT_SID,
+          authToken: env.TWILIO_AUTH_TOKEN,
+          phoneNumber: env.TWILIO_PHONE_NUMBER,
+          isDefault: true,
+        },
+      });
+    } catch (error) {
+      throw handleError(error);
+    }
+  }),
+  disconnectSms: protectedProcedure.mutation(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    try {
+      await useRateLimit(userId);
+
+      return await ctx.db.smsConfig.delete({
+        where: { userId: userId },
+      });
+    } catch (error) {
+      throw handleError(error);
+    }
+  }),
+  connectGroupMe: protectedProcedure
+    .input(z.object({ accessToken: z.string().min(1) }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      try {
+        await useRateLimit(userId);
+
+        const user = await ctx.db.user.findUnique({
+          where: { id: userId },
+          include: { groupMeConfig: true },
+        });
+
+        if (!user) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: `User with id ${userId} not found`,
+          });
+        }
+
+        if (!!user.groupMeConfig) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: `GroupMe already connected`,
+          });
+        }
+
+        return await ctx.db.groupMeConfig.create({
+          data: {
+            accessToken: input.accessToken,
+            user: { connect: { id: userId } },
+          },
+        });
+      } catch (error) {
+        throw handleError(error);
+      }
+    }),
+  disconnectGroupMe: protectedProcedure.mutation(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    try {
+      await useRateLimit(userId);
+
+      return await ctx.db.groupMeConfig.delete({
+        where: { userId: userId },
+      });
     } catch (error) {
       throw handleError(error);
     }
