@@ -23,12 +23,6 @@ export function MessageSettings({ form }: IMessageSettingsProps) {
     <>
       <BooleanSelect<typeof messageFormSchema>
         control={form.control}
-        name="isDraft"
-        label="Save as Draft"
-        description="Toggle to save this message as a draft"
-      />
-      <BooleanSelect<typeof messageFormSchema>
-        control={form.control}
         name="isScheduled"
         label="Scheduled"
         description="Schedule messages to be sent at a specific date and time"
@@ -117,6 +111,12 @@ export function MessageSettings({ form }: IMessageSettingsProps) {
           />
         </div>
       )}
+      <BooleanSelect<typeof messageFormSchema>
+        control={form.control}
+        name="isDraft"
+        label="Save as Draft"
+        description="Toggle to save this message as a draft"
+      />
     </>
   );
 }

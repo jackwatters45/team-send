@@ -6,8 +6,7 @@ import { TRPCError } from "@trpc/server";
 const log = debug("team-send:api:handleError");
 
 export function handleError(error: unknown): TRPCError {
-  log("An unexpected error occurred: %O", error);
-  console.error(error);
+  console.error("An unexpected error occurred: %O", error);
 
   if (error instanceof TRPCError) return error;
 
