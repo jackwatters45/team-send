@@ -2,7 +2,7 @@ import { createTRPCRouter } from "@/server/api/trpc";
 import { groupRouter } from "./routers/group";
 import { contactRouter } from "./routers/contact";
 import { memberRouter } from "./routers/member";
-import { authRouter } from "./routers/auth";
+import { userRouter } from "./routers/user";
 import { messageRouter } from "./routers/message";
 
 /**
@@ -13,7 +13,7 @@ import { messageRouter } from "./routers/message";
 export const appRouter = createTRPCRouter({
   group: groupRouter,
   contact: contactRouter,
-  auth: authRouter,
+  user: userRouter,
   message: messageRouter,
   member: memberRouter,
 });

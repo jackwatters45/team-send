@@ -9,7 +9,7 @@ import ComingSoon from "@/components/error/ComingSoon";
 import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
 export default function AccountBilling() {
-  const { data: user, error } = api.auth.getCurrentUser.useQuery();
+  const { data: user, error } = api.user.getCurrentUser.useQuery();
 
   if (!user) return renderErrorComponent(error);
 
@@ -32,7 +32,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 
   const helpers = genSSRHelpers(session);
-  await helpers.auth.getCurrentUser.prefetch();
+  await helpers.user.getCurrentUser.prefetch();
 
   return { props: { trpcState: helpers.dehydrate() } };
 };

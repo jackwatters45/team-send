@@ -127,7 +127,7 @@ function GroupMemberList({ form }: { form: GroupMembersFormReturn }) {
               type="tel"
               placeholder="Phone"
             />
-            <div className="lg:flex-1">
+            <div className="lg:flex-1 ">
               <FormInput<typeof groupMembersFormSchema>
                 control={form.control}
                 name={`members.${index}.memberNotes`}

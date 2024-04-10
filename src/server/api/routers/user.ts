@@ -13,9 +13,9 @@ import { z } from "zod";
 
 const GoogleOAuth2 = google.auth.OAuth2;
 
-const log = debug("team-send:api:auth");
+const log = debug("team-send:api:user");
 
-export const authRouter = createTRPCRouter({
+export const userRouter = createTRPCRouter({
   getCurrentUser: publicProcedure.query(async ({ ctx }) => {
     const userId = ctx.session?.user.id;
 

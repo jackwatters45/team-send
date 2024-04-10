@@ -21,7 +21,7 @@ import {
 import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
 export default function AccountProfile() {
-  const { data: user, error } = api.auth.getCurrentUser.useQuery();
+  const { data: user, error } = api.user.getCurrentUser.useQuery();
 
   const form = useForm<UserSettingsFormType>({
     resolver: zodResolver(userSettingsFormSchema),
@@ -35,9 +35,9 @@ export default function AccountProfile() {
   });
 
   const ctx = api.useUtils();
-  const { mutate } = api.auth.updateProfile.useMutation({
+  const { mutate } = api.user.updateProfile.useMutation({
     onSuccess: () => {
-      void ctx.auth.getCurrentUser.invalidate();
+      void ctx.user.getCurrentUser.invalidate();
     },
     onError: (error) => {
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
@@ -167,7 +167,7 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
   }
 
   const helpers = genSSRHelpers(session);
-  await helpers.auth.getCurrentUser.prefetch();
+  await helpers.user.getCurrentUser.prefetch();
 
   return { props: { trpcState: helpers.dehydrate() } };
 };

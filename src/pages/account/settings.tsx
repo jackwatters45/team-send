@@ -24,7 +24,7 @@ import { type SMSFormType, smsFormSchema } from "@/lib/schemas/smsSchema";
 export default function AccountSettings({
   emailConfig,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-  const { data: user, error } = api.auth.getCurrentUser.useQuery();
+  const { data: user, error } = api.user.getCurrentUser.useQuery();
 
   useEffect(() => {
     if (emailConfig === "success") {
@@ -97,13 +97,13 @@ export default function AccountSettings({
   );
 }
 
-type SettingsUser = RouterOutputs["auth"]["getCurrentUser"];
+type SettingsUser = RouterOutputs["user"]["getCurrentUser"];
 
 function ConnectEmail({ user }: { user: SettingsUser }) {
   const router = useRouter();
 
   const ctx = api.useUtils();
-  const { mutate: connectEmail } = api.auth.connectEmail.useMutation({
+  const { mutate: connectEmail } = api.user.connectEmail.useMutation({
     onSuccess: async (data) => {
       await router.push(data);
     },
@@ -117,9 +117,9 @@ function ConnectEmail({ user }: { user: SettingsUser }) {
   });
   const handleClickConnectEmail = () => connectEmail();
 
-  const { mutate: disconnectEmail } = api.auth.disconnectEmail.useMutation({
+  const { mutate: disconnectEmail } = api.user.disconnectEmail.useMutation({
     onSuccess: async () => {
-      await ctx.auth.getCurrentUser.invalidate();
+      await ctx.user.getCurrentUser.invalidate();
       toast({
         title: "Email disconnected",
         description: "You can no longer send messages via email.",
@@ -157,10 +157,10 @@ function ConnectEmail({ user }: { user: SettingsUser }) {
 function ConnectSMS({ user }: { user: SettingsUser }) {
   const ctx = api.useUtils();
 
-  const { mutate: connectSMSDefault } = api.auth.connectSmsDefault.useMutation({
+  const { mutate: connectSMSDefault } = api.user.connectSmsDefault.useMutation({
     onSuccess: async () => {
       setIsConnectingSMS(false);
-      await ctx.auth.getCurrentUser.invalidate();
+      await ctx.user.getCurrentUser.invalidate();
     },
     onError: () => {
       toast({
@@ -184,10 +184,10 @@ function ConnectSMS({ user }: { user: SettingsUser }) {
     },
   });
 
-  const { mutate: connectSMS } = api.auth.connectSms.useMutation({
+  const { mutate: connectSMS } = api.user.connectSms.useMutation({
     onSuccess: async () => {
       setIsConnectingSMS(false);
-      await ctx.auth.getCurrentUser.invalidate();
+      await ctx.user.getCurrentUser.invalidate();
     },
     onError: () => {
       toast({
@@ -199,9 +199,9 @@ function ConnectSMS({ user }: { user: SettingsUser }) {
   });
   const onSubmit = async (data: SMSFormType) => connectSMS(data);
 
-  const { mutate: disconnectSMS } = api.auth.disconnectSms.useMutation({
+  const { mutate: disconnectSMS } = api.user.disconnectSms.useMutation({
     onSuccess: async () => {
-      await ctx.auth.getCurrentUser.invalidate();
+      await ctx.user.getCurrentUser.invalidate();
       toast({
         title: "SMS disconnected",
         description: "You can no longer send messages via sms.",
@@ -304,9 +304,9 @@ function ConnectGroupMe({ user }: { user: SettingsUser }) {
   };
 
   const ctx = api.useUtils();
-  const { mutate: disconnectGroupMe } = api.auth.disconnectGroupMe.useMutation({
+  const { mutate: disconnectGroupMe } = api.user.disconnectGroupMe.useMutation({
     onSuccess: async () => {
-      await ctx.auth.getCurrentUser.invalidate();
+      await ctx.user.getCurrentUser.invalidate();
       toast({
         title: "GroupMe disconnected",
         description: "You can no longer send messages via GroupMe.",
@@ -342,7 +342,7 @@ function ConnectGroupMe({ user }: { user: SettingsUser }) {
 }
 
 function ExportAccountData({ user }: { user: SettingsUser }) {
-  const { refetch } = api.auth.getExportData.useQuery(undefined, {
+  const { refetch } = api.user.getExportData.useQuery(undefined, {
     enabled: false,
   });
 
@@ -389,7 +389,7 @@ function ExportAccountData({ user }: { user: SettingsUser }) {
 // TODO
 function _ArchiveAccount() {
   const router = useRouter();
-  const { mutate: archiveAccount } = api.auth.archiveAccount.useMutation({
+  const { mutate: archiveAccount } = api.user.archiveAccount.useMutation({
     onSuccess: async () => {
       await router.push("/login");
       toast({
@@ -420,7 +420,7 @@ function _ArchiveAccount() {
 
 function DeleteAccount() {
   const router = useRouter();
-  const { mutate: deleteAccount } = api.auth.deleteAccount.useMutation({
+  const { mutate: deleteAccount } = api.user.deleteAccount.useMutation({
     onSuccess: async () => {
       await router.push("/login");
       toast({
@@ -493,7 +493,7 @@ export const getServerSideProps: GetServerSideProps<
   }
 
   const helpers = genSSRHelpers(session);
-  await helpers.auth.getCurrentUser.prefetch();
+  await helpers.user.getCurrentUser.prefetch();
 
   return {
     props: {
