@@ -23,7 +23,6 @@ import { type SMSFormType, smsFormSchema } from "@/lib/schemas/smsSchema";
 
 export default function AccountSettings({
   emailConfig,
-  groupMeToken,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const { data: user, error } = api.auth.getCurrentUser.useQuery();
 
@@ -71,9 +70,9 @@ export default function AccountSettings({
             </p>
           </div>
           <div className="flex flex-col gap-8 py-4 sm:gap-6">
-            <ConnectEmail user={user} />
             <ConnectSMS user={user} />
-            <ConnectGroupMe user={user} accessToken={groupMeToken} />
+            <ConnectEmail user={user} />
+            <ConnectGroupMe user={user} />
           </div>
         </div>
       </section>
@@ -297,13 +296,7 @@ function ConnectSMS({ user }: { user: SettingsUser }) {
   );
 }
 
-function ConnectGroupMe({
-  user,
-  accessToken,
-}: {
-  user: SettingsUser;
-  accessToken: string | null;
-}) {
+function ConnectGroupMe({ user }: { user: SettingsUser }) {
   const router = useRouter();
 
   const handleClickConnectGroupMe = () => {
@@ -311,26 +304,6 @@ function ConnectGroupMe({
   };
 
   const ctx = api.useUtils();
-  const { mutate: connectGroupMe } = api.auth.connectGroupMe.useMutation({
-    onSuccess: async () => {
-      await ctx.auth.getCurrentUser.invalidate();
-      toast({
-        title: "GroupMe connected",
-        description: "You can now send messages via GroupMe.",
-      });
-    },
-    onError: () => {
-      toast({
-        title: "Error connecting GroupMe",
-        description:
-          "There was an error connecting GroupMe to your account. Please try again.",
-      });
-    },
-  });
-  useEffect(() => {
-    if (accessToken && !user?.groupMeConfig) connectGroupMe({ accessToken });
-  }, [accessToken, user?.groupMeConfig, connectGroupMe]);
-
   const { mutate: disconnectGroupMe } = api.auth.disconnectGroupMe.useMutation({
     onSuccess: async () => {
       await ctx.auth.getCurrentUser.invalidate();
@@ -478,7 +451,6 @@ function DeleteAccount() {
 
 type GetServerSidePropsReturn = {
   emailConfig: "success" | "error" | null;
-  groupMeToken: string | null;
 };
 export const getServerSideProps: GetServerSideProps<
   GetServerSidePropsReturn
@@ -503,7 +475,22 @@ export const getServerSideProps: GetServerSideProps<
     }
   }
 
-  const { access_token: groupMeToken } = ctx.query as { access_token?: string };
+  // GroupMe config redirect
+  const { access_token } = ctx.query as { access_token?: string };
+  if (access_token) {
+    await db.groupMeConfig.upsert({
+      where: { userId: session.user.id },
+      update: { accessToken: access_token },
+      create: {
+        accessToken: access_token,
+        user: { connect: { id: session.user.id } },
+      },
+    });
+
+    return {
+      redirect: { destination: "/account/settings", permanent: false },
+    };
+  }
 
   const helpers = genSSRHelpers(session);
   await helpers.auth.getCurrentUser.prefetch();
@@ -512,7 +499,6 @@ export const getServerSideProps: GetServerSideProps<
     props: {
       trpcState: helpers.dehydrate(),
       emailConfig,
-      groupMeToken: groupMeToken ?? null,
     },
   };
 };
@@ -559,11 +545,7 @@ async function exchangeAuthCodeForTokens(session: Session, authCode: string) {
 async function fetchGoogleUserEmail(accessToken: string) {
   const response = await fetch(
     "https://www.googleapis.com/oauth2/v2/userinfo",
-    {
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    },
+    { headers: { Authorization: `Bearer ${accessToken}` } },
   );
 
   if (!response.ok) {
