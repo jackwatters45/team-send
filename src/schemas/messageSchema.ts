@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { reminderSchema } from "./reminderSchema.ts";
 
-const messageSchema = z.object({
+export const messageFormSchema = z.object({
   id: z.string().optional(),
   groupId: z.string(),
   status: z.enum(["draft", "scheduled", "sent", "failed"]),
@@ -18,13 +18,9 @@ const messageSchema = z.object({
   recipients: z.record(z.string(), z.boolean()),
 });
 
-export const messageFormSchema = messageSchema.extend({
-  isDraft: z.enum(["no", "yes"]),
-});
-
 export type MessageFormType = z.infer<typeof messageFormSchema>;
 
-export const messageInputSchema = messageSchema
+export const messageInputSchema = messageFormSchema
   .extend({
     isScheduled: z.boolean(),
     isRecurring: z.boolean(),
@@ -45,3 +41,5 @@ export const messageInputSchema = messageSchema
       path: ["scheduledDate", "recurringNum", "recurringPeriod", "reminders"],
     },
   );
+
+export type MessageInputType = z.infer<typeof messageInputSchema>;
