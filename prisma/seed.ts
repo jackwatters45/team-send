@@ -3,9 +3,9 @@ import debug from "debug";
 import pLimit from "p-limit";
 
 import { db } from "../src/server/db";
-import type { Member } from "@/server/api/routers/member";
-import type { Contact } from "@/server/api/routers/contact";
-import type { IGroupPreview } from "@/server/api/routers/group";
+import type { GroupPreview } from "@/server/api/routers/group";
+import type { MemberWithContact } from "@/server/api/routers/member";
+import type { Contact } from "@prisma/client";
 
 const log = debug("team-send:seed");
 
@@ -78,7 +78,7 @@ async function createGroup(userId: string, contactIds: string[]) {
         description: faker.company.catchPhrase(),
         image: faker.image.avatar(),
         addedGroupIds: [],
-        usePhone: true,
+        useSMS: true,
         useEmail: true,
         createdBy: { connect: { id: userId } },
       },
@@ -95,7 +95,7 @@ async function createGroup(userId: string, contactIds: string[]) {
       selectedContactIds.map((contactId) =>
         limit(() => createMember(contactId, group.id)),
       ),
-    )) as unknown as Member[];
+    )) as unknown as MemberWithContact[];
 
     return { ...group, members };
   } catch (e) {
@@ -138,7 +138,7 @@ async function createReminder({ messageId }: { messageId: string }) {
   }
 }
 
-export async function createMessage(group: IGroupPreview, userId: string) {
+export async function createMessage(group: GroupPreview, userId: string) {
   try {
     const randomPastDate = faker.date.past();
     const randomFutureDate = faker.date.future();
@@ -172,7 +172,6 @@ export async function createMessage(group: IGroupPreview, userId: string) {
             data: {
               memberNotes: member.memberNotes,
               isRecipient: member.isRecipient,
-              contact: { connect: { id: member.contactId } },
               message: { connect: { id: message.id } },
               member: { connect: { id: member.id } },
             },

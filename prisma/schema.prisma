@@ -16,8 +16,10 @@ model Group {
   members  Member[]
   messages Message[]
 
-  usePhone Boolean @default(true)
-  useEmail Boolean @default(true)
+  useSMS   Boolean @default(true)
+  useEmail   Boolean @default(true)
+  groupMeId  String?
+  useGroupMe Boolean @default(false)
 
   addedGroupIds String[]
 
@@ -43,8 +45,7 @@ model Contact {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  members         Member[]
-  memberSnapshots MemberSnapshot[]
+  members Member[]
 }
 
 model Member {
@@ -69,9 +70,6 @@ model MemberSnapshot {
   memberNotes String?
   isRecipient Boolean  @default(true)
   createdAt   DateTime @default(now())
-
-  contactId String
-  contact   Contact @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
   messageId String
   message   Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
@@ -172,7 +170,7 @@ model Session {
 
 model User {
   id            String    @id @default(cuid())
-  name          String?
+  name          String
   username      String?   @unique
   phone         String?   @unique
   email         String?   @unique
