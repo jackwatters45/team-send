@@ -2,38 +2,18 @@ import { z } from "zod";
 import debug from "debug";
 
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { type Message } from "./message";
 import { TRPCError } from "@trpc/server";
-import type { User } from "./auth";
 import { useRateLimit } from "@/server/helpers/rateLimit";
 import { handleError } from "@/server/helpers/handleError";
 
-// TODO not sure if right
-import type { Member } from "@prisma/client";
-
 const log = debug("team-send:api:contact");
 
-export interface ContactBase {
+export interface NewContact {
   name: string;
-  email: string | null;
-  phone: string | null;
-  notes: string | null;
-}
-
-export interface ContactBaseWithId extends ContactBase {
-  id: string;
-}
-
-export interface ContactConnections {
-  members: Member[];
-  messages: Message[];
-}
-
-export interface Contact extends ContactBaseWithId {
-  createdAt: Date;
-  updatedAt: Date;
-  createdBy: User;
-  createdById: string;
+  email: string | undefined | null;
+  phone: string | undefined | null;
+  notes: string | undefined | null;
+  id: string | undefined;
 }
 
 export const contactRouter = createTRPCRouter({

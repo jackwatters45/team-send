@@ -1,36 +1,27 @@
 import { z } from "zod";
 import debug from "debug";
+import type { Member, MemberSnapshot, Contact } from "@prisma/client";
 
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { type Group } from "./group";
 import { useRateLimit } from "@/server/helpers/rateLimit";
 import { handleError } from "@/server/helpers/handleError";
-import type { Contact, ContactBase, ContactBaseWithId } from "./contact";
+import type { NewContact } from "./contact";
 
 const log = debug("team-send:api:member");
 
-interface MemberBase {
-  memberNotes: string | null;
+export interface NewMember {
+  contact: NewContact;
+  memberNotes: string | undefined;
   isRecipient: boolean;
+  id: string | undefined;
 }
 
-export interface MemberBaseNewContact extends MemberBase {
-  contact: ContactBase;
-}
-
-export interface MemberBaseContact extends MemberBase {
-  id: string;
-  contact: ContactBaseWithId;
-}
-
-export interface Member extends MemberBaseContact {
-  id: string;
+export interface MemberWithContact extends Member {
   contact: Contact;
-  contactId: string;
-  group: Group;
-  groupId: string;
-  createdAt: Date;
-  updatedAt: Date;
+}
+
+export interface MemberSnapshotWithContact extends MemberSnapshot {
+  member: { contact: Contact };
 }
 
 export const memberRouter = createTRPCRouter({

@@ -1,50 +1,25 @@
 import { z } from "zod";
 import debug from "debug";
+import { TRPCError } from "@trpc/server";
 
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
-import { type Member } from "./member";
-
-import { type Message } from "./message";
-import { TRPCError } from "@trpc/server";
+import type { MemberWithContact } from "./member";
 import { createGroupSchema } from "@/lib/schemas/createGroupSchema";
 import { groupMembersFormSchema } from "@/lib/schemas/groupMembersFormSchema";
 import { groupSettingsSchema } from "@/lib/schemas/groupSettingsSchema";
 import { handleError } from "@/server/helpers/handleError";
 import { useRateLimit } from "@/server/helpers/rateLimit";
+import type { GetGroupByIdReturn } from "./types/groupMeApi";
 
 const log = debug("team-send:api:group");
 
-export interface IGroupBase {
+export interface GroupPreview {
   id: string;
   name: string;
   description: string | null;
   image: string | null;
+  members: MemberWithContact[];
 }
-
-export interface IGroupPreview extends IGroupBase {
-  members: Member[];
-}
-
-export interface IGroupHistory extends IGroupBase {
-  messages: Message[];
-}
-
-export interface IGroupSettings extends IGroupBase {
-  usePhone: boolean;
-  useEmail: boolean;
-}
-
-export interface IGroupMetaDetails {
-  addedGroupIds: string[];
-  createdAt: Date;
-  updatedAt: Date;
-  createdBy: string;
-}
-
-export type Group = IGroupPreview &
-  IGroupSettings &
-  IGroupHistory &
-  IGroupMetaDetails;
 
 export const groupRouter = createTRPCRouter({
   getAll: protectedProcedure.query(async ({ ctx }) => {
@@ -84,13 +59,13 @@ export const groupRouter = createTRPCRouter({
           select: { id: true, name: true, description: true },
         });
 
-        if (!groupBasicInfo) return throwGroupNotFoundError(input.groupId);
+        if (!groupBasicInfo) throw throwGroupNotFoundError(input.groupId);
 
         const messages = await ctx.db.message.findMany({
           where: { groupId: input.groupId },
           include: {
             sentBy: true,
-            recipients: { include: { contact: true } },
+            recipients: { include: { member: { include: { contact: true } } } },
             reminders: true,
           },
         });
@@ -101,11 +76,7 @@ export const groupRouter = createTRPCRouter({
       }
     }),
   getGroupById: protectedProcedure
-    .input(
-      z.object({
-        groupId: z.string(),
-      }),
-    )
+    .input(z.object({ groupId: z.string() }))
     .query(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
@@ -120,9 +91,57 @@ export const groupRouter = createTRPCRouter({
           },
         });
 
-        if (!group) return throwGroupNotFoundError(input.groupId);
+        if (!group) throw throwGroupNotFoundError(input.groupId);
 
         return group;
+      } catch (err) {
+        throw handleError(err);
+      }
+    }),
+  getGroupSettingsById: protectedProcedure
+    .input(z.object({ groupId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      try {
+        await useRateLimit(userId);
+
+        const group = await ctx.db.group.findUnique({
+          where: { id: input.groupId, createdBy: { id: userId } },
+          select: {
+            id: true,
+            name: true,
+            description: true,
+            image: true,
+            useSMS: true,
+            useEmail: true,
+            groupMeId: true,
+            useGroupMe: true,
+          },
+        });
+
+        if (!group) throw throwGroupNotFoundError(input.groupId);
+
+        const userConnections = await ctx.db.user.findUnique({
+          where: { id: userId },
+          select: { groupMeConfig: true, emailConfig: true, smsConfig: true },
+        });
+
+        if (!userConnections) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to retrieve user connections",
+          });
+        }
+
+        return {
+          ...group,
+          isGroupMeConfig: !!userConnections.groupMeConfig,
+          isSMSConfig: !!userConnections.smsConfig,
+          isEmailConfig: !!userConnections.emailConfig,
+        };
+
+        return;
       } catch (err) {
         throw handleError(err);
       }
@@ -255,7 +274,7 @@ export const groupRouter = createTRPCRouter({
           data: { isArchived: true },
         });
 
-        if (!archivedGroup) throwGroupNotFoundError(input.groupId);
+        if (!archivedGroup) throw throwGroupNotFoundError(input.groupId);
 
         return archivedGroup;
       } catch (err) {
@@ -277,20 +296,31 @@ export const groupRouter = createTRPCRouter({
               name: input.name,
               description: input.description,
               image: input.imageFile ?? input.image,
-              usePhone: input.usePhone,
+              useSMS: input.useSMS,
               useEmail: input.useEmail,
             },
           });
 
-          if (!group) return throwGroupNotFoundError(input.groupId);
+          if (!group) throw throwGroupNotFoundError(input.groupId);
 
-          if (input["change-global"]) {
+          if (input["change-global-email"]) {
             const updateAll = await prisma.group.updateMany({
               where: { createdBy: { id: userId } },
-              data: {
-                usePhone: input.usePhone,
-                useEmail: input.useEmail,
-              },
+              data: { useEmail: input.useEmail },
+            });
+
+            if (!updateAll) {
+              throw new TRPCError({
+                code: "INTERNAL_SERVER_ERROR",
+                message: "Failed to update all group connections",
+              });
+            }
+          }
+
+          if (input["change-global-sms"]) {
+            const updateAll = await prisma.group.updateMany({
+              where: { createdBy: { id: userId } },
+              data: { useSMS: input.useSMS },
             });
 
             if (!updateAll) {
@@ -309,6 +339,53 @@ export const groupRouter = createTRPCRouter({
         throw handleError(err);
       }
     }),
+  saveGroupMeId: protectedProcedure
+    .input(z.object({ groupId: z.string(), groupMeId: z.string() }))
+    .mutation(async ({ ctx, input: { groupId, groupMeId } }) => {
+      const userId = ctx.session.user.id;
+
+      try {
+        await useRateLimit(userId);
+
+        const user = await ctx.db.user.findUnique({
+          where: { id: userId },
+          include: { groupMeConfig: true },
+        });
+
+        const groupMeAccessToken = user?.groupMeConfig?.accessToken;
+
+        const res = await fetch(
+          `https://api.groupme.com/v3/groups/${groupMeId}?token=${groupMeAccessToken}`,
+        );
+
+        if (!res.ok) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid GroupMe ID",
+          });
+        }
+
+        const groupMeData = (await res.json()) as GetGroupByIdReturn;
+
+        if (!groupMeData) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Invalid GroupMe ID",
+          });
+        }
+
+        const group = await ctx.db.group.update({
+          where: { id: groupId, createdById: userId },
+          data: { groupMeId: groupMeId },
+        });
+
+        if (!group) throw throwGroupNotFoundError(groupId);
+
+        return group;
+      } catch (err) {
+        throw handleError(err);
+      }
+    }),
   updateMembers: protectedProcedure
     .input(groupMembersFormSchema)
     .mutation(async ({ ctx, input }) => {
@@ -321,7 +398,7 @@ export const groupRouter = createTRPCRouter({
           where: { id: input.groupId, createdById: userId },
           include: { members: true },
         });
-        if (!group) return throwGroupNotFoundError(input.groupId!);
+        if (!group) throw throwGroupNotFoundError(input.groupId!);
 
         const result = await ctx.db.$transaction(async (prisma) => {
           if (input.addedGroupIds !== group.addedGroupIds) {
@@ -389,7 +466,7 @@ export const groupRouter = createTRPCRouter({
 });
 
 function throwGroupNotFoundError(groupId: string) {
-  throw new TRPCError({
+  return new TRPCError({
     code: "NOT_FOUND",
     message: `Group with id "${groupId}" not found`,
   });
