@@ -6,7 +6,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { TRPCClientError } from "@trpc/client";
 
-import { createContact } from "@/lib/utils";
+import { createNewMember } from "@/lib/utils";
 import { api } from "@/utils/api";
 import { getServerAuthSession } from "@/server/auth";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
@@ -30,7 +30,7 @@ export default function GroupMembers({
     resolver: zodResolver(groupMembersFormSchema),
     defaultValues: {
       groupId,
-      members: data?.members ?? [createContact()],
+      members: data?.members ?? [createNewMember()],
       addedGroupIds: data?.addedGroupIds ?? [],
     },
   });

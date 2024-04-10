@@ -4,17 +4,19 @@ import type {
 } from "next";
 import { Fragment } from "react";
 import Link from "next/link";
-import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
-import { getServerAuthSession } from "@/server/auth";
 import type { ColumnDef } from "@tanstack/react-table";
 import { parsePhoneNumber } from "libphonenumber-js";
-import { renderErrorComponent } from "@/components/error/renderErrorComponent";
+import { useRouter } from "next/router";
+import { TRPCClientError } from "@trpc/client";
 
-import { getInitialSelectedMembers } from "@/lib/utils";
+import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
+import { getServerAuthSession } from "@/server/auth";
+import { getInitialSelectedMembersSnapshot } from "@/lib/utils";
+import type { MemberSnapshotWithContact } from "@/server/api/routers/member";
 import { api } from "@/utils/api";
-import type { MemberBaseContact } from "@/server/api/routers/member";
 import useDataTable from "@/hooks/useDataTable";
 
+import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 import PageLayout from "@/layouts/PageLayout";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -31,8 +33,6 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/use-toast";
-import { useRouter } from "next/router";
-import { TRPCClientError } from "@trpc/client";
 
 export default function MessageDetails({
   messageId,
@@ -68,10 +68,10 @@ export default function MessageDetails({
   const { table } = useDataTable({
     columns,
     data: data?.recipients ?? [],
-    getRowId: (row: MemberBaseContact) => row.id,
+    getRowId: (row: MemberSnapshotWithContact) => row.id,
     options: {
       rowSelection: {
-        initial: getInitialSelectedMembers(data?.recipients ?? []),
+        initial: getInitialSelectedMembersSnapshot(data?.recipients ?? []),
       },
     },
   });
@@ -201,7 +201,7 @@ type MessageDetailsProps = InferGetServerSidePropsType<
 
 const getGroupMembersColumns = (
   handleDeleteMessage: () => void,
-): ColumnDef<MemberBaseContact>[] => [
+): ColumnDef<MemberSnapshotWithContact>[] => [
   {
     id: "select",
     cell: ({ row }) => {
@@ -243,7 +243,7 @@ const getGroupMembersColumns = (
       <DataTableColumnHeader column={column} title="Phone" />
     ),
     cell: ({ row }) => {
-      const phoneString = row.original.contact?.phone;
+      const phoneString = row.original.member.contact?.phone;
       if (!phoneString) return null;
 
       const phone = parsePhoneNumber(phoneString);
@@ -256,7 +256,9 @@ const getGroupMembersColumns = (
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Notes" className="flex-1" />
     ),
-    cell: ({ row }) => <HoverableCell value={row.original.contact?.notes} />,
+    cell: ({ row }) => (
+      <HoverableCell value={row.original.member.contact?.notes} />
+    ),
   },
   {
     id: "actions",
@@ -279,7 +281,7 @@ const getGroupMembersColumns = (
           <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
         </DropdownMenuItem>
         <DropdownMenuSeparator />
-        <Link href={`/contact/${row.original.contact.id}`}>
+        <Link href={`/contact/${row.original.member.contact.id}`}>
           <DropdownMenuItem>View contact details</DropdownMenuItem>
         </Link>
         <DropdownMenuItem onClick={handleDeleteMessage}>

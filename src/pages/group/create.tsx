@@ -5,7 +5,7 @@ import type { GetServerSideProps } from "next";
 
 import { getServerAuthSession } from "@/server/auth";
 import { api } from "@/utils/api";
-import { createContact, extractInitials } from "@/lib/utils";
+import { createNewMember, extractInitials } from "@/lib/utils";
 
 import GroupMembersFormContent from "@/components/group/GroupMembersForm";
 import { toast } from "@/components/ui/use-toast";
@@ -26,7 +26,7 @@ export default function CreateGroup() {
       name: "",
       description: "",
       image: "",
-      members: [createContact()],
+      members: [createNewMember()],
       addedGroupIds: [],
     },
   });

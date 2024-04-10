@@ -2,23 +2,29 @@ import React from "react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useRouter } from "next/router";
-import Link from "next/link";
-import { parsePhoneNumber } from "libphonenumber-js";
 import type {
   GetServerSidePropsContext,
   InferGetServerSidePropsType,
 } from "next";
-import { type UseFormReturn, useForm } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { TRPCClientError } from "@trpc/client";
+import Link from "next/link";
+import { parsePhoneNumber } from "libphonenumber-js";
+import { type UseFormReturn } from "react-hook-form";
 import type { ColumnDef } from "@tanstack/react-table";
 
+import type { MemberSnapshotWithContact } from "@/server/api/routers/member";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
-import { getInitialSelectedMembers } from "@/lib/utils";
-import type { MemberBaseContact } from "@/server/api/routers/member";
+import { getInitialSelectedMembersSnapshot } from "@/lib/utils";
 import { api } from "@/utils/api";
-import type { IReminder, RecurPeriod } from "@/server/api/routers/message";
+import {
+  type Reminder,
+  defaultReminder,
+} from "@/lib/schemas/reminderSchema.ts";
+
 import { getServerAuthSession } from "@/server/auth";
 import useDataTable from "@/hooks/useDataTable";
+import { validateMessageForm } from "@/lib/utils";
 import { db } from "@/server/db";
 
 import PageLayout from "@/layouts/PageLayout";
@@ -39,22 +45,21 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { HoverableCell } from "@/components/ui/hover-card";
+import {
+  type MessageFormType,
+  messageFormSchema,
+} from "@/lib/schemas/messageSchema";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DataTableColumnHeader,
   DataTableRowActions,
 } from "@/components/ui/data-table";
+import { HoverableCell } from "@/components/ui/hover-card";
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
   DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
-import {
-  type MessageFormType,
-  messageFormSchema,
-} from "@/lib/schemas/messageSchema";
-import { defaultReminder } from "@/lib/schemas/reminderSchema.ts";
 import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
 export default function EditMessage({
@@ -63,11 +68,34 @@ export default function EditMessage({
 }: MessageDetailsProps) {
   const { data, error } = api.message.getMessageById.useQuery({ messageId });
 
-  const [isTableDirty, setIsTableDirty] = React.useState(false);
+  const ctx = api.useUtils();
+  const { mutate: deleteMember } = api.member.delete.useMutation({
+    onSuccess: async (data) => {
+      await ctx.group.getGroupById.invalidate({ groupId });
+      toast({
+        title: "Member deleted",
+        description: `Member ${data?.id} has been deleted`,
+      });
+    },
+    onError: (error) => {
+      const errorMessage = error.data?.zodError?.fieldErrors?.content;
+      toast({
+        title: "Member deletion failed",
+        description:
+          errorMessage?.[0] ??
+          error.message ??
+          "An error occurred while deleting the member",
+        variant: "destructive",
+      });
+    },
+  });
+  const handleDeleteMember = (memberId: string) => deleteMember({ memberId });
+
   const form = useForm<MessageFormType>({
     resolver: zodResolver(messageFormSchema),
     defaultValues: {
       id: messageId,
+      groupId,
       status: data?.status,
       isDraft: data?.status === "draft" ? "yes" : "no",
       content: data?.content,
@@ -75,103 +103,86 @@ export default function EditMessage({
       scheduledDate: data?.scheduledDate,
       isRecurring: data?.isRecurring ? "yes" : "no",
       recurringNum: data?.recurringNum,
-      recurringPeriod: data?.recurringPeriod ?? ("weeks" as RecurPeriod),
+      recurringPeriod: data?.recurringPeriod ?? "weeks",
       isReminders: data?.isReminders ? "yes" : "no",
       reminders: (data?.reminders?.length
         ? data?.reminders
-        : [defaultReminder]) as IReminder[],
+        : [defaultReminder]) as Reminder[],
       saveRecipientState: true,
-      recipients: getInitialSelectedMembers(data?.recipients ?? []),
+      recipients: getInitialSelectedMembersSnapshot(data?.recipients ?? []),
     },
   });
 
-  const columns = getRecipientsColumns({ form, setIsTableDirty });
+  const [isTableDirty, setIsTableDirty] = React.useState(false);
+  const columns = getSnapshotRecipientsColumns({
+    form,
+    setIsTableDirty,
+    handleDeleteMember,
+  });
   const { table } = useDataTable({
     columns,
     data: data?.recipients ?? [],
-    getRowId: (row: MemberBaseContact) => row.id,
+    getRowId: (row) => row.id,
     enableRowSelection: (row) =>
-      !!row.original.contact.phone || !!row.original.contact.email,
+      !!row.original.member.contact.phone ||
+      !!row.original.member.contact.email,
     options: {
       rowSelection: {
-        initial: getInitialSelectedMembers(data?.recipients ?? []),
+        initial: getInitialSelectedMembersSnapshot(data?.recipients ?? []),
       },
     },
   });
 
   const router = useRouter();
-  const { mutate } = api.message.update.useMutation({
-    onSuccess: async (data) => {
-      await router.push(`/group/${groupId}/message/${messageId}`);
-      if (data?.status === "sent") {
-        toast({
-          title: "Message Sent",
-          description: `Message "${data?.id}" has been sent.`,
-        });
-      } else {
-        toast({
-          title: "Message Updated",
-          description: `Message "${data?.id}" has been updated.`,
-        });
-      }
-    },
-    onError: (error) => {
-      const errorMessage = error.data?.zodError?.fieldErrors?.content;
+  // const { mutate } = api.message.update.useMutation({
+  //   onSuccess: async (data) => {
+  //     await router.push(`/group/${groupId}/message/${messageId}`);
+  //     if (data?.status === "sent") {
+  //       toast({
+  //         title: "Message Sent",
+  //         description: `Message "${data?.id}" has been sent.`,
+  //       });
+  //     } else {
+  //       toast({
+  //         title: "Message Updated",
+  //         description: `Message "${data?.id}" has been updated.`,
+  //       });
+  //     }
+  //   },
+  //   onError: (error) => {
+  //     const errorMessage = error.data?.zodError?.fieldErrors?.content;
+  //     toast({
+  //       title: "Message Update Failed",
+  //       description:
+  //         errorMessage?.[0] ??
+  //         error.message ??
+  //         "An error occurred while updating the message. Please try again.",
+  //       variant: "destructive",
+  //     });
+  //   },
+  // });
+
+  const { mutate } = api.message.testSend.useMutation({
+    onSuccess: (data) => {
       toast({
-        title: "Message Update Failed",
-        description:
-          errorMessage?.[0] ??
-          error.message ??
-          "An error occurred while updating the message. Please try again.",
-        variant: "destructive",
+        title: "Message sent",
+        description: JSON.stringify(data),
       });
+    },
+    onError: (err) => {
+      console.log("Error sending message", err);
     },
   });
 
   const onSubmit = (formData: MessageFormType) => {
-    if (formData.isScheduled === "yes" && !formData.scheduledDate) {
-      formData.isScheduled = "no";
-    }
-    if (formData.isScheduled === "no") {
-      formData.scheduledDate = null;
-      formData.isReminders = "no";
-    }
-
-    formData.reminders = Array.from(
-      new Map(
-        formData.reminders
-          ?.filter((reminder) => reminder.num && reminder.period)
-          .map((reminder) => [`${reminder.num}-${reminder.period}`, reminder]),
-      ).values(),
-    );
-
-    if (formData.isReminders === "yes" && !formData.reminders?.length) {
-      formData.isReminders = "no";
-    } else if (formData.isReminders === "no") {
-      formData.reminders = [];
-    }
-
-    if (
-      formData.isRecurring === "yes" &&
-      !(formData.recurringNum && formData.recurringPeriod)
-    ) {
-      formData.isRecurring = "no";
-    } else if (formData.isRecurring === "no") {
-      formData.recurringNum = null;
-      formData.recurringPeriod = null;
-    }
+    const data = validateMessageForm(formData);
 
     toast({
       title: "Updating Message",
       description: "Please wait while we update your message.",
     });
 
-    mutate({
-      ...formData,
-      isRecurring: formData.isRecurring === "yes",
-      isScheduled: formData.isScheduled === "yes",
-      isReminders: formData.isReminders === "yes",
-    });
+    mutate(data);
   };
 
   const { mutate: deleteMessage } = api.message.delete.useMutation({
@@ -324,13 +335,15 @@ type MessageDetailsProps = InferGetServerSidePropsType<
   typeof getServerSideProps
 >;
 
-const getRecipientsColumns = ({
+export const getSnapshotRecipientsColumns = ({
   form,
   setIsTableDirty,
+  handleDeleteMember,
 }: {
   form: UseFormReturn<MessageFormType>;
   setIsTableDirty: React.Dispatch<React.SetStateAction<boolean>>;
-}): ColumnDef<MemberBaseContact>[] => {
+  handleDeleteMember: (memberId: string) => void;
+}): ColumnDef<MemberSnapshotWithContact>[] => {
   return [
     {
       id: "select",
@@ -371,7 +384,8 @@ const getRecipientsColumns = ({
             aria-label="Select row"
             name="select-row"
             disabled={
-              !row.original.contact.phone && !row.original.contact.email
+              !row.original.member.contact.phone &&
+              !row.original.member.contact.email
             }
           />
         );
@@ -406,7 +420,7 @@ const getRecipientsColumns = ({
         <DataTableColumnHeader column={column} title="Phone" />
       ),
       cell: ({ row }) => {
-        const phoneString = row.original.contact?.phone;
+        const phoneString = row.original.member.contact?.phone;
         if (!phoneString) return null;
 
         const phone = parsePhoneNumber(phoneString);
@@ -447,11 +461,13 @@ const getRecipientsColumns = ({
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={async () => {
-              await navigator.clipboard.writeText(row.original.contact.id);
+              await navigator.clipboard.writeText(
+                row.original.member.contact.id,
+              );
 
               toast({
                 title: "Copied contact ID",
-                description: `Contact ID ${row.original.contact.id} has been copied to your clipboard`,
+                description: `Contact ID ${row.original.member.contact.id} has been copied to your clipboard`,
               });
             }}
             className="w-48"
@@ -460,10 +476,12 @@ const getRecipientsColumns = ({
             <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
           </DropdownMenuItem>
           <DropdownMenuSeparator />
-          <Link href={`/contact/${row.original.contact.id}`}>
+          <Link href={`/contact/${row.original.member.contact.id}`}>
             <DropdownMenuItem>View contact details</DropdownMenuItem>
           </Link>
-          <DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={() => handleDeleteMember(row.getValue<string>("id"))}
+          >
             Remove from group
             <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
           </DropdownMenuItem>

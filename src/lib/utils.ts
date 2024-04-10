@@ -1,17 +1,19 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { type RowSelectionState } from "@tanstack/react-table";
+import type { MessageFormType } from "./schemas/messageSchema";
 
 import type {
-  MemberBaseContact,
-  MemberBaseNewContact,
+  MemberSnapshotWithContact,
+  MemberWithContact,
+  NewMember,
 } from "@/server/api/routers/member";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-export function extractInitials(text: string, numInitials = 2): string {
+export function extractInitials(text?: string, numInitials = 2): string {
   if (!text) {
     return "";
   }
@@ -31,7 +33,7 @@ export function extractInitials(text: string, numInitials = 2): string {
     .join("");
 }
 
-export function getInitialSelectedMembers(groupMembers: MemberBaseContact[]) {
+export function getInitialSelectedMembers(groupMembers: MemberWithContact[]) {
   return Object.fromEntries(
     groupMembers?.map((member) => {
       const isSelected =
@@ -43,17 +45,31 @@ export function getInitialSelectedMembers(groupMembers: MemberBaseContact[]) {
   ) as RowSelectionState;
 }
 
-export const createContact = (
-  newMember?: MemberBaseNewContact,
-): MemberBaseNewContact => ({
+export function getInitialSelectedMembersSnapshot(
+  groupMemberSnapshots: MemberSnapshotWithContact[],
+) {
+  return Object.fromEntries(
+    groupMemberSnapshots?.map((snapshot) => {
+      const isSelected =
+        snapshot.isRecipient &&
+        (!!snapshot.member.contact?.phone || !!snapshot.member.contact?.email);
+
+      return [snapshot.id, isSelected];
+    }) ?? [],
+  ) as RowSelectionState;
+}
+
+export const createNewMember = (newMember?: Partial<NewMember>): NewMember => ({
   contact: {
-    name: newMember?.contact.name ?? "",
-    email: newMember?.contact.email ?? "",
-    phone: newMember?.contact.phone ?? "",
-    notes: newMember?.contact.notes ?? "",
+    name: newMember?.contact?.name ?? "",
+    email: newMember?.contact?.email ?? "",
+    phone: newMember?.contact?.phone ?? "",
+    notes: newMember?.contact?.notes ?? "",
+    id: newMember?.contact?.id ?? undefined,
   },
   memberNotes: newMember?.memberNotes ?? "",
   isRecipient: newMember?.isRecipient ?? true,
+  id: undefined,
 });
 
 export function formatRelativeDateAndTime(
@@ -134,4 +150,45 @@ export function camelCaseToSentenceCase(input: string): string {
   const result = input.replace(/([A-Z])/g, " $1").toLowerCase();
 
   return result.charAt(0).toUpperCase() + result.slice(1);
+}
+
+export function validateMessageForm(formData: MessageFormType) {
+  if (formData.isScheduled === "yes" && !formData.scheduledDate) {
+    formData.isScheduled = "no";
+  }
+  if (formData.isScheduled === "no") {
+    formData.scheduledDate = null;
+    formData.isReminders = "no";
+  }
+
+  formData.reminders = Array.from(
+    new Map(
+      formData.reminders
+        ?.filter((reminder) => reminder.num && reminder.period)
+        .map((reminder) => [`${reminder.num}-${reminder.period}`, reminder]),
+    ).values(),
+  );
+
+  if (formData.isReminders === "yes" && !formData.reminders?.length) {
+    formData.isReminders = "no";
+  } else if (formData.isReminders === "no") {
+    formData.reminders = [];
+  }
+
+  if (
+    formData.isRecurring === "yes" &&
+    !(formData.recurringNum && formData.recurringPeriod)
+  ) {
+    formData.isRecurring = "no";
+  } else if (formData.isRecurring === "no") {
+    formData.recurringNum = null;
+    formData.recurringPeriod = null;
+  }
+
+  return {
+    ...formData,
+    isRecurring: formData.isRecurring === "yes",
+    isScheduled: formData.isScheduled === "yes",
+    isReminders: formData.isReminders === "yes",
+  };
 }

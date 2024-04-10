@@ -4,10 +4,11 @@ import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { MinusCircledIcon, PlusCircledIcon } from "@radix-ui/react-icons";
 import { useDebounce } from "use-debounce";
 import { parsePhoneNumber } from "libphonenumber-js";
+import type { Contact } from "@prisma/client";
 
-import { createContact, extractInitials } from "@/lib/utils";
+import type { NewContact } from "@/server/api/routers/contact";
+import { createNewMember, extractInitials } from "@/lib/utils";
 import { api } from "@/utils/api";
-import type { ContactBaseWithId } from "@/server/api/routers/contact";
 import type {
   GroupMembersFormType,
   groupMembersFormSchema,
@@ -159,7 +160,7 @@ function GroupMemberList({ form }: { form: GroupMembersFormReturn }) {
         onClick={() => {
           form.setValue("members", [
             ...form.getValues("members"),
-            createContact(),
+            createNewMember(),
           ]);
         }}
       >
@@ -224,10 +225,10 @@ function RecentContactsResults({ search, form }: RecentResultsProps) {
 
   const results = useSearchResults(data);
 
-  const handleClickContact = (contact: ContactBaseWithId) => {
+  const handleClickContact = (contact: NewContact) => {
     form.setValue("members", [
       ...form.getValues("members"),
-      { isRecipient: true, contact, memberNotes: "" },
+      createNewMember({ contact }),
     ]);
   };
 
@@ -287,7 +288,7 @@ function RecentGroupResults({ search, form }: RecentResultsProps) {
 
   const handleClickGroup = (
     id: string,
-    groupMembers: Array<{ contact: ContactBaseWithId }>,
+    groupMembers: Array<{ contact: Contact }>,
   ) => {
     form.setValue("addedGroupIds", [...form.getValues("addedGroupIds"), id]);
 

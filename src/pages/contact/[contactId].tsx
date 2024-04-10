@@ -12,7 +12,6 @@ import type {
 import { getServerAuthSession } from "@/server/auth";
 import { api } from "@/utils/api";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
-import { type ContactBaseWithId } from "@/server/api/routers/contact";
 import { extractInitials, truncateText } from "@/lib/utils";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -26,11 +25,12 @@ import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
 const contactBaseSchema = z.object({
   id: z.string(),
-  name: z.string().min(1).max(40).optional(),
+  name: z.string().min(1).max(40),
   email: z.string().email().optional(),
   phone: z.string().optional(),
   notes: z.string().max(5280).optional(),
 });
+type ContactBaseWithId = z.infer<typeof contactBaseSchema>;
 
 export default function Contact({ contactId }: ContactProps) {
   const { data, error } = api.contact.getContactById.useQuery({ contactId });

@@ -1,5 +1,6 @@
 import * as React from "react";
 import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
+import type { User } from "@prisma/client";
 
 import {
   cn,
@@ -8,11 +9,10 @@ import {
   truncateText,
 } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
-import { type User } from "@/server/api/routers/auth";
 import { parsePhoneNumber } from "libphonenumber-js";
 import { Separator } from "./separator";
 import { ScrollArea } from "./scroll-area";
-import type { Member } from "@/server/api/routers/member";
+import type { MemberWithContact } from "@/server/api/routers/member";
 import Link from "next/link";
 
 const HoverCard = HoverCardPrimitive.Root;
@@ -51,17 +51,17 @@ function HoverableCell({ value, truncLength = 20 }: HoverableCellProps) {
   );
 }
 
-interface IUserHoverableCellProps {
+interface UserHoverableCellProps {
   user: User;
 }
-function UserHoverableCell({ user }: IUserHoverableCellProps) {
+function UserHoverableCell({ user }: UserHoverableCellProps) {
   return (
     <HoverCard>
       <HoverCardTrigger>{user.name}</HoverCardTrigger>
       <HoverCardContent className="text-xs">
         <div className="flex justify-between space-x-4">
           <Avatar>
-            <AvatarImage src={user.image} />
+            <AvatarImage src={user.image ?? undefined} />
             <AvatarFallback>{extractInitials(user.name)}</AvatarFallback>
           </Avatar>
           <div className="space-y-1">
@@ -76,10 +76,10 @@ function UserHoverableCell({ user }: IUserHoverableCellProps) {
   );
 }
 
-interface IMemberHoverableCellProps {
-  members: Member[];
+interface MemberHoverableCellProps {
+  members: MemberWithContact[];
 }
-function MembersHoverableCell({ members }: IMemberHoverableCellProps) {
+function MembersHoverableCell({ members }: MemberHoverableCellProps) {
   if (!members) return null;
 
   return (

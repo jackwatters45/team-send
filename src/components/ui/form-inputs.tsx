@@ -21,15 +21,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "./checkbox";
+import { cn } from "@/lib/utils";
 
-export interface ISharedInputNoNameProps<T extends z.ZodType> {
+export interface SharedInputNoNameProps<T extends z.ZodType> {
   control: Control<z.infer<T>>;
   label?: string;
   description?: string;
 }
 
-export interface ISharedInputProps<T extends z.ZodType>
-  extends ISharedInputNoNameProps<T>,
+export interface SharedInputProps<T extends z.ZodType>
+  extends SharedInputNoNameProps<T>,
     React.InputHTMLAttributes<HTMLInputElement> {
   name: Path<z.infer<T>>;
 }
@@ -40,7 +41,7 @@ function FormInput<T extends z.ZodType>({
   label,
   description,
   ...inputProps
-}: ISharedInputProps<T>) {
+}: SharedInputProps<T>) {
   return (
     <FormField
       control={control}
@@ -59,8 +60,8 @@ function FormInput<T extends z.ZodType>({
   );
 }
 
-export interface ISharedTextareaProps<T extends z.ZodType>
-  extends ISharedInputNoNameProps<T>,
+export interface SharedTextareaProps<T extends z.ZodType>
+  extends SharedInputNoNameProps<T>,
     TextareaProps {
   name: Path<z.infer<T>>;
 }
@@ -70,7 +71,7 @@ function FormTextarea<T extends z.ZodType>({
   label,
   description,
   ...textareaProps
-}: ISharedTextareaProps<T>) {
+}: SharedTextareaProps<T>) {
   return (
     <FormField
       control={control}
@@ -89,8 +90,8 @@ function FormTextarea<T extends z.ZodType>({
   );
 }
 
-interface INumPeriodInputs<T extends z.ZodType>
-  extends ISharedInputNoNameProps<T> {
+interface NumPeriodInputs<T extends z.ZodType>
+  extends SharedInputNoNameProps<T> {
   numName: Path<z.infer<T>>;
   periodName: Path<z.infer<T>>;
   numGreaterThanOne: boolean;
@@ -102,7 +103,7 @@ function NumPeriodInputs<T extends z.ZodType>({
   control,
   label,
   description,
-}: INumPeriodInputs<T>) {
+}: NumPeriodInputs<T>) {
   return (
     <div className="flex flex-1 items-start justify-evenly gap-4">
       <FormField
@@ -174,7 +175,7 @@ function DateTimeInput<T extends z.ZodType>({
   name,
   label,
   description,
-}: ISharedInputProps<T>) {
+}: SharedInputProps<T>) {
   return (
     <FormField
       control={control}
@@ -202,8 +203,7 @@ function DateTimeInput<T extends z.ZodType>({
   );
 }
 
-interface IBooleanSelectProps<T extends z.ZodType>
-  extends ISharedInputProps<T> {
+interface BooleanSelectProps<T extends z.ZodType> extends SharedInputProps<T> {
   placeholder?: "no" | "yes";
 }
 function BooleanSelect<T extends z.ZodType>({
@@ -212,7 +212,7 @@ function BooleanSelect<T extends z.ZodType>({
   label,
   description,
   placeholder = "no",
-}: IBooleanSelectProps<T>) {
+}: BooleanSelectProps<T>) {
   return (
     <FormField
       control={control}
@@ -251,13 +251,19 @@ function CheckboxInput<T extends z.ZodType>({
   description,
   name,
   label,
-}: ISharedInputProps<T>) {
+  className,
+}: SharedInputProps<T>) {
   return (
     <FormField
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem className="flex flex-row items-start space-x-3 space-y-0 px-4 pb-4 pt-8">
+        <FormItem
+          className={cn(
+            "flex flex-row items-start space-x-3 space-y-0 px-4 pb-4 pt-8",
+            className,
+          )}
+        >
           <FormControl>
             <Checkbox checked={field.value} onCheckedChange={field.onChange} />
           </FormControl>

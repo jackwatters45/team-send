@@ -13,10 +13,10 @@ import {
 } from "@/lib/schemas/messageSchema";
 import { defaultReminder } from "@/lib/schemas/reminderSchema.ts";
 
-interface IMessageSettingsProps {
+interface MessageSettingsProps {
   form: UseFormReturn<MessageFormType>;
 }
-export function MessageSettings({ form }: IMessageSettingsProps) {
+export function MessageSettings({ form }: MessageSettingsProps) {
   const reminders = form.watch("reminders") ?? [];
 
   return (

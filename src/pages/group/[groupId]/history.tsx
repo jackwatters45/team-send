@@ -6,12 +6,17 @@ import { type ColumnDef } from "@tanstack/react-table";
 import Link from "next/link";
 import { TRPCClientError } from "@trpc/client";
 import { useRouter } from "next/router";
+import type { User } from "@prisma/client";
 
 import { api } from "@/utils/api";
 import type { RouterOutputs } from "@/utils/api";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import useDataTable from "@/hooks/useDataTable";
 import { getServerAuthSession } from "@/server/auth";
+import type {
+  MemberSnapshotWithContact,
+  MemberWithContact,
+} from "@/server/api/routers/member";
 
 import { GroupLayout } from "@/layouts/GroupLayout";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -19,8 +24,6 @@ import {
   DataTableColumnHeader,
   DataTableRowActions,
 } from "@/components/ui/data-table";
-import { type User } from "@/server/api/routers/auth";
-import { type Member } from "@/server/api/routers/member";
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -266,13 +269,17 @@ function getHistoryTableColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Recipients" />
       ),
-      cell: ({ row }) => (
-        <MembersHoverableCell
-          members={row
-            .getValue<Member[]>("recipients")
-            .filter(({ isRecipient }) => isRecipient)}
-        />
-      ),
+      cell: ({ row }) => {
+        const members = row
+          .getValue<MemberSnapshotWithContact[]>("recipients")
+          .filter(({ isRecipient }) => isRecipient)
+          .map(({ member, isRecipient }) => ({
+            ...member,
+            isRecipient,
+          })) as MemberWithContact[];
+
+        return <MembersHoverableCell members={members} />;
+      },
     },
     {
       accessorKey: "status",

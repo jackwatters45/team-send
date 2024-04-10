@@ -4,7 +4,7 @@ import { cn } from "@/lib/utils";
 import { Button } from "./button";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 
-interface ISettingActionItemProps {
+interface SettingActionItemProps {
   title: string;
   description: string | React.ReactNode;
   actionButtonText: string | React.ReactNode;
@@ -22,7 +22,7 @@ export const SettingActionItem = ({
   onAction,
   hideButton,
   children,
-}: ISettingActionItemProps) => {
+}: SettingActionItemProps) => {
   const [parent] = useAutoAnimate();
 
   return (

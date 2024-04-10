@@ -1,11 +1,12 @@
 import { z } from "zod";
 import { reminderSchema } from "./reminderSchema.ts";
 
-export const messageFormSchema = z.object({
+const messageSchema = z.object({
   id: z.string().optional(),
+  groupId: z.string(),
   status: z.enum(["draft", "scheduled", "sent", "failed"]),
-  isDraft: z.enum(["no", "yes"]),
   content: z.string().max(500).min(1),
+  subject: z.string().max(100).nullish(),
   isScheduled: z.enum(["no", "yes"]),
   scheduledDate: z.date().nullish(),
   isRecurring: z.enum(["no", "yes"]),
@@ -16,30 +17,24 @@ export const messageFormSchema = z.object({
   saveRecipientState: z.boolean(),
   recipients: z.record(z.string(), z.boolean()),
 });
+
+export const messageFormSchema = messageSchema.extend({
+  isDraft: z.enum(["no", "yes"]),
+});
+
 export type MessageFormType = z.infer<typeof messageFormSchema>;
 
-export const messageInputSchema = z
-  .object({
-    id: z.string().optional(),
-    status: z.enum(["draft", "scheduled", "sent", "failed"]),
-    content: z.string().max(500).min(1),
+export const messageInputSchema = messageSchema
+  .extend({
     isScheduled: z.boolean(),
-    scheduledDate: z.date().nullish(),
     isRecurring: z.boolean(),
-    recurringNum: z.number().positive().int().max(36).nullish(),
-    recurringPeriod: z.enum(["years", "months", "weeks", "days"]).nullish(),
     isReminders: z.boolean(),
-    reminders: z.array(reminderSchema).max(6).nullish(),
-    saveRecipientState: z.boolean(),
-    recipients: z.record(z.string(), z.boolean()),
   })
   .refine(
     (data) => {
       if (data.isScheduled && !data.scheduledDate) return false;
-
       if (data.isRecurring && (!data.recurringNum || !data.recurringPeriod))
         return false;
-
       if (data.isReminders && !data.reminders?.length) return false;
 
       return true;

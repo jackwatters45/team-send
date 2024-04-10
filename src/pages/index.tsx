@@ -4,8 +4,8 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { type RouterOutputs, api } from "@/utils/api";
 import useDataTable from "@/hooks/useDataTable";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
-import type { Member } from "@/server/api/routers/member";
 import { getServerAuthSession } from "@/server/auth";
+import type { MemberWithContact } from "@/server/api/routers/member";
 
 import Layout from "@/layouts/Layout";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -187,7 +187,9 @@ const getGroupColumns = (
     ),
     cell: ({ row }) => {
       return (
-        <MembersHoverableCell members={row.getValue<Member[]>("members")} />
+        <MembersHoverableCell
+          members={row.getValue<MemberWithContact[]>("members")}
+        />
       );
     },
   },

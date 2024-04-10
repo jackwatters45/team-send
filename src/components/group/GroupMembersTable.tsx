@@ -8,19 +8,17 @@ import {
   DataTableSelectedRowCount,
 } from "@/components/ui/data-table";
 
-import type { MemberBaseContact } from "@/server/api/routers/member";
-
-interface IGroupMembersTableProps {
-  table: Table<MemberBaseContact>;
-  columns: ColumnDef<MemberBaseContact>[];
+interface GroupMembersTableProps<T> {
+  table: Table<T>;
+  columns: ColumnDef<T>[];
   placeholder?: string;
 }
 
-export default function GroupMembersTable({
+export default function GroupMembersTable<T>({
   table,
   columns,
   placeholder = "Search members",
-}: IGroupMembersTableProps) {
+}: GroupMembersTableProps<T>) {
   return (
     <div>
       <div className="flex items-center py-4">
