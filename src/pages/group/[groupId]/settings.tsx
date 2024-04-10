@@ -1,6 +1,6 @@
 import { GroupLayout } from "@/layouts/GroupLayout";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
-import { api } from "@/utils/api";
+import { type RouterOutputs, api } from "@/utils/api";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
 import { useRouter } from "next/router";
@@ -8,23 +8,15 @@ import type {
   GetServerSidePropsContext,
   InferGetServerSidePropsType,
 } from "next";
-import type { Control, FieldValues, Path } from "react-hook-form";
+import type { UseFormReturn } from "react-hook-form";
 import { TRPCClientError } from "@trpc/client";
 
 import { getServerAuthSession } from "@/server/auth";
 import { extractInitials } from "@/lib/utils";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Switch } from "@/components/ui/switch";
 import DangerZoneCard from "@/components/ui/danger-zone-card";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-} from "@/components/ui/form";
+import { Form, FormDescription } from "@/components/ui/form";
 import { toast } from "@/components/ui/use-toast";
 import { CheckboxInput, FormInput } from "@/components/ui/form-inputs";
 import { Button } from "@/components/ui/button";
@@ -34,30 +26,23 @@ import {
   groupSettingsSchema,
 } from "@/lib/schemas/groupSettingsSchema";
 import { renderErrorComponent } from "@/components/error/renderErrorComponent";
+import { useAutoAnimate } from "@formkit/auto-animate/react";
+import ConnectionSwitchInput from "@/components/ui/connection-switch-input";
 
 export default function GroupSettings({
   groupId,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
-  const { data, error } = api.group.getGroupById.useQuery({ groupId });
+  const { data, error } = api.group.getGroupSettingsById.useQuery({ groupId });
 
   const form = useForm<GroupSettingsFormType>({
     resolver: zodResolver(groupSettingsSchema),
-    defaultValues: {
-      groupId: data?.id ?? "",
-      name: data?.name ?? "",
-      description: data?.description ?? "",
-      image: data?.image ?? undefined,
-      imageFile: undefined,
-      usePhone: data?.usePhone ?? false,
-      useEmail: data?.useEmail ?? false,
-      "change-global": false,
-    },
+    defaultValues: getDefaultFormValues(data),
   });
 
   const ctx = api.useUtils();
   const { mutate: updateSettings } = api.group.updateSettings.useMutation({
     onSuccess: async (data) => {
-      void ctx.group.getGroupById.invalidate({ groupId: data?.id });
+      void ctx.group.getGroupSettingsById.invalidate({ groupId: data?.id });
     },
     onError: (error) => {
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
@@ -71,31 +56,30 @@ export default function GroupSettings({
       });
     },
   });
-
   const onSubmit = (data: GroupSettingsFormType) => updateSettings(data);
 
   const router = useRouter();
-  const { mutate: archiveGroup } = api.group.archive.useMutation({
-    onSuccess: async (data) => {
-      await router.push(`/`); // TODO change
-      toast({
-        title: "Group Archived",
-        description: `Group "${data.id}" has been archived.`,
-      });
-    },
-    onError: (error) => {
-      const errorMessage = error.data?.zodError?.fieldErrors?.content;
-      toast({
-        title: "Failed to archive group",
-        description:
-          errorMessage?.[0] ??
-          error.message ??
-          "There was an error archiving the group. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-  const handleArchive = () => archiveGroup({ groupId });
+  // const { mutate: archiveGroup } = api.group.archive.useMutation({
+  //   onSuccess: async (data) => {
+  //     await router.push(`/`); // TODO change
+  //     toast({
+  //       title: "Group Archived",
+  //       description: `Group "${data.id}" has been archived.`,
+  //     });
+  //   },
+  //   onError: (error) => {
+  //     const errorMessage = error.data?.zodError?.fieldErrors?.content;
+  //     toast({
+  //       title: "Failed to archive group",
+  //       description:
+  //         errorMessage?.[0] ??
+  //         error.message ??
+  //         "There was an error archiving the group. Please try again.",
+  //       variant: "destructive",
+  //     });
+  //   },
+  // });
+  // const handleArchive = () => archiveGroup({ groupId });
 
   const { mutate: deleteGroup } = api.group.delete.useMutation({
     onSuccess: async (data) => {
@@ -184,38 +168,30 @@ export default function GroupSettings({
                 will not be able to send messages when no connections are turned
                 on.
               </FormDescription>
-              {/* TODO dynamically show available connections */}
               <div className="flex flex-col gap-5 pt-5">
-                <ConnectionSwitchInput
-                  name="usePhone"
-                  control={form.control}
-                  label="Phone"
-                  description="Send texts from your twilio number to members of this group."
-                />
-                <ConnectionSwitchInput
-                  name="useEmail"
-                  control={form.control}
-                  label="Email"
-                  description="Send emails via Nodemailer to members of this group."
-                />
+                {data.isSMSConfig && <SMSConnections form={form} />}
+                {data.isEmailConfig && <EmailConnection form={form} />}
+                {data.isGroupMeConfig && (
+                  <GroupMeConnection
+                    form={form}
+                    groupId={groupId}
+                    groupMeId={data.groupMeId}
+                  />
+                )}
               </div>
-              <CheckboxInput
-                name="change-global"
-                label="Change settings for all groups"
-                description="Change the phone and email settings for all your groups."
-                control={form.control}
-              />
             </div>
           </div>
-          <div className="flex pt-4">
-            <Button
-              type="submit"
-              disabled={!form.formState.isDirty || !form.formState.isValid}
-              className="flex-1"
-            >
-              Save changes
-            </Button>
-          </div>
+          {!form.formState.dirtyFields.groupMeId && (
+            <div className="flex pt-4">
+              <Button
+                type="submit"
+                disabled={!form.formState.isDirty || !form.formState.isValid}
+                className="flex-1"
+              >
+                Save changes
+              </Button>
+            </div>
+          )}
         </form>
       </Form>
       <div className="pt-12" />
@@ -262,33 +238,160 @@ export default function GroupSettings({
   );
 }
 
-function ConnectionSwitchInput<T extends FieldValues>({
-  name,
-  control,
-  label,
-  description,
+function SMSConnections({
+  form,
 }: {
-  name: Path<T>;
-  control: Control<T>;
-  label: string;
-  description: string;
+  form: UseFormReturn<GroupSettingsFormType>;
 }) {
+  const [parent] = useAutoAnimate();
+
   return (
-    <FormField
-      control={control}
-      name={name}
-      render={({ field }) => (
-        <FormItem className="flex w-full flex-row items-center justify-between rounded-lg border p-4 dark:border-stone-800 dark:bg-stone-950">
-          <div className="space-y-0.5">
-            <FormLabel className="text-base">{label}</FormLabel>
-            <FormDescription>{description}</FormDescription>
+    <div
+      className="rounded-lg border dark:border-stone-800 dark:bg-stone-950"
+      ref={parent}
+    >
+      <ConnectionSwitchInput
+        name="useSMS"
+        control={form.control}
+        label="SMS"
+        description="Send texts from your twilio number to members of this group."
+        variant="ghost"
+      />
+      {form.formState.dirtyFields.useSMS && (
+        <>
+          <div className="px-3 pb-2">
+            <Separator />
           </div>
-          <FormControl>
-            <Switch checked={field.value} onCheckedChange={field.onChange} />
-          </FormControl>
-        </FormItem>
+          <CheckboxInput
+            name="change-global-sms"
+            label="Change setting for all groups"
+            description="Change the SMS setting for all your groups."
+            control={form.control}
+            className="pt-2"
+          />
+        </>
       )}
-    />
+    </div>
+  );
+}
+
+function EmailConnection({
+  form,
+}: {
+  form: UseFormReturn<GroupSettingsFormType>;
+}) {
+  const [parent] = useAutoAnimate();
+
+  return (
+    <div
+      className="rounded-lg border dark:border-stone-800 dark:bg-stone-950"
+      ref={parent}
+    >
+      <ConnectionSwitchInput
+        name="useEmail"
+        control={form.control}
+        label="Email"
+        description="Send emails via Nodemailer to members of this group."
+        variant="ghost"
+      />
+      {form.formState.dirtyFields.useEmail && (
+        <>
+          <div className="px-3 pb-2">
+            <Separator />
+          </div>
+          <CheckboxInput
+            name="change-global-email"
+            label="Change setting for all groups"
+            description="Change the email setting for all your groups."
+            control={form.control}
+            className="pt-2"
+          />
+        </>
+      )}
+    </div>
+  );
+}
+function GroupMeConnection({
+  form,
+  groupId,
+  groupMeId,
+}: {
+  form: UseFormReturn<GroupSettingsFormType>;
+  groupId: string;
+  groupMeId: string | null;
+}) {
+  const ctx = api.useUtils();
+  const { mutate: saveGroupMeId } = api.group.saveGroupMeId.useMutation({
+    onSuccess: async (data) => {
+      void ctx.group.getGroupSettingsById.invalidate({ groupId: data.id });
+      form.reset(getDefaultFormValues(data));
+      toast({
+        title: "GroupMe ID saved",
+        description: "GroupMe ID has been saved.",
+      });
+    },
+    onError: (error) => {
+      const errorMessage = error.data?.zodError?.fieldErrors?.content;
+      toast({
+        title: "Failed to save GroupMe ID",
+        description:
+          errorMessage?.[0] ??
+          error.message ??
+          "There was an error saving the GroupMe ID. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+  const handleSaveGroupMeId = (groupId: string, groupMeId?: string) => {
+    if (!groupMeId) return;
+    saveGroupMeId({ groupId, groupMeId });
+  };
+
+  const [parent] = useAutoAnimate();
+
+  return (
+    <div
+      className="rounded-lg border dark:border-stone-800 dark:bg-stone-950"
+      ref={parent}
+    >
+      <ConnectionSwitchInput
+        name="useGroupMe"
+        control={form.control}
+        label="GroupMe"
+        description="Send GroupMe messages to a connected GroupMe group."
+        variant="ghost"
+        disabled={!groupMeId}
+      />
+      <div className="px-3 pb-2">
+        <Separator />
+      </div>
+      <div className="px-4 pb-4">
+        <FormInput<typeof groupSettingsSchema>
+          name="groupMeId"
+          label="Group ID"
+          placeholder="Enter the Group's ID"
+          control={form.control}
+          type="number"
+          description="GroupId is an 8 digit numerical 
+        value that can be found in a group's share url."
+        />
+      </div>
+      {form.formState.dirtyFields.groupMeId && (
+        <div className="w-full px-4 pb-4">
+          <Button
+            type="button"
+            className="w-full"
+            disabled={!form.getValues("groupMeId")}
+            onClick={() => {
+              const groupMeId = form.getValues("groupMeId");
+              handleSaveGroupMeId(groupId, groupMeId);
+            }}
+          >
+            Save Group Id
+          </Button>
+        </div>
+      )}
+    </div>
   );
 }
 
@@ -304,7 +407,7 @@ export const getServerSideProps = async (
   if (typeof groupId !== "string") throw new TRPCClientError("Invalid slug");
 
   const helpers = genSSRHelpers(session);
-  await helpers.group.getGroupById.prefetch({ groupId });
+  await helpers.group.getGroupSettingsById.prefetch({ groupId });
 
   return {
     props: {
@@ -313,3 +416,20 @@ export const getServerSideProps = async (
     },
   };
 };
+
+type GetGroupSettingsByIdOutput =
+  RouterOutputs["group"]["getGroupSettingsById"];
+
+const getDefaultFormValues = (data: Partial<GetGroupSettingsByIdOutput>) => ({
+  groupId: data?.id ?? "",
+  name: data?.name ?? "",
+  description: data?.description ?? "",
+  image: data?.image ?? undefined,
+  imageFile: undefined,
+  useSMS: data?.useSMS ?? false,
+  useEmail: data?.useEmail ?? false,
+  groupMeId: data?.groupMeId ?? "",
+  useGroupMe: data?.useGroupMe ?? false,
+  "change-global-sms": false,
+  "change-global-email": false,
+});
