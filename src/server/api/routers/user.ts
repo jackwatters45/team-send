@@ -3,12 +3,12 @@ import { google } from "googleapis";
 
 import { createTRPCRouter, protectedProcedure, publicProcedure } from "../trpc";
 import { TRPCError } from "@trpc/server";
-import { userSettingsSchema } from "@/lib/schemas/userSettingsSchema";
+import { userSettingsSchema } from "@/schemas/userSettingsSchema";
 import { PrismaClientKnownRequestError } from "@prisma/client/runtime/library";
 import { useRateLimit } from "@/server/helpers/rateLimit";
 import { handleError } from "@/server/helpers/handleError";
 import { env } from "@/env";
-import { smsFormSchema } from "@/lib/schemas/smsSchema";
+import { smsFormSchema } from "@/schemas/smsSchema";
 import { z } from "zod";
 
 const GoogleOAuth2 = google.auth.OAuth2;

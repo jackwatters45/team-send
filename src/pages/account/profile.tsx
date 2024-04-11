@@ -17,7 +17,7 @@ import { Button } from "@/components/ui/button";
 import {
   type UserSettingsFormType,
   userSettingsFormSchema,
-} from "@/lib/schemas/userSettingsSchema";
+} from "@/schemas/userSettingsSchema";
 import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
 export default function AccountProfile() {

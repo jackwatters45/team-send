@@ -17,10 +17,7 @@ import type { MemberSnapshotWithContact } from "@/server/api/routers/member";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { getInitialSelectedMembersSnapshot } from "@/lib/utils";
 import { api } from "@/utils/api";
-import {
-  type Reminder,
-  defaultReminder,
-} from "@/lib/schemas/reminderSchema.ts";
+import { type Reminder, defaultReminder } from "@/schemas/reminderSchema.ts";
 
 import { getServerAuthSession } from "@/server/auth";
 import useDataTable from "@/hooks/useDataTable";
@@ -48,7 +45,7 @@ import {
 import {
   type MessageFormType,
   messageFormSchema,
-} from "@/lib/schemas/messageSchema";
+} from "@/schemas/messageSchema";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   DataTableColumnHeader,
@@ -97,7 +94,6 @@ export default function EditMessage({
       id: messageId,
       groupId,
       status: data?.status,
-      isDraft: data?.status === "draft" ? "yes" : "no",
       content: data?.content,
       isScheduled: data?.isScheduled ? "yes" : "no",
       scheduledDate: data?.scheduledDate,

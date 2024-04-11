@@ -1,4 +1,4 @@
-import { useForm, type UseFormReturn } from "react-hook-form";
+import { useForm } from "react-hook-form";
 import { useEffect, useState } from "react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { MinusCircledIcon, PlusCircledIcon } from "@radix-ui/react-icons";
@@ -10,9 +10,10 @@ import type { NewContact } from "@/server/api/routers/contact";
 import { createNewMember, extractInitials } from "@/lib/utils";
 import { api } from "@/utils/api";
 import type {
+  GroupMembersFormReturn,
   GroupMembersFormType,
   groupMembersFormSchema,
-} from "@/lib/schemas/groupMembersFormSchema";
+} from "@/schemas/groupSchema";
 
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -26,8 +27,6 @@ import {
   FormLabel,
 } from "@/components/ui/form";
 import { Skeleton } from "@/components/ui/skeleton";
-
-type GroupMembersFormReturn = UseFormReturn<GroupMembersFormType>;
 
 interface GroupMembersFormProps extends GroupMemberHeaderProps {
   form: GroupMembersFormReturn;

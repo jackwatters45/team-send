@@ -8,26 +8,29 @@ import type {
   GetServerSidePropsContext,
   InferGetServerSidePropsType,
 } from "next";
-import type { UseFormReturn } from "react-hook-form";
 import { TRPCClientError } from "@trpc/client";
 
 import { getServerAuthSession } from "@/server/auth";
 import { extractInitials } from "@/lib/utils";
+import {
+  type GroupSettingsFormType,
+  type GroupConnectionsFormReturn,
+  groupSettingsSchema,
+} from "@/schemas/groupSchema";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import DangerZoneCard from "@/components/ui/danger-zone-card";
 import { Form, FormDescription } from "@/components/ui/form";
 import { toast } from "@/components/ui/use-toast";
-import { CheckboxInput, FormInput } from "@/components/ui/form-inputs";
+import { FormInput } from "@/components/ui/form-inputs";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
-import {
-  type GroupSettingsFormType,
-  groupSettingsSchema,
-} from "@/lib/schemas/groupSettingsSchema";
 import { renderErrorComponent } from "@/components/error/renderErrorComponent";
-import { useAutoAnimate } from "@formkit/auto-animate/react";
-import ConnectionSwitchInput from "@/components/ui/connection-switch-input";
+import {
+  EmailConnection,
+  GroupMeConnectionExistingGroup,
+  SMSConnections,
+} from "@/components/group/Connections";
 
 export default function GroupSettings({
   groupId,
@@ -169,11 +172,19 @@ export default function GroupSettings({
                 on.
               </FormDescription>
               <div className="flex flex-col gap-5 pt-5">
-                {data.isSMSConfig && <SMSConnections form={form} />}
-                {data.isEmailConfig && <EmailConnection form={form} />}
+                {data.isSMSConfig && (
+                  <SMSConnections
+                    form={form as unknown as GroupConnectionsFormReturn}
+                  />
+                )}
+                {data.isEmailConfig && (
+                  <EmailConnection
+                    form={form as unknown as GroupConnectionsFormReturn}
+                  />
+                )}
                 {data.isGroupMeConfig && (
-                  <GroupMeConnection
-                    form={form}
+                  <GroupMeConnectionExistingGroup
+                    form={form as unknown as GroupConnectionsFormReturn}
                     groupId={groupId}
                     groupMeId={data.groupMeId}
                   />
@@ -235,163 +246,6 @@ export default function GroupSettings({
         </div>
       </div>
     </GroupLayout>
-  );
-}
-
-function SMSConnections({
-  form,
-}: {
-  form: UseFormReturn<GroupSettingsFormType>;
-}) {
-  const [parent] = useAutoAnimate();
-
-  return (
-    <div
-      className="rounded-lg border dark:border-stone-800 dark:bg-stone-950"
-      ref={parent}
-    >
-      <ConnectionSwitchInput
-        name="useSMS"
-        control={form.control}
-        label="SMS"
-        description="Send texts from your twilio number to members of this group."
-        variant="ghost"
-      />
-      {form.formState.dirtyFields.useSMS && (
-        <>
-          <div className="px-3 pb-2">
-            <Separator />
-          </div>
-          <CheckboxInput
-            name="change-global-sms"
-            label="Change setting for all groups"
-            description="Change the SMS setting for all your groups."
-            control={form.control}
-            className="pt-2"
-          />
-        </>
-      )}
-    </div>
-  );
-}
-
-function EmailConnection({
-  form,
-}: {
-  form: UseFormReturn<GroupSettingsFormType>;
-}) {
-  const [parent] = useAutoAnimate();
-
-  return (
-    <div
-      className="rounded-lg border dark:border-stone-800 dark:bg-stone-950"
-      ref={parent}
-    >
-      <ConnectionSwitchInput
-        name="useEmail"
-        control={form.control}
-        label="Email"
-        description="Send emails via Nodemailer to members of this group."
-        variant="ghost"
-      />
-      {form.formState.dirtyFields.useEmail && (
-        <>
-          <div className="px-3 pb-2">
-            <Separator />
-          </div>
-          <CheckboxInput
-            name="change-global-email"
-            label="Change setting for all groups"
-            description="Change the email setting for all your groups."
-            control={form.control}
-            className="pt-2"
-          />
-        </>
-      )}
-    </div>
-  );
-}
-function GroupMeConnection({
-  form,
-  groupId,
-  groupMeId,
-}: {
-  form: UseFormReturn<GroupSettingsFormType>;
-  groupId: string;
-  groupMeId: string | null;
-}) {
-  const ctx = api.useUtils();
-  const { mutate: saveGroupMeId } = api.group.saveGroupMeId.useMutation({
-    onSuccess: async (data) => {
-      void ctx.group.getGroupSettingsById.invalidate({ groupId: data.id });
-      form.reset(getDefaultFormValues(data));
-      toast({
-        title: "GroupMe ID saved",
-        description: "GroupMe ID has been saved.",
-      });
-    },
-    onError: (error) => {
-      const errorMessage = error.data?.zodError?.fieldErrors?.content;
-      toast({
-        title: "Failed to save GroupMe ID",
-        description:
-          errorMessage?.[0] ??
-          error.message ??
-          "There was an error saving the GroupMe ID. Please try again.",
-        variant: "destructive",
-      });
-    },
-  });
-  const handleSaveGroupMeId = (groupId: string, groupMeId?: string) => {
-    if (!groupMeId) return;
-    saveGroupMeId({ groupId, groupMeId });
-  };
-
-  const [parent] = useAutoAnimate();
-
-  return (
-    <div
-      className="rounded-lg border dark:border-stone-800 dark:bg-stone-950"
-      ref={parent}
-    >
-      <ConnectionSwitchInput
-        name="useGroupMe"
-        control={form.control}
-        label="GroupMe"
-        description="Send GroupMe messages to a connected GroupMe group."
-        variant="ghost"
-        disabled={!groupMeId}
-      />
-      <div className="px-3 pb-2">
-        <Separator />
-      </div>
-      <div className="px-4 pb-4">
-        <FormInput<typeof groupSettingsSchema>
-          name="groupMeId"
-          label="Group ID"
-          placeholder="Enter the Group's ID"
-          control={form.control}
-          type="number"
-          description="GroupId is an 8 digit numerical 
-        value that can be found in a group's share url."
-        />
-      </div>
-      {form.formState.dirtyFields.groupMeId && (
-        <div className="w-full px-4 pb-4">
-          <Button
-            type="button"
-            className="w-full"
-            disabled={!form.getValues("groupMeId")}
-            onClick={() => {
-              const groupMeId = form.getValues("groupMeId");
-              handleSaveGroupMeId(groupId, groupMeId);
-            }}
-          >
-            Save Group Id
-          </Button>
-        </div>
-      )}
-    </div>
   );
 }
 

@@ -19,7 +19,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { FormInput } from "@/components/ui/form-inputs";
 import { Button } from "@/components/ui/button";
-import { type SMSFormType, smsFormSchema } from "@/lib/schemas/smsSchema";
+import { type SMSFormType, smsFormSchema } from "@/schemas/smsSchema";
 
 export default function AccountSettings({
   emailConfig,

@@ -1,15 +1,18 @@
 import { z } from "zod";
 import debug from "debug";
 import { TRPCError } from "@trpc/server";
+import type { PrismaClient } from "@prisma/client";
 
 import { createTRPCRouter, protectedProcedure } from "@/server/api/trpc";
 import type { MemberWithContact } from "./member";
-import { createGroupSchema } from "@/lib/schemas/createGroupSchema";
-import { groupMembersFormSchema } from "@/lib/schemas/groupMembersFormSchema";
-import { groupSettingsSchema } from "@/lib/schemas/groupSettingsSchema";
 import { handleError } from "@/server/helpers/handleError";
 import { useRateLimit } from "@/server/helpers/rateLimit";
 import type { GetGroupByIdReturn } from "./types/groupMeApi";
+import {
+  createGroupSchema,
+  groupMembersFormSchema,
+  groupSettingsSchema,
+} from "@/schemas/groupSchema";
 
 const log = debug("team-send:api:group");
 
@@ -339,6 +342,24 @@ export const groupRouter = createTRPCRouter({
         throw handleError(err);
       }
     }),
+  checkGroupMeId: protectedProcedure
+    .input(z.object({ groupMeId: z.string() }))
+    .mutation(async ({ ctx, input: { groupMeId } }) => {
+      const userId = ctx.session.user.id;
+
+      try {
+        await useRateLimit(userId);
+
+        return await getGroupMeGroup({
+          userId,
+          db: ctx.db,
+          groupMeId,
+          throwErrorOnFail: false,
+        });
+      } catch (err) {
+        throw handleError(err);
+      }
+    }),
   saveGroupMeId: protectedProcedure
     .input(z.object({ groupId: z.string(), groupMeId: z.string() }))
     .mutation(async ({ ctx, input: { groupId, groupMeId } }) => {
@@ -347,32 +368,7 @@ export const groupRouter = createTRPCRouter({
       try {
         await useRateLimit(userId);
 
-        const user = await ctx.db.user.findUnique({
-          where: { id: userId },
-          include: { groupMeConfig: true },
-        });
-
-        const groupMeAccessToken = user?.groupMeConfig?.accessToken;
-
-        const res = await fetch(
-          `https://api.groupme.com/v3/groups/${groupMeId}?token=${groupMeAccessToken}`,
-        );
-
-        if (!res.ok) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Invalid GroupMe ID",
-          });
-        }
-
-        const groupMeData = (await res.json()) as GetGroupByIdReturn;
-
-        if (!groupMeData) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Invalid GroupMe ID",
-          });
-        }
+        await getGroupMeGroup({ userId, db: ctx.db, groupMeId });
 
         const group = await ctx.db.group.update({
           where: { id: groupId, createdById: userId },
@@ -470,4 +466,45 @@ function throwGroupNotFoundError(groupId: string) {
     code: "NOT_FOUND",
     message: `Group with id "${groupId}" not found`,
   });
+}
+
+async function getGroupMeGroup({
+  userId,
+  groupMeId,
+  db,
+  throwErrorOnFail = true,
+}: {
+  userId: string;
+  groupMeId?: string;
+  db: PrismaClient;
+  throwErrorOnFail?: boolean;
+}) {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    include: { groupMeConfig: true },
+  });
+
+  const groupMeAccessToken = user?.groupMeConfig?.accessToken;
+
+  const res = await fetch(
+    `https://api.groupme.com/v3/groups/${groupMeId}?token=${groupMeAccessToken}`,
+  );
+
+  if (!res.ok) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Invalid GroupMe ID",
+    });
+  }
+
+  const groupMeData = (await res.json()) as GetGroupByIdReturn | null;
+
+  if (!groupMeData && throwErrorOnFail) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Invalid GroupMe ID",
+    });
+  }
+
+  return { id: groupMeId, ...groupMeData };
 }

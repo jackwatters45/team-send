@@ -9,7 +9,7 @@ import { TRPCError } from "@trpc/server";
 import { useRateLimit } from "@/server/helpers/rateLimit";
 import { handleError } from "@/server/helpers/handleError";
 import { env } from "@/env";
-import { messageInputSchema } from "@/lib/schemas/messageSchema";
+import { messageInputSchema } from "@/schemas/messageSchema";
 
 const log = debug("team-send:api:message");
 
@@ -315,7 +315,7 @@ export const messageRouter = createTRPCRouter({
               });
             } else {
               message = await prisma.message.update({
-                where: { id: input.id },
+                where: { id: input.id, createdById: userId },
                 data: { status: "sent", sendAt: new Date() },
               });
             }
@@ -456,14 +456,15 @@ export const messageRouter = createTRPCRouter({
             }
 
             // TODO what
-            return await ctx.db.message.update({
-              where: { id: message.id },
-              data: { status: "sent", sendAt: new Date() },
-            });
+            return message;
           });
 
           return result;
         } catch (err) {
+          await ctx.db.message.update({
+            where: { id: input.id, createdById: userId },
+            data: { status: "failed" },
+          });
           throw handleError(err);
         }
       },

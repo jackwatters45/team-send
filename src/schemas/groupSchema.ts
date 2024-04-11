@@ -4,6 +4,7 @@ import type { UseFormReturn } from "react-hook-form";
 
 // connections
 export const groupConnectionsSchema = z.object({
+  groupId: z.string().optional(),
   useSMS: z.boolean(),
   "change-global-sms": z.boolean(),
   useEmail: z.boolean(),
@@ -40,6 +41,7 @@ export type GroupBasicInfoFormReturn = UseFormReturn<GroupBasicInfoFormType>;
 
 // members
 export const groupMembersFormSchema = z.object({
+  groupId: z.string().optional(),
   members: z.array(memberSchema),
   addedGroupIds: z.array(z.string()),
 });
@@ -53,8 +55,10 @@ export const createGroupSchema = groupBasicInfoSchema
 export type CreateGroupFormType = z.infer<typeof createGroupSchema>;
 
 // settings
-export const groupSettingsSchema = groupBasicInfoSchema.merge(
-  groupConnectionsSchema,
-);
+export const groupSettingsSchema = groupBasicInfoSchema
+  .merge(groupConnectionsSchema)
+  .extend({
+    groupId: z.string(),
+  });
 export type GroupSettingsFormType = z.infer<typeof groupSettingsSchema>;
 export type GroupSettingsFormReturn = UseFormReturn<GroupSettingsFormType>;

@@ -1,7 +1,10 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { type RowSelectionState } from "@tanstack/react-table";
-import type { MessageFormType } from "./schemas/messageSchema";
+import type {
+  MessageFormType,
+  MessageInputType,
+} from "@/schemas/messageSchema";
 
 import type {
   MemberSnapshotWithContact,
@@ -152,7 +155,9 @@ export function camelCaseToSentenceCase(input: string): string {
   return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
-export function validateMessageForm(formData: MessageFormType) {
+export function validateMessageForm(
+  formData: MessageFormType,
+): MessageInputType {
   if (formData.isScheduled === "yes" && !formData.scheduledDate) {
     formData.isScheduled = "no";
   }
@@ -185,8 +190,13 @@ export function validateMessageForm(formData: MessageFormType) {
     formData.recurringPeriod = null;
   }
 
+  if (formData.isScheduled === "yes") {
+    formData.status = "scheduled";
+  }
+
   return {
     ...formData,
+    status: formData.status,
     isRecurring: formData.isRecurring === "yes",
     isScheduled: formData.isScheduled === "yes",
     isReminders: formData.isReminders === "yes",

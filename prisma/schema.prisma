@@ -16,7 +16,7 @@ model Group {
   members  Member[]
   messages Message[]
 
-  useSMS   Boolean @default(true)
+  useSMS     Boolean @default(true)
   useEmail   Boolean @default(true)
   groupMeId  String?
   useGroupMe Boolean @default(false)
@@ -137,7 +137,7 @@ model Message {
   reminders       Reminder[]
 
   recipients MemberSnapshot[]
-  status     MessageStatus    @default(draft)
+  status     MessageStatus
 }
 
 // Necessary for Next auth

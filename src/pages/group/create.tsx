@@ -6,20 +6,30 @@ import type { GetServerSideProps } from "next";
 import { getServerAuthSession } from "@/server/auth";
 import { api } from "@/utils/api";
 import { createNewMember, extractInitials } from "@/lib/utils";
+import { createGroupSchema } from "@/schemas/groupSchema";
+import type {
+  CreateGroupFormType,
+  GroupConnectionsFormReturn,
+  GroupMembersFormReturn,
+} from "@/schemas/groupSchema";
 
 import GroupMembersFormContent from "@/components/group/GroupMembersForm";
 import { toast } from "@/components/ui/use-toast";
 import PageLayout from "@/layouts/PageLayout";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { FormInput } from "@/components/ui/form-inputs";
-import { Form } from "@/components/ui/form";
+import { Form, FormDescription } from "@/components/ui/form";
 import {
-  type CreateGroupFormType,
-  createGroupSchema,
-} from "@/lib/schemas/createGroupSchema";
-import { type GroupMembersFormReturn } from "@/lib/schemas/groupMembersFormSchema";
+  EmailConnection,
+  GroupMeConnectionNewGroup,
+  SMSConnections,
+} from "@/components/group/Connections";
+import { renderErrorComponent } from "@/components/error/renderErrorComponent";
+import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 
 export default function CreateGroup() {
+  const { data, error } = api.user.getCurrentUser.useQuery();
+  // TODO: Add connections
   const form = useForm<CreateGroupFormType>({
     resolver: zodResolver(createGroupSchema),
     defaultValues: {
@@ -62,6 +72,8 @@ export default function CreateGroup() {
     mutate(data);
   });
 
+  if (!data) return renderErrorComponent(error);
+
   return (
     <PageLayout
       title={"Create New Group"}
@@ -102,6 +114,35 @@ export default function CreateGroup() {
               </Avatar>
             )}
           </section>
+          <section>
+            <div className="rounded-md border p-4 dark:border-stone-800 dark:bg-stone-900/25">
+              <h3 className=" text-lg font-medium tracking-tight ">
+                Connections
+              </h3>
+              <FormDescription>
+                Choose how you want to connect with members of this group. You
+                will not be able to send messages when no connections are turned
+                on.
+              </FormDescription>
+              <div className="flex flex-col gap-5 pt-5">
+                {!!data.smsConfig && (
+                  <SMSConnections
+                    form={form as unknown as GroupConnectionsFormReturn}
+                  />
+                )}
+                {!!data.emailConfig && (
+                  <EmailConnection
+                    form={form as unknown as GroupConnectionsFormReturn}
+                  />
+                )}
+                {!!data.groupMeConfig && (
+                  <GroupMeConnectionNewGroup
+                    form={form as unknown as GroupConnectionsFormReturn}
+                  />
+                )}
+              </div>
+            </div>
+          </section>
           <section className="flex flex-col gap-6 pt-16">
             <GroupMembersFormContent
               title={"Add Members"}
@@ -123,5 +164,8 @@ export const getServerSideProps: GetServerSideProps = async (context) => {
     };
   }
 
-  return { props: {} };
+  const helpers = genSSRHelpers(session);
+  await helpers.user.getCurrentUser.prefetch();
+
+  return { props: { trpcState: helpers.dehydrate() } };
 };

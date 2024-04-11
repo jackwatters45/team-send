@@ -10,16 +10,16 @@ import { createNewMember } from "@/lib/utils";
 import { api } from "@/utils/api";
 import { getServerAuthSession } from "@/server/auth";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
-import {
-  type GroupMembersFormType,
-  groupMembersFormSchema,
-} from "@/lib/schemas/groupMembersFormSchema";
 
 import { toast } from "@/components/ui/use-toast";
 import { GroupLayout } from "@/layouts/GroupLayout";
 import { Form } from "@/components/ui/form";
 import GroupMembersFormContent from "@/components/group/GroupMembersForm";
 import { renderErrorComponent } from "@/components/error/renderErrorComponent";
+import {
+  type GroupMembersFormType,
+  groupMembersFormSchema,
+} from "@/schemas/groupSchema";
 
 export default function GroupMembers({
   groupId,
@@ -29,7 +29,6 @@ export default function GroupMembers({
   const form = useForm<GroupMembersFormType>({
     resolver: zodResolver(groupMembersFormSchema),
     defaultValues: {
-      groupId,
       members: data?.members ?? [createNewMember()],
       addedGroupIds: data?.addedGroupIds ?? [],
     },
@@ -49,7 +48,7 @@ export default function GroupMembers({
     },
   });
 
-  const onSubmit = (data: GroupMembersFormType) => mutate(data);
+  const onSubmit = (data: GroupMembersFormType) => mutate({ groupId, ...data });
 
   if (!data) return renderErrorComponent(error);
 

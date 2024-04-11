@@ -10,8 +10,8 @@ import { MinusCircledIcon } from "@radix-ui/react-icons";
 import {
   type MessageFormType,
   type messageFormSchema,
-} from "@/lib/schemas/messageSchema";
-import { defaultReminder } from "@/lib/schemas/reminderSchema.ts";
+} from "@/schemas/messageSchema";
+import { defaultReminder } from "@/schemas/reminderSchema.ts";
 
 interface MessageSettingsProps {
   form: UseFormReturn<MessageFormType>;
@@ -111,12 +111,6 @@ export function MessageSettings({ form }: MessageSettingsProps) {
           />
         </div>
       )}
-      <BooleanSelect<typeof messageFormSchema>
-        control={form.control}
-        name="isDraft"
-        label="Save as Draft"
-        description="Toggle to save this message as a draft"
-      />
     </>
   );
 }

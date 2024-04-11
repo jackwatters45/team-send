@@ -1,27 +1,28 @@
-import { useForm } from "react-hook-form";
+import { type UseFormReturn, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
-import { useEffect } from "react";
-import { parsePhoneNumber } from "libphonenumber-js";
 import { TRPCClientError } from "@trpc/client";
+import { useState } from "react";
 import Link from "next/link";
+import { parsePhoneNumber } from "libphonenumber-js";
 import type {
   GetServerSidePropsContext,
   InferGetServerSidePropsType,
 } from "next";
 import type { ColumnDef } from "@tanstack/react-table";
 
+import type { MemberWithContact } from "@/server/api/routers/member";
 import { api } from "@/utils/api";
 import {
   type MessageFormType,
   messageFormSchema,
-} from "@/lib/schemas/messageSchema";
-import { defaultReminder } from "@/lib/schemas/reminderSchema.ts";
+} from "@/schemas/messageSchema";
+import { defaultReminder } from "@/schemas/reminderSchema.ts";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { getServerAuthSession } from "@/server/auth";
 import { getInitialSelectedMembers } from "@/lib/utils";
+import { validateMessageForm } from "@/lib/utils";
 import useDataTable from "@/hooks/useDataTable";
-import type { MemberBaseContact } from "@/server/api/routers/member";
 
 import { GroupLayout } from "@/layouts/GroupLayout";
 import { Form, FormDescription } from "@/components/ui/form";
@@ -29,13 +30,17 @@ import { MessageSettings } from "@/components/group/MessageSettings";
 import { Button } from "@/components/ui/button";
 import GroupMembersTable from "@/components/group/GroupMembersTable";
 import { toast } from "@/components/ui/use-toast";
-import { CheckboxInput, FormTextarea } from "@/components/ui/form-inputs";
+import {
+  CheckboxInput,
+  FormInput,
+  FormTextarea,
+} from "@/components/ui/form-inputs";
 import { Checkbox } from "@/components/ui/checkbox";
-import { HoverableCell } from "@/components/ui/hover-card";
 import {
   DataTableColumnHeader,
   DataTableRowActions,
 } from "@/components/ui/data-table";
+import { HoverableCell } from "@/components/ui/hover-card";
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
@@ -43,10 +48,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
-export default function Group({
+export default function GroupSendMessage({
   groupId,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const { data, error } = api.group.getGroupById.useQuery({ groupId });
+
+  const isActiveConnections =
+    data?.useSMS ?? data?.useEmail ?? data?.useGroupMe;
 
   const ctx = api.useUtils();
   const { mutate: deleteMember } = api.member.delete.useMutation({
@@ -71,11 +79,35 @@ export default function Group({
   });
   const handleDeleteMember = (memberId: string) => deleteMember({ memberId });
 
-  const columns = getGroupMembersColumns(handleDeleteMember);
-  const { table, rowSelection } = useDataTable({
+  const form = useForm<MessageFormType>({
+    resolver: zodResolver(messageFormSchema),
+    defaultValues: {
+      content: "",
+      groupId,
+      subject: "",
+      status: "sent",
+      isScheduled: "no",
+      scheduledDate: undefined,
+      isRecurring: "no",
+      recurringNum: 1,
+      recurringPeriod: "months",
+      isReminders: "no",
+      reminders: [defaultReminder],
+      saveRecipientState: true,
+      recipients: getInitialSelectedMembers(data?.members ?? []),
+    },
+  });
+
+  const [isTableDirty, setIsTableDirty] = useState(false);
+  const columns = getMemberRecipientsColumns({
+    form,
+    setIsTableDirty,
+    handleDeleteMember,
+  });
+  const { table } = useDataTable({
     columns,
     data: data?.members ?? [],
-    getRowId: (row) => row.contact?.id,
+    getRowId: (row) => row.id,
     enableRowSelection: (row) =>
       !!row.original.contact.phone || !!row.original.contact.email,
     options: {
@@ -84,42 +116,27 @@ export default function Group({
     },
   });
 
-  const form = useForm<MessageFormType>({
-    resolver: zodResolver(messageFormSchema),
-    defaultValues: {
-      content: "",
-      isDraft: "no",
-      isScheduled: "no",
-      scheduledDate: undefined,
-      isRecurring: "no",
-      recurringNum: 1,
-      recurringPeriod: "months",
-      isReminders: "yes",
-      reminders: [defaultReminder],
-      saveRecipientState: true,
-      recipients: getInitialSelectedMembers(data?.members ?? []),
+  const { mutate } = api.message.testSend.useMutation({
+    onSuccess: (data) => {
+      toast({
+        title: "Message sent",
+        description: JSON.stringify(data),
+      });
+    },
+    onError: (err) => {
+      console.log("Error sending message", err);
     },
   });
 
-  useEffect(() => {
-    if (!rowSelection || !form) return;
-    form.setValue("recipients", rowSelection);
-  }, [rowSelection, form]);
-
-  // add from edit message
-  const onSubmit = (data: MessageFormType) => {
-    if (data.isReminders === "yes" && data.reminders?.length === 0) {
-      form.setValue("isReminders", "no");
-    }
+  const onSubmit = (formData: MessageFormType) => {
+    const data = validateMessageForm(formData);
 
     toast({
-      title: "You submitted the following values:",
-      description: (
-        <pre className="mt-2 w-[340px] rounded-md bg-slate-950 p-4">
-          <code className="text-white">{JSON.stringify(data, null, 2)}</code>
-        </pre>
-      ),
+      title: "Updating Message",
+      description: "Please wait while we update your message.",
     });
+
+    mutate(data);
   };
 
   const [parent] = useAutoAnimate();
@@ -143,22 +160,55 @@ export default function Group({
           ref={parent}
         >
           <MessageSettings form={form} />
+          <FormInput<typeof messageFormSchema>
+            control={form.control}
+            name="subject"
+            label="Subject (optional)"
+            description="Email subject - recommended if sending email"
+            placeholder="Enter a subject"
+          />
           <FormTextarea
             control={form.control}
-            name="message"
+            name="content"
             label="Message"
             description="This message will be sent to all selected group members"
             placeholder="Enter a message"
             required={true}
           />
-          <Button
-            type="submit"
-            disabled={!form.formState.isDirty || !form.formState.isValid}
-          >
-            {form.watch("isScheduled") === "yes"
-              ? "Schedule Message"
-              : "Send Message"}
-          </Button>
+          {isActiveConnections ? (
+            <div className="flex justify-between">
+              <Button
+                type="submit"
+                variant="outline"
+                onClick={() => form.setValue("status", "draft")}
+              >
+                Save as Draft
+              </Button>
+              <Button
+                type="submit"
+                disabled={
+                  !(isTableDirty || form.formState.isDirty) ||
+                  !form.formState.isValid
+                }
+              >
+                {form.watch("isScheduled") === "yes"
+                  ? "Schedule Message"
+                  : "Send Message"}
+              </Button>
+            </div>
+          ) : (
+            <Link href="settings">
+              <Button
+                type="button"
+                onClick={(e) => e.preventDefault()}
+                variant={"destructive"}
+                disabled={true}
+                className="w-full"
+              >
+                You must have at least one active connection to send a message.
+              </Button>
+            </Link>
+          )}
           <div className="border-b dark:border-stone-500 dark:border-opacity-20" />
           <div>
             <div>
@@ -207,110 +257,155 @@ export const getServerSideProps = async (
   };
 };
 
-export const getGroupMembersColumns = (
-  handleDeleteMember: (memberId: string) => void,
-): ColumnDef<MemberBaseContact>[] => [
-  {
-    id: "select",
-    header: ({ table }) => (
-      <Checkbox
-        checked={
-          table.getIsAllPageRowsSelected() ||
-          (table.getIsSomePageRowsSelected() && "indeterminate")
-        }
-        onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-        aria-label="Select all"
-        name="select-all"
-        disabled={table.getRowCount() === 0}
-      />
-    ),
-    cell: ({ row }) => {
-      return (
+const getMemberRecipientsColumns = ({
+  form,
+  setIsTableDirty,
+  handleDeleteMember,
+}: {
+  form: UseFormReturn<MessageFormType>;
+  setIsTableDirty: React.Dispatch<React.SetStateAction<boolean>>;
+  handleDeleteMember: (memberId: string) => void;
+}): ColumnDef<MemberWithContact>[] => {
+  return [
+    {
+      id: "select",
+      header: ({ table }) => (
         <Checkbox
-          checked={row.getIsSelected()}
-          onCheckedChange={(value) => row.toggleSelected(!!value)}
-          aria-label="Select row"
-          name="select-row"
-          disabled={!row.original.contact.phone && !row.original.contact.email}
-        />
-      );
-    },
-    enableSorting: false,
-    enableHiding: false,
-  },
-  {
-    accessorKey: "id",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="ID" />
-    ),
-  },
-  {
-    accessorKey: "contact.name",
-    id: "name",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Name" />
-    ),
-  },
-  {
-    accessorKey: "contact.email",
-    id: "email",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Email" />
-    ),
-  },
-  {
-    accessorKey: "contact.phone",
-    id: "phone",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Phone" />
-    ),
-    cell: ({ row }) => {
-      const phoneString = row.original.contact?.phone;
-      if (!phoneString) return null;
-
-      const phone = parsePhoneNumber(phoneString);
-      return phone ? phone.formatNational() : phoneString;
-    },
-  },
-  {
-    accessorKey: "memberNotes",
-    id: "notes",
-    header: ({ column }) => (
-      <DataTableColumnHeader column={column} title="Notes" className="flex-1" />
-    ),
-    cell: ({ row }) => <HoverableCell value={row.original.contact?.notes} />,
-  },
-  {
-    id: "actions",
-    enableSorting: false,
-    enableHiding: false,
-    cell: ({ row }) => (
-      <DataTableRowActions>
-        <DropdownMenuItem
-          onClick={async () => {
-            await navigator.clipboard.writeText(row.getValue<string>("id"));
-
-            toast({
-              title: "Member ID copied",
-              description: `member ID "${row.getValue<string>("id")}" has been copied to your clipboard.`,
-            });
+          checked={
+            table.getIsAllPageRowsSelected() ||
+            (table.getIsSomePageRowsSelected() && "indeterminate")
+          }
+          onCheckedChange={(value) => {
+            table.toggleAllPageRowsSelected(!!value);
+            form.setValue(
+              "recipients",
+              Object.keys(form.getValues("recipients")).reduce(
+                (acc, key) => ({ ...acc, [key]: !!value }),
+                {},
+              ),
+            );
+            setIsTableDirty(true);
           }}
-          className="w-48"
-        >
-          Copy member ID
-          <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
-        </DropdownMenuItem>
-        <DropdownMenuSeparator />
-        <Link href={`/contact/${row.original.contact.id}`}>
-          <DropdownMenuItem>View contact details</DropdownMenuItem>
-        </Link>
-        <DropdownMenuItem
-          onClick={() => handleDeleteMember(row.getValue<string>("id"))}
-        >
-          Remove from group
-          <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
-        </DropdownMenuItem>
-      </DataTableRowActions>
-    ),
-  },
-];
+          aria-label="Select all"
+          name="select-all"
+          disabled={table.getRowCount() === 0}
+        />
+      ),
+      cell: ({ row }) => {
+        return (
+          <Checkbox
+            checked={row.getIsSelected()}
+            onCheckedChange={(value) => {
+              row.toggleSelected(!!value);
+              form.setValue("recipients", {
+                ...form.getValues("recipients"),
+                [row.original.id]: !!value,
+              });
+              setIsTableDirty(true);
+            }}
+            aria-label="Select row"
+            name="select-row"
+            disabled={
+              !row.original.contact.phone && !row.original.contact.email
+            }
+          />
+        );
+      },
+      enableSorting: false,
+      enableHiding: false,
+    },
+    {
+      accessorKey: "id",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="ID" />
+      ),
+    },
+    {
+      accessorKey: "contact.name",
+      id: "name",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Name" />
+      ),
+    },
+    {
+      accessorKey: "contact.email",
+      id: "email",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Email" />
+      ),
+    },
+    {
+      accessorKey: "contact.phone",
+      id: "phone",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Phone" />
+      ),
+      cell: ({ row }) => {
+        const phoneString = row.original.contact?.phone;
+        if (!phoneString) return null;
+
+        const phone = parsePhoneNumber(phoneString);
+        return phone ? phone.formatNational() : phoneString;
+      },
+    },
+    {
+      accessorKey: "memberNotes",
+      id: "notes",
+      header: ({ column }) => (
+        <DataTableColumnHeader
+          column={column}
+          title="Notes"
+          className="flex-1"
+        />
+      ),
+      cell: ({ row }) => <HoverableCell value={row.original.memberNotes} />,
+    },
+    {
+      id: "actions",
+      enableSorting: false,
+      enableHiding: false,
+      cell: ({ row }) => (
+        <DataTableRowActions>
+          <DropdownMenuItem
+            onClick={async () => {
+              await navigator.clipboard.writeText(row.getValue<string>("id"));
+
+              toast({
+                title: "Copied member ID",
+                description: `Member ID ${row.getValue<string>("id")} has been copied to your clipboard`,
+              });
+            }}
+            className="w-48"
+          >
+            Copy member ID
+            <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuItem
+            onClick={async () => {
+              await navigator.clipboard.writeText(row.original.contact.id);
+
+              toast({
+                title: "Copied contact ID",
+                description: `Contact ID ${row.original.contact.id} has been copied to your clipboard`,
+              });
+            }}
+            className="w-48"
+          >
+            Copy contact ID
+            <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
+          </DropdownMenuItem>
+          <DropdownMenuSeparator />
+          <Link href={`/contact/${row.original.contact.id}`}>
+            <DropdownMenuItem>View contact details</DropdownMenuItem>
+          </Link>
+          <DropdownMenuItem
+            onClick={() => handleDeleteMember(row.getValue<string>("id"))}
+          >
+            Remove from group
+            <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+          </DropdownMenuItem>
+        </DataTableRowActions>
+      ),
+    },
+  ];
+};
