@@ -115,7 +115,7 @@ export default function Contact({ contactId }: ContactProps) {
                 <Fragment key={id}>
                   <Link
                     href={`/group/${group?.id}`}
-                    className="flex items-center gap-2 rounded-md p-2"
+                    className="flex items-center gap-3 rounded-md p-2"
                   >
                     <Avatar>
                       <AvatarImage
@@ -132,10 +132,10 @@ export default function Contact({ contactId }: ContactProps) {
                         {group.members.length} members
                       </div>
                       {!!memberNotes && (
-                        <div className="flex gap-1 text-xs text-stone-500">
-                          <span className="font-semibold">Notes:</span>
-                          <span>{truncateText(memberNotes ?? "", 30)}</span>
-                        </div>
+                        <p className="text-xs text-stone-500">
+                          <span className="pr-1 font-semibold">Notes:</span>
+                          {memberNotes}
+                        </p>
                       )}
                       {/* {!!memberNotes ? (
                       <HoverCard>
