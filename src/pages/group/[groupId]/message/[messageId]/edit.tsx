@@ -396,21 +396,21 @@ export const getSnapshotRecipientsColumns = ({
       ),
     },
     {
-      accessorKey: "contact.name",
+      accessorKey: "member.contact.name",
       id: "name",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Name" />
       ),
     },
     {
-      accessorKey: "contact.email",
+      accessorKey: "member.contact.email",
       id: "email",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Email" />
       ),
     },
     {
-      accessorKey: "contact.phone",
+      accessorKey: "member.contact.phone",
       id: "phone",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Phone" />

@@ -223,21 +223,21 @@ const getGroupMembersColumns = (
     ),
   },
   {
-    accessorKey: "contact.name",
+    accessorKey: "member.contact.name",
     id: "name",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Name" />
     ),
   },
   {
-    accessorKey: "contact.email",
+    accessorKey: "member.contact.email",
     id: "email",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Email" />
     ),
   },
   {
-    accessorKey: "contact.phone",
+    accessorKey: "member.contact.phone",
     id: "phone",
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Phone" />
@@ -256,9 +256,7 @@ const getGroupMembersColumns = (
     header: ({ column }) => (
       <DataTableColumnHeader column={column} title="Notes" className="flex-1" />
     ),
-    cell: ({ row }) => (
-      <HoverableCell value={row.original.member.contact?.notes} />
-    ),
+    cell: ({ row }) => <HoverableCell value={row.original.memberNotes} />,
   },
   {
     id: "actions",
