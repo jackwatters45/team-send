@@ -38,6 +38,12 @@ export default function CreateGroup() {
       image: "",
       members: [createNewMember()],
       addedGroupIds: [],
+      useSMS: false,
+      "change-global-sms": false,
+      useEmail: false,
+      "change-global-email": false,
+      useGroupMe: false,
+      groupMeId: "",
     },
   });
 
@@ -80,7 +86,7 @@ export default function CreateGroup() {
       description={"Add members to your group and send them messages."}
     >
       <Form {...form}>
-        <form onSubmit={onSubmit} className="w-full">
+        <form onSubmit={onSubmit} className="flex w-full flex-col gap-16">
           <section className="flex flex-col-reverse items-center lg:flex-row lg:justify-between lg:gap-12">
             <div className="flex w-full  flex-col gap-8 px-4 py-4  sm:px-0 lg:max-w-lg">
               <FormInput<typeof createGroupSchema>
@@ -97,6 +103,7 @@ export default function CreateGroup() {
                 label="Name"
                 placeholder="Enter a Group Name"
                 required={true}
+                autoComplete="off"
               />
               <FormInput<typeof createGroupSchema>
                 control={form.control}
@@ -143,7 +150,7 @@ export default function CreateGroup() {
               </div>
             </div>
           </section>
-          <section className="flex flex-col gap-6 pt-16">
+          <section className="flex flex-col gap-6">
             <GroupMembersFormContent
               title={"Add Members"}
               form={form as unknown as GroupMembersFormReturn}
