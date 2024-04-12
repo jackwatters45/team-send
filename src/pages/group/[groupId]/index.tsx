@@ -116,7 +116,7 @@ export default function GroupSendMessage({
     },
   });
 
-  const { mutate } = api.message.testSend.useMutation({
+  const { mutate } = api.message.send.useMutation({
     onSuccess: (data) => {
       toast({
         title: "Message sent",

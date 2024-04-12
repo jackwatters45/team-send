@@ -11,14 +11,14 @@ import { TRPCClientError } from "@trpc/client";
 import Link from "next/link";
 import { parsePhoneNumber } from "libphonenumber-js";
 import { type UseFormReturn } from "react-hook-form";
+import type { Reminder } from "@prisma/client";
 import type { ColumnDef } from "@tanstack/react-table";
 
 import type { MemberSnapshotWithContact } from "@/server/api/routers/member";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { getInitialSelectedMembersSnapshot } from "@/lib/utils";
 import { api } from "@/utils/api";
-import { type Reminder, defaultReminder } from "@/schemas/reminderSchema.ts";
-
+import { defaultReminder } from "@/schemas/reminderSchema.ts";
 import { getServerAuthSession } from "@/server/auth";
 import useDataTable from "@/hooks/useDataTable";
 import { validateMessageForm } from "@/lib/utils";
@@ -158,7 +158,7 @@ export default function EditMessage({
   //   },
   // });
 
-  const { mutate } = api.message.testSend.useMutation({
+  const { mutate } = api.message.send.useMutation({
     onSuccess: (data) => {
       toast({
         title: "Message sent",

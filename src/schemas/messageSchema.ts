@@ -1,17 +1,22 @@
 import { z } from "zod";
 import { reminderSchema } from "./reminderSchema.ts";
 
+const messageStatus = ["draft", "scheduled", "sent", "failed"] as const;
+
+const messagePeriod = ["years", "months", "weeks", "days"] as const;
+export type MessagePeriod = (typeof messagePeriod)[number];
+
 export const messageFormSchema = z.object({
   id: z.string().optional(),
   groupId: z.string(),
-  status: z.enum(["draft", "scheduled", "sent", "failed"]),
+  status: z.enum(messageStatus),
   content: z.string().max(500).min(1),
   subject: z.string().max(100).nullish(),
   isScheduled: z.enum(["no", "yes"]),
   scheduledDate: z.date().nullish(),
   isRecurring: z.enum(["no", "yes"]),
   recurringNum: z.number().positive().int().max(36).nullish(),
-  recurringPeriod: z.enum(["years", "months", "weeks", "days"]).nullish(),
+  recurringPeriod: z.enum(messagePeriod).nullish(),
   isReminders: z.enum(["no", "yes"]),
   reminders: z.array(reminderSchema).max(6).nullish(),
   saveRecipientState: z.boolean(),
