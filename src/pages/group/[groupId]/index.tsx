@@ -29,7 +29,7 @@ import { Form, FormDescription } from "@/components/ui/form";
 import { MessageSettings } from "@/components/group/MessageSettings";
 import { Button } from "@/components/ui/button";
 import GroupMembersTable from "@/components/group/GroupMembersTable";
-import { toast } from "@/components/ui/use-toast";
+import { toast, toastWithLoading } from "@/components/ui/use-toast";
 import {
   CheckboxInput,
   FormInput,
@@ -131,10 +131,24 @@ export default function GroupSendMessage({
   const onSubmit = (formData: MessageFormType) => {
     const data = validateMessageForm(formData);
 
-    // toast({
-    //   title: "Updating Message",
-    //   description: "Please wait while we update your message.",
-    // });
+    const title =
+      data.status === "scheduled"
+        ? "Scheduling Message"
+        : data.status === "draft"
+          ? "Saving Draft"
+          : "Sending Message";
+
+    const description =
+      data.status === "scheduled"
+        ? "Your message is being scheduled"
+        : data.status === "draft"
+          ? "Your message is being saved as a draft"
+          : "Your message is being sent";
+
+    toastWithLoading({
+      title: title,
+      description: description,
+    });
 
     mutate(data);
   };
@@ -181,6 +195,10 @@ export default function GroupSendMessage({
                 type="submit"
                 variant="outline"
                 onClick={() => form.setValue("status", "draft")}
+                disabled={
+                  !(isTableDirty || form.formState.isDirty) ||
+                  !form.formState.isValid
+                }
               >
                 Save as Draft
               </Button>
