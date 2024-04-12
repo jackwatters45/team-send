@@ -332,6 +332,106 @@ export const messageRouter = createTRPCRouter({
         }
       },
     ),
+  sendExisting: protectedProcedure
+    .input(z.object({ messageId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      try {
+        await useRateLimit(userId);
+
+        const user = await ctx.db.user.findUnique({
+          where: { id: userId },
+          include: {
+            emailConfig: true,
+            smsConfig: true,
+            groupMeConfig: true,
+          },
+        });
+
+        if (!user) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+          });
+        }
+
+        const existingMessage = await ctx.db.message.findUnique({
+          where: { id: input.messageId, createdById: userId },
+          include: {
+            recipients: {
+              include: { member: { include: { contact: true } } },
+            },
+            reminders: true,
+          },
+        });
+
+        if (!existingMessage) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: `Message with id "${input.messageId}" not found`,
+          });
+        }
+
+        if (existingMessage?.status === "sent") {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Message has already been sent",
+          });
+        }
+
+        const message = await ctx.db.message.update({
+          where: { id: input.messageId },
+          data: { status: "sent", sendAt: new Date() },
+          include: {
+            recipients: { include: { member: { include: { contact: true } } } },
+          },
+        });
+
+        // send message
+        try {
+          const emailConfig = user.emailConfig;
+          if (!!emailConfig) {
+            await sendEmail({
+              emailConfig: emailConfig,
+              recipients: message.recipients,
+              message: message,
+            });
+          }
+
+          const smsConfig = user.smsConfig;
+          if (!!smsConfig) {
+            await sendSMS({
+              smsConfig: smsConfig,
+              recipients: message.recipients,
+              message: message,
+            });
+          }
+
+          // TODO cron/schedule shit
+          // TODO send groupme
+          const groupMeConfig = user.groupMeConfig;
+          if (!!groupMeConfig) {
+            await sendGroupMe({
+              groupMeConfig: groupMeConfig,
+              recipients: message.recipients,
+              message: message,
+            });
+          }
+        } catch (error) {
+          await ctx.db.message.update({
+            where: { id: message.id },
+            data: { status: "failed" },
+          });
+
+          throw handleError(error);
+        }
+
+        return message;
+      } catch (err) {
+        throw handleError(err);
+      }
+    }),
+  // TODO cron/schedule
   send: protectedProcedure
     .input(messageInputSchema)
     .mutation(
@@ -419,45 +519,45 @@ export const messageRouter = createTRPCRouter({
             body: message,
           });
 
-          return message;
           // send message
-          try {
-            const emailConfig = user.emailConfig;
-            if (!!emailConfig) {
-              await sendEmail({
-                emailConfig: emailConfig,
-                recipients: messageRecipients,
-                message: message,
-              });
-            }
+          // try {
+          //   const emailConfig = user.emailConfig;
+          //   if (!!emailConfig) {
+          //     await sendEmail({
+          //       emailConfig: emailConfig,
+          //       recipients: messageRecipients,
+          //       message: message,
+          //     });
+          //   }
 
-            const smsConfig = user.smsConfig;
-            if (!!smsConfig) {
-              await sendSMS({
-                smsConfig: smsConfig,
-                recipients: messageRecipients,
-                message: message,
-              });
-            }
+          //   const smsConfig = user.smsConfig;
+          //   if (!!smsConfig) {
+          //     await sendSMS({
+          //       smsConfig: smsConfig,
+          //       recipients: messageRecipients,
+          //       message: message,
+          //     });
+          //   }
 
-            // TODO cron/schedule shit
-            // TODO send groupme
-            const groupMeConfig = user.groupMeConfig;
-            if (!!groupMeConfig) {
-              await sendGroupMe({
-                groupMeConfig: groupMeConfig,
-                recipients: messageRecipients,
-                message: message,
-              });
-            }
-          } catch (error) {
-            await ctx.db.message.update({
-              where: { id: message.id },
-              data: { status: "failed" },
-            });
+          //   // TODO cron/schedule shit
+          //   // TODO send groupme
+          //   const groupMeConfig = user.groupMeConfig;
+          //   if (!!groupMeConfig) {
+          //     await sendGroupMe({
+          //       groupMeConfig: groupMeConfig,
+          //       recipients: messageRecipients,
+          //       message: message,
+          //     });
+          //   }
+          // } catch (error) {
+          //   await ctx.db.message.update({
+          //     where: { id: message.id },
+          //     data: { status: "failed" },
+          //   });
 
-            throw handleError(error);
-          }
+          //   throw handleError(error);
+          // }
+
           return message;
         } catch (err) {
           throw handleError(err);
