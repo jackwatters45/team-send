@@ -414,8 +414,8 @@ export const messageRouter = createTRPCRouter({
           });
 
           const res = await qstashClient.publishJSON({
-            url: "https://jackwatters.requestcatcher.com/",
-            // url: `${env.BASE_URL}/api/sendMessage`,
+            // url: "https://jackwatters.requestcatcher.com/",
+            url: `${env.BASE_URL}/api/sendMessage`,
             body: message,
           });
 

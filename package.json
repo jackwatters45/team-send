@@ -53,6 +53,7 @@
     "@trpc/next": "^10.45.2",
     "@trpc/react-query": "^10.45.2",
     "@trpc/server": "^10.45.2",
+    "@upstash/qstash": "^2.4.3",
     "@upstash/ratelimit": "^1.0.1",
     "@upstash/redis": "^1.28.4",
     "class-variance-authority": "^0.7.0",

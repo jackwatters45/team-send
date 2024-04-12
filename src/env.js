@@ -7,6 +7,7 @@ export const env = createEnv({
    *
    */
   server: {
+    BASE_URL: z.string(),
     DATABASE_URL: z
       .string()
       .url()
@@ -45,6 +46,7 @@ export const env = createEnv({
 
     UPSTASH_REDIS_REST_URL: z.string().url(),
     UPSTASH_REDIS_REST_TOKEN: z.string(),
+    QSTASH_TOKEN: z.string(),
 
     TWILIO_ACCOUNT_SID: z.string().min(34).max(34),
     TWILIO_AUTH_TOKEN: z.string().min(32).max(32),
@@ -71,6 +73,7 @@ export const env = createEnv({
         message:
           "Redirect URI should start with https://oauth.groupme.com/oauth/authorize?client_id=",
       }),
+    NEXT_PUBLIC_API_BASE_URL: z.string().url(),
   },
 
   /**
@@ -78,6 +81,7 @@ export const env = createEnv({
    * middlewares) or client-side so we need to destruct manually.
    */
   runtimeEnv: {
+    BASE_URL: process.env.BASE_URL,
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
@@ -100,6 +104,7 @@ export const env = createEnv({
 
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
+    QSTASH_TOKEN: process.env.QSTASH_TOKEN,
 
     TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
     TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
@@ -108,6 +113,8 @@ export const env = createEnv({
     GROUPME_ACCESS_TOKEN: process.env.GROUPME_ACCESS_TOKEN,
     NEXT_PUBLIC_GROUPME_REDIRECT_URI:
       process.env.NEXT_PUBLIC_GROUPME_REDIRECT_URI,
+
+    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially
