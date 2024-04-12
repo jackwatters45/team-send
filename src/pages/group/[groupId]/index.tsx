@@ -87,13 +87,13 @@ export default function GroupSendMessage({
       subject: "",
       status: "sent",
       isScheduled: "no",
-      scheduledDate: undefined,
+      scheduledDate: null,
       isRecurring: "no",
       recurringNum: 1,
       recurringPeriod: "months",
       isReminders: "no",
       reminders: [defaultReminder],
-      saveRecipientState: true,
+      saveRecipientState: false,
       recipients: getInitialSelectedMembers(data?.members ?? []),
     },
   });
@@ -131,10 +131,10 @@ export default function GroupSendMessage({
   const onSubmit = (formData: MessageFormType) => {
     const data = validateMessageForm(formData);
 
-    toast({
-      title: "Updating Message",
-      description: "Please wait while we update your message.",
-    });
+    // toast({
+    //   title: "Updating Message",
+    //   description: "Please wait while we update your message.",
+    // });
 
     mutate(data);
   };

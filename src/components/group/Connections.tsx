@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -112,7 +111,6 @@ export function GroupMeConnectionNewGroup({
 }) {
   const [parent] = useAutoAnimate();
 
-  const [isGroupMeId, setIsGroupMeId] = useState(false);
   const groupMeIdForm = useForm<GroupMeIdForm>({
     resolver: zodResolver(groupMeIdFormSchema),
     defaultValues: { groupMeIdInput: "" },
@@ -127,7 +125,6 @@ export function GroupMeConnectionNewGroup({
           variant: "destructive",
         });
       } else {
-        setIsGroupMeId(true);
         groupMeIdForm.reset();
         form.setValue("groupMeId", data.id);
         form.setValue("useGroupMe", true);
@@ -163,27 +160,24 @@ export function GroupMeConnectionNewGroup({
         label="GroupMe"
         description="Send GroupMe messages to a connected GroupMe group."
         variant="ghost"
-        disabled={!isGroupMeId}
+        disabled={!form.watch("groupMeId")}
       />
       <div className="px-3 pb-2">
         <Separator />
       </div>
       <div className="px-4 pb-4">
-        {isGroupMeId ? (
+        {form.watch("groupMeId") ? (
           <div className="space-y-3">
             <div className="pb-[1px] pt-[3px] text-sm font-medium">
               Group ID
             </div>
             <div className="flex h-10 w-full items-center rounded-md border border-stone-200 bg-white py-2 pl-3 pr-2 text-start text-sm hover:bg-white dark:border-stone-800 dark:bg-stone-900 dark:hover:bg-stone-900">
-              <div className="flex-1">{form.getValues("groupMeId")}</div>
+              <div className="flex-1">{form.watch("groupMeId")}</div>
               <Button
                 type="button"
                 className="h-fit p-1"
                 variant={"outline"}
-                onClick={() => {
-                  // setIsGroupMeId(false);
-                  form.resetField("groupMeId");
-                }}
+                onClick={() => form.resetField("groupMeId")}
               >
                 <MinusCircledIcon className="h-5 w-5 text-stone-500 dark:text-stone-400" />
               </Button>
@@ -200,10 +194,11 @@ export function GroupMeConnectionNewGroup({
             name="groupMeIdInput"
             render={({ field }) => (
               <FormItem>
-                <FormLabel>Group ID</FormLabel>
+                <FormLabel htmlFor="groupMeIdInput">Group ID</FormLabel>
                 <div className="flex py-1">
                   <Input
                     {...field}
+                    id="groupMeIdInput"
                     type="number"
                     placeholder="Enter the Group's ID"
                   />

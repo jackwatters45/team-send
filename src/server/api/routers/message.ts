@@ -1,7 +1,13 @@
 import { z } from "zod";
 import debug from "debug";
 import nodemailer from "nodemailer";
-import type { MemberSnapshot } from "@prisma/client";
+import type {
+  EmailConfig,
+  GroupMeConfig,
+  Message,
+  Reminder,
+  SmsConfig,
+} from "@prisma/client";
 import Client from "twilio";
 
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -10,8 +16,14 @@ import { useRateLimit } from "@/server/helpers/rateLimit";
 import { handleError } from "@/server/helpers/handleError";
 import { env } from "@/env";
 import { messageInputSchema } from "@/schemas/messageSchema";
+import type { MemberSnapshotWithContact } from "./member";
 
 const log = debug("team-send:api:message");
+
+type MessageWithContacts = Message & {
+  recipients: MemberSnapshotWithContact[];
+  reminders: Reminder[];
+};
 
 export const messageRouter = createTRPCRouter({
   getMessageById: protectedProcedure
@@ -43,7 +55,7 @@ export const messageRouter = createTRPCRouter({
     .mutation(
       async ({
         ctx,
-        input: { reminders, saveRecipientState, recipients, ...data },
+        input: { reminders: _, saveRecipientState, recipients, ...data },
       }) => {
         if (!data.id) {
           throw new TRPCError({
@@ -282,15 +294,18 @@ export const messageRouter = createTRPCRouter({
             });
           }
 
-          const existingMessage = await ctx.db.message.findFirst({
-            where: { id: input.id },
-            include: {
-              recipients: {
-                include: { member: { include: { contact: true } } },
+          let existingMessage: MessageWithContacts | null = null;
+          if (input.id) {
+            existingMessage = await ctx.db.message.findUnique({
+              where: { id: input.id, createdById: userId },
+              include: {
+                recipients: {
+                  include: { member: { include: { contact: true } } },
+                },
+                reminders: true,
               },
-              reminders: true,
-            },
-          });
+            });
+          }
 
           if (existingMessage?.status === "sent") {
             throw new TRPCError({
@@ -299,259 +314,268 @@ export const messageRouter = createTRPCRouter({
             });
           }
 
-          const result = await ctx.db.$transaction(async (prisma) => {
-            // create/update message
-            let message;
-            if (!input?.id) {
-              message = await prisma.message.create({
-                data: {
-                  ...input,
-                  sendAt: new Date(),
-                  group: { connect: { id: groupId } },
-                  sentBy: { connect: { id: userId } },
-                  createdBy: { connect: { id: userId } },
-                  lastUpdatedBy: { connect: { id: userId } },
-                },
-              });
-            } else {
-              message = await prisma.message.update({
-                where: { id: input.id, createdById: userId },
-                data: { status: "sent", sendAt: new Date() },
-              });
-            }
-
-            // create/update recipients
-            const messageRecipients: MemberSnapshot[] = [];
-            for (const [memberId, isRecipient] of Object.entries(recipients)) {
-              if (!existingMessage) {
-                const snapshot = await prisma.memberSnapshot.create({
+          const { message, messageRecipients } = await ctx.db.$transaction(
+            async (prisma) => {
+              // create/update message
+              let message: Message;
+              if (!input?.id) {
+                message = await prisma.message.create({
                   data: {
-                    isRecipient,
-                    message: { connect: { id: message.id } },
-                    member: { connect: { id: memberId } },
+                    ...input,
+                    sendAt: new Date(),
+                    group: { connect: { id: groupId } },
+                    sentBy: { connect: { id: userId } },
+                    createdBy: { connect: { id: userId } },
+                    lastUpdatedBy: { connect: { id: userId } },
                   },
                 });
-                if (isRecipient) messageRecipients.push(snapshot);
               } else {
-                const snapshot = await prisma.memberSnapshot.update({
-                  where: { id: memberId },
-                  data: { isRecipient },
-                });
-                if (isRecipient) messageRecipients.push(snapshot);
-              }
-
-              if (saveRecipientState) {
-                await prisma.member.update({
-                  where: { id: memberId },
-                  data: { isRecipient },
+                message = await prisma.message.update({
+                  where: { id: input.id, createdById: userId },
+                  data: { status: "sent", sendAt: new Date() },
                 });
               }
-            }
 
-            if (!messageRecipients.length) {
-              throw new TRPCError({
-                code: "BAD_REQUEST",
-                message: "Message must have at least one recipient",
-              });
-            }
-
-            // create/update reminders
-            if (!reminders?.length) {
-              await prisma.reminder.deleteMany({
-                where: { messageId: message.id },
-              });
-            } else if (!existingMessage?.reminders?.length) {
-              await Promise.all(
-                reminders.map((reminder) => {
-                  return prisma.reminder.create({
+              // create/update recipients
+              const messageRecipients: MemberSnapshotWithContact[] = [];
+              for (const [memberId, isRecipient] of Object.entries(
+                recipients,
+              )) {
+                if (!existingMessage) {
+                  const snapshot = await prisma.memberSnapshot.create({
                     data: {
-                      ...reminder,
+                      isRecipient,
                       message: { connect: { id: message.id } },
+                      member: { connect: { id: memberId } },
                     },
+                    include: { member: { include: { contact: true } } },
                   });
-                }),
-              );
-            } else {
-              const remindersToDelete = existingMessage.reminders
-                .filter((r) => !reminders.some((newR) => newR.id === r.id))
-                .map((r) => r.id);
+                  if (isRecipient) messageRecipients.push(snapshot);
+                } else {
+                  const snapshot = await prisma.memberSnapshot.update({
+                    where: { id: memberId },
+                    data: { isRecipient },
+                    include: { member: { include: { contact: true } } },
+                  });
+                  if (isRecipient) messageRecipients.push(snapshot);
+                }
 
-              if (!!remindersToDelete.length) {
-                await prisma.reminder.deleteMany({
-                  where: { id: { in: remindersToDelete } },
+                if (saveRecipientState) {
+                  await prisma.member.update({
+                    where: { id: memberId },
+                    data: { isRecipient },
+                  });
+                }
+              }
+
+              if (!messageRecipients.length) {
+                throw new TRPCError({
+                  code: "BAD_REQUEST",
+                  message: "Message must have at least one recipient",
                 });
               }
 
-              await Promise.all(
-                reminders.map((reminder) => {
-                  if (!reminder.id) {
+              // create/update reminders
+              if (!reminders?.length) {
+                await prisma.reminder.deleteMany({
+                  where: { messageId: message.id },
+                });
+              } else if (!existingMessage?.reminders?.length) {
+                await Promise.all(
+                  reminders.map((reminder) => {
                     return prisma.reminder.create({
                       data: {
                         ...reminder,
-                        message: { connect: { id: message.id } },
+                        message: { connect: { id: message?.id } },
                       },
                     });
-                  } else {
-                    return prisma.reminder.update({
-                      where: { id: reminder.id },
-                      data: reminder,
-                    });
-                  }
-                }),
-              );
-            }
+                  }),
+                );
+              } else {
+                const remindersToDelete = existingMessage.reminders
+                  .filter((r) => !reminders.some((newR) => newR.id === r.id))
+                  .map((r) => r.id);
 
-            // TODO cron shit
+                if (!!remindersToDelete.length) {
+                  await prisma.reminder.deleteMany({
+                    where: { id: { in: remindersToDelete } },
+                  });
+                }
 
-            // send email
-            const emailConfig = user.emailConfig;
-            if (!!emailConfig) {
-              const { accessToken, refreshToken } = emailConfig;
-              if (!user.email || !accessToken || !refreshToken) {
-                throw new TRPCError({
-                  code: "BAD_REQUEST",
-                  message:
-                    "Account is not properly configured to send email messages",
-                });
+                await Promise.all(
+                  reminders.map((reminder) => {
+                    if (!reminder.id) {
+                      return prisma.reminder.create({
+                        data: {
+                          ...reminder,
+                          message: { connect: { id: message?.id } },
+                        },
+                      });
+                    } else {
+                      return prisma.reminder.update({
+                        where: { id: reminder.id },
+                        data: reminder,
+                      });
+                    }
+                  }),
+                );
               }
 
-              const transporter = nodemailer.createTransport({
-                service: "gmail",
-                auth: {
-                  type: "oauth2",
-                  user: user.email,
-                  clientId: env.GOOGLE_ID_DEV,
-                  clientSecret: env.GOOGLE_SECRET_DEV,
-                  refreshToken: refreshToken,
-                  accessToken: accessToken,
-                },
-              });
+              return { message, messageRecipients };
+            },
+          );
 
-              // TODO: get working + specific email shit
-              await transporter.sendMail({
-                from: user.email,
-                to: "jack.watters@me.com",
-                subject: "Test Email",
-                text: "existingMessage.content",
+          // TODO cron shit
+
+          try {
+            const emailConfig = user.emailConfig;
+            if (!!emailConfig) {
+              await sendEmail({
+                emailConfig: emailConfig,
+                recipients: messageRecipients,
+                message: message,
               });
             }
 
             // TODO send sms
-            if (!!user.smsConfig) {
-              const { accountSid, authToken, phoneNumber } = user.smsConfig;
-              const client = Client(accountSid, authToken);
-
-              const smsMessage = await client.messages.create({
-                from: phoneNumber,
-                to: "+19544949167",
-                body: message.content,
+            const smsConfig = user.smsConfig;
+            if (!!smsConfig) {
+              await sendSMS({
+                smsConfig: smsConfig,
+                recipients: messageRecipients,
+                message: message,
               });
-
-              log(smsMessage);
             }
 
             // TODO send groupme
-            if (!!user.groupMeConfig) {
-              await sendGroupMe();
+            const groupMeConfig = user.groupMeConfig;
+            if (!!groupMeConfig) {
+              await sendGroupMe({
+                groupMeConfig: groupMeConfig,
+                recipients: messageRecipients,
+                message: message,
+              });
             }
+          } catch (error) {
+            await ctx.db.message.update({
+              where: { id: message.id },
+              data: { status: "failed" },
+            });
 
-            // TODO what
-            return message;
-          });
-
-          return result;
+            throw handleError(error);
+          }
+          return message;
         } catch (err) {
-          await ctx.db.message.update({
-            where: { id: input.id, createdById: userId },
-            data: { status: "failed" },
-          });
           throw handleError(err);
         }
       },
     ),
 });
 
+async function sendEmail({
+  emailConfig,
+  recipients,
+  message,
+}: {
+  emailConfig: EmailConfig;
+  recipients: MemberSnapshotWithContact[];
+  message: Message;
+}) {
+  const { accessToken, refreshToken, email } = emailConfig;
+  if (!email || !accessToken || !refreshToken) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Account is not properly configured to send email messages",
+    });
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    auth: {
+      type: "OAuth2",
+      user: email,
+      clientId: env.GOOGLE_ID_DEV,
+      clientSecret: env.GOOGLE_SECRET_DEV,
+      refreshToken: refreshToken,
+      accessToken: accessToken,
+    },
+  });
+
+  try {
+    for (const recipient of recipients) {
+      const recipientEmail = recipient.member.contact.email;
+      if (!recipientEmail) return false;
+
+      await transporter.sendMail({
+        from: email,
+        to: "jack.watters@me.com",
+        // to: recipientEmail,
+        subject: message.subject ? message.subject : undefined,
+        text: message.content,
+      });
+    }
+  } catch (err) {
+    throw handleError(err);
+  }
+}
+
+async function sendSMS({
+  smsConfig,
+  recipients,
+  message,
+}: {
+  smsConfig: SmsConfig;
+  recipients: MemberSnapshotWithContact[];
+  message: Message;
+}) {
+  const { accountSid, authToken, phoneNumber } = smsConfig;
+  const client = Client(accountSid, authToken);
+
+  try {
+    for (const recipient of recipients) {
+      const recipientPhone = recipient.member.contact.phone;
+      if (!recipientPhone) return false;
+
+      await client.messages.create({
+        from: phoneNumber,
+        to: "+19544949167",
+        // to: recipientPhone,
+        body: message.content,
+      });
+    }
+  } catch (err) {
+    throw handleError(err);
+  }
+}
+
+async function sendGroupMe({
+  groupMeConfig,
+  recipients,
+  message,
+}: {
+  groupMeConfig: GroupMeConfig;
+  recipients: MemberSnapshotWithContact[];
+  message: Message;
+}) {
+  console.log("sendGroupMe");
+
+  const { id, accessToken, userId } = groupMeConfig;
+
+  try {
+    for (const recipient of recipients) {
+      const contact = recipient.member.contact;
+      if (!contact) return false;
+
+      log("sendGroupMe", contact, id, accessToken, userId, message);
+    }
+  } catch (err) {
+    throw handleError(err);
+  }
+}
+
 function throwMessageNotFoundError(messageId: string) {
   throw new TRPCError({
     code: "NOT_FOUND",
     message: `Message with id "${messageId}" not found`,
   });
-}
-
-// async function updateMembers({
-//   recipients,
-//   prevRecipients,
-//   prisma,
-//   saveRecipientState,
-// }: {
-//   recipients: Record<string, boolean>;
-//   prevRecipients: MemberSnapshot[] | undefined;
-//   prisma: Prisma.TransactionClient;
-//   saveRecipientState: boolean;
-// }) {
-//   if (!prevRecipients) {
-//     // create snapshots
-//     for (const [memberId, isRecipient] of Object.entries(recipients)) {
-//       await prisma.memberSnapshot.create({
-//         data: {
-//           isRecipient,
-//           member: { connect: { id: memberId } },
-//         },
-//       });
-//     }
-
-//     if (saveRecipientState) {
-//       // update members
-//     }
-//   }
-//   //
-//   // add isDraft + scheduled considerations
-//   //
-//   // TODO if existing
-//   await Promise.all(
-//     Object.entries(recipients).map(async ([memberSnapshotId, isRecipient]) => {
-//       const recipient = existingMessage?.recipients.find(
-//         (r) => r.id === memberSnapshotId,
-//       );
-
-//       if (!recipient) {
-//         throw new TRPCError({
-//           code: "INTERNAL_SERVER_ERROR",
-//         });
-//       }
-
-//       if (saveRecipientState) {
-//         await prisma.member.update({
-//           where: { id: recipient.memberId },
-//           data: { isRecipient },
-//         });
-//       }
-
-//       if (recipient?.isRecipient === isRecipient) return null;
-//       return prisma.memberSnapshot.update({
-//         where: { id: memberSnapshotId },
-//         data: { isRecipient },
-//       });
-//     }),
-//   );
-// }
-
-// async function sendEmail({
-//   emailConfig,
-//   recipients,
-//   fromEmail,
-// }: {
-//   emailConfig: EmailConfig;
-//   recipients: MemberSnapshot[] | undefined;
-//   fromEmail: string | null;
-// }) {
-
-// }
-
-async function sendSMS() {
-  console.log("sendSMS");
-}
-
-async function sendGroupMe() {
-  console.log("sendGroupMe");
 }

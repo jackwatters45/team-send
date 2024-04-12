@@ -175,13 +175,14 @@ function DateTimeInput<T extends z.ZodType>({
   name,
   label,
   description,
+  ...props
 }: SharedInputProps<T>) {
   return (
     <FormField
       control={control}
       name={name}
       render={({ field }) => (
-        <FormItem>
+        <FormItem {...props}>
           <FormLabel>{label}</FormLabel>
           <FormControl>
             <Input
@@ -190,7 +191,7 @@ function DateTimeInput<T extends z.ZodType>({
               value={
                 field.value
                   ? new Date(field.value).toISOString().slice(0, 16)
-                  : undefined
+                  : new Date().toISOString().slice(0, 16)
               }
               onChange={(e) => field.onChange(new Date(e.target.value))}
             />
@@ -265,7 +266,11 @@ function CheckboxInput<T extends z.ZodType>({
           )}
         >
           <FormControl>
-            <Checkbox checked={field.value} onCheckedChange={field.onChange} />
+            <Checkbox
+              checked={field.value}
+              onCheckedChange={field.onChange}
+              name={name}
+            />
           </FormControl>
           <div className="space-y-1 leading-none">
             <FormLabel>{label}</FormLabel>

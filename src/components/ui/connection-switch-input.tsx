@@ -65,6 +65,7 @@ export default function ConnectionSwitchInput<T extends FieldValues>({
               checked={field.value}
               onCheckedChange={field.onChange}
               disabled={disabled}
+              name={name}
             />
           </FormControl>
         </FormItem>

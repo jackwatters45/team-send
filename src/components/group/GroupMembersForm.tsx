@@ -102,6 +102,7 @@ function GroupMemberList({ form }: { form: GroupMembersFormReturn }) {
                       <Checkbox
                         checked={field.value}
                         onCheckedChange={field.onChange}
+                        name={`members.${index}.isRecipient`}
                       />
                     </FormControl>
                   </FormLabel>
