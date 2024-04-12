@@ -116,15 +116,49 @@ export default function GroupSendMessage({
     },
   });
 
-  const { mutate } = api.message.send.useMutation({
+  const { mutate: send } = api.message.send.useMutation({
     onSuccess: (data) => {
+      const title =
+        data.status === "scheduled" ? " Message Scheduled" : "Message sent";
+
+      const description =
+        data.status === "scheduled"
+          ? "Your message has been scheduled"
+          : "Your message has been sent";
+
       toast({
-        title: "Message sent",
-        description: JSON.stringify(data),
+        title: title,
+        description: description,
       });
     },
     onError: (err) => {
-      console.log("Error sending message", err);
+      const errorMessage = err.data?.zodError?.fieldErrors?.content;
+      toast({
+        title: "Error sending message",
+        description:
+          errorMessage?.[0] ??
+          err.message ??
+          "An error occurred while sending the message",
+      });
+    },
+  });
+
+  const { mutate: saveDraft } = api.message.saveDraft.useMutation({
+    onSuccess: () => {
+      toast({
+        title: "Message draft saved",
+        description: "Your message has been saved as a draft",
+      });
+    },
+    onError: (err) => {
+      const errorMessage = err?.data?.zodError?.fieldErrors?.content;
+      toast({
+        title: "Error saving draft",
+        description:
+          errorMessage?.[0] ??
+          err.message ??
+          "An error occurred while saving the draft",
+      });
     },
   });
 
@@ -150,7 +184,11 @@ export default function GroupSendMessage({
       description: description,
     });
 
-    mutate(data);
+    if (data.status === "draft") {
+      saveDraft(data);
+    } else {
+      send(data);
+    }
   };
 
   const [parent] = useAutoAnimate();

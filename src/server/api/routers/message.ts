@@ -10,7 +10,8 @@ import type {
   Reminder,
   SmsConfig,
 } from "@prisma/client";
-import Client from "twilio";
+import TwilioClient from "twilio";
+import { Client as QStashClient } from "@upstash/qstash";
 
 import type { NewReminder } from "@/schemas/reminderSchema.ts";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -265,6 +266,72 @@ export const messageRouter = createTRPCRouter({
         throw handleError(err);
       }
     }),
+  saveDraft: protectedProcedure
+    .input(messageInputSchema)
+    .mutation(
+      async ({
+        ctx,
+        input: { reminders, saveRecipientState, recipients, ...input },
+      }) => {
+        const userId = ctx.session.user.id;
+
+        try {
+          await useRateLimit(userId);
+
+          let existingMessage: MessageWithContacts | null = null;
+          if (input.id) {
+            existingMessage = await ctx.db.message.findUnique({
+              where: { id: input.id, createdById: userId },
+              include: {
+                recipients: {
+                  include: { member: { include: { contact: true } } },
+                },
+                reminders: true,
+              },
+            });
+          }
+
+          if (existingMessage?.status === "sent") {
+            throw new TRPCError({
+              code: "BAD_REQUEST",
+              message: "Message has already been sent",
+            });
+          }
+
+          const message = await ctx.db.$transaction(async (prisma) => {
+            // create/update message
+            const message = await updateMessage({
+              messageData: input,
+              prisma,
+              userId,
+            });
+
+            // create/update recipients
+            const messageRecipients = await updateRecipients({
+              messageId: message.id,
+              prisma,
+              recipients,
+              isExistingMessage: !!existingMessage,
+              saveRecipientState,
+            });
+
+            // create/update reminders
+            const updatedReminders = await updateReminders({
+              messageId: message.id,
+              reminders,
+              prisma,
+              existingReminders: existingMessage?.reminders,
+            });
+
+            return { messageRecipients, updatedReminders, ...message };
+          });
+
+          return message;
+        } catch (err) {
+          throw handleError(err);
+        }
+      },
+    ),
   send: protectedProcedure
     .input(messageInputSchema)
     .mutation(
@@ -342,6 +409,17 @@ export const messageRouter = createTRPCRouter({
             },
           );
 
+          const qstashClient = new QStashClient({
+            token: env.QSTASH_TOKEN,
+          });
+
+          const res = await qstashClient.publishJSON({
+            url: "https://jackwatters.requestcatcher.com/",
+            // url: `${env.BASE_URL}/api/sendMessage`,
+            body: message,
+          });
+
+          return message;
           // send message
           try {
             const emailConfig = user.emailConfig;
@@ -494,13 +572,15 @@ const updateReminders = async ({
   prisma: PrismaClient | Prisma.TransactionClient;
   reminders: NewReminder[] | undefined | null;
   existingReminders: Reminder[] | undefined;
-}) => {
+}): Promise<Reminder[]> => {
   if (!reminders?.length) {
     await prisma.reminder.deleteMany({
       where: { messageId: messageId },
     });
+
+    return [];
   } else if (!existingReminders?.length) {
-    await Promise.all(
+    return await Promise.all(
       reminders.map((reminder) => {
         return prisma.reminder.create({
           data: {
@@ -521,23 +601,34 @@ const updateReminders = async ({
       });
     }
 
-    await Promise.all(
-      reminders.map((reminder) => {
+    const [newReminders, updatedReminders] = reminders.reduce(
+      ([newReminders, updatedReminders], reminder) => {
         if (!reminder.id) {
-          return prisma.reminder.create({
-            data: {
-              ...reminder,
-              message: { connect: { id: messageId } },
-            },
-          });
+          newReminders.push(reminder);
         } else {
-          return prisma.reminder.update({
-            where: { id: reminder.id },
-            data: reminder,
-          });
+          updatedReminders.push(reminder);
         }
-      }),
+        return [newReminders, updatedReminders];
+      },
+      [[], []] as [NewReminder[], NewReminder[]],
     );
+
+    return await Promise.all([
+      ...newReminders.map((reminder) => {
+        return prisma.reminder.create({
+          data: {
+            ...reminder,
+            message: { connect: { id: messageId } },
+          },
+        });
+      }),
+      ...updatedReminders.map((reminder) => {
+        return prisma.reminder.update({
+          where: { id: reminder.id },
+          data: reminder,
+        });
+      }),
+    ]);
   }
 };
 
@@ -598,7 +689,7 @@ async function sendSMS({
   message: Message;
 }) {
   const { accountSid, authToken, phoneNumber } = smsConfig;
-  const client = Client(accountSid, authToken);
+  const client = TwilioClient(accountSid, authToken);
 
   try {
     for (const recipient of recipients) {
