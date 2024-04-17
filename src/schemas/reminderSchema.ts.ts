@@ -1,6 +1,20 @@
 import { z } from "zod";
 
-const reminderPeriod = ["months", "weeks", "days"] as const;
+export const reminderPeriod = [
+  "months",
+  "weeks",
+  "days",
+  "hours",
+  "minutes",
+] as const;
+
+const maxValues = {
+  days: 15,
+  weeks: 3,
+  months: 6,
+  hours: 24,
+  minutes: 59,
+} as const;
 
 export const reminderSchema = z
   .object({
@@ -10,8 +24,6 @@ export const reminderSchema = z
   })
   .refine(
     (data) => {
-      const maxValues = { days: 15, weeks: 3, months: 6 } as const;
-
       if (data.num > maxValues[data.period]) {
         return false;
       }

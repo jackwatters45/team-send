@@ -1,7 +1,7 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { type RowSelectionState } from "@tanstack/react-table";
-import type { Message } from "@prisma/client";
+import type { Message, ReminderPeriod } from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 
 import type {
@@ -153,14 +153,22 @@ export function camelCaseToSentenceCase(input: string): string {
   return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
-export function getPeriodMillis(period: Message["recurringPeriod"]) {
+export function getPeriodMillis(
+  period: Message["recurringPeriod"] | ReminderPeriod,
+) {
   switch (period) {
+    case "years":
+      return 365.25 * 24 * 60 * 60 * 1000;
     case "months":
-      return 60 * 60 * 1000;
-    case "days":
-      return 24 * 60 * 60 * 1000;
+      return 30.44 * 24 * 60 * 60 * 1000;
     case "weeks":
       return 7 * 24 * 60 * 60 * 1000;
+    case "days":
+      return 24 * 60 * 60 * 1000;
+    case "hours":
+      return 60 * 60 * 1000;
+    case "minutes":
+      return 60 * 1000;
     default:
       throw new TRPCError({
         code: "BAD_REQUEST",

@@ -5,7 +5,8 @@ import pLimit from "p-limit";
 import { db } from "../src/server/db";
 import type { GroupPreview } from "@/server/api/routers/group";
 import type { MemberWithContact } from "@/server/api/routers/member";
-import type { Contact } from "@prisma/client";
+import type { Contact, ReminderPeriod } from "@prisma/client";
+import { reminderPeriod } from "@/schemas/reminderSchema.ts";
 
 const log = debug("team-send:seed");
 
@@ -117,11 +118,8 @@ const getRandomRecurringPeriod =
     ]!;
   };
 
-const reminderPeriodOptions = ["days", "weeks", "months"] as const;
-const getRandomReminderPeriod = (): (typeof reminderPeriodOptions)[number] => {
-  return reminderPeriodOptions[
-    Math.floor(Math.random() * reminderPeriodOptions.length)
-  ]!;
+const getRandomReminderPeriod = (): ReminderPeriod => {
+  return reminderPeriod[Math.floor(Math.random() * reminderPeriod.length)]!;
 };
 
 async function createReminder({ messageId }: { messageId: string }) {

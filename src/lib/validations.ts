@@ -9,6 +9,13 @@ import type {
   MessageInputType,
 } from "@/schemas/messageSchema";
 
+export const recurMaxValues = {
+  days: 31,
+  weeks: 4,
+  months: 12,
+  years: 1,
+} as const;
+
 export function validateScheduleDate(scheduledDate: Date | null) {
   if (!scheduledDate) {
     throw new TRPCError({
@@ -50,17 +57,13 @@ export function validateRecurringData({
     });
   }
 
-  const maxValues = {
-    days: 31,
-    weeks: 4,
-    months: 12,
-    years: 1,
-  } as const;
-
-  if (recurringNum > maxValues[recurringPeriod as keyof typeof maxValues]) {
+  if (
+    recurringNum >
+    recurMaxValues[recurringPeriod as keyof typeof recurMaxValues]
+  ) {
     throw new TRPCError({
       code: "BAD_REQUEST",
-      message: `Recurring number for ${recurringPeriod} must be less than ${maxValues[recurringPeriod as keyof typeof maxValues] + 1} and greater than 0`,
+      message: `Recurring number for ${recurringPeriod} must be less than ${recurMaxValues[recurringPeriod as keyof typeof recurMaxValues] + 1} and greater than 0`,
     });
   }
 
@@ -117,10 +120,3 @@ export function validateMessageForm(
     isReminders: formData.isReminders === "yes",
   };
 }
-
-export const recurMaxValues = {
-  days: 31,
-  weeks: 4,
-  months: 12,
-  years: 1,
-} as const;
