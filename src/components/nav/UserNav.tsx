@@ -7,7 +7,6 @@ import {
   DropdownMenuItem,
   DropdownMenuLabel,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { extractInitials } from "@/lib/utils";
@@ -55,7 +54,7 @@ export default function UserNav() {
           <Link href="/account/profile">
             <DropdownMenuItem>
               Profile
-              <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut>
+              {/* <DropdownMenuShortcut>⇧⌘P</DropdownMenuShortcut> */}
             </DropdownMenuItem>
           </Link>
           {/* <Link href="/account/billing">
@@ -67,14 +66,14 @@ export default function UserNav() {
           <Link href="/account/settings">
             <DropdownMenuItem>
               Settings
-              <DropdownMenuShortcut>⇧⌘S</DropdownMenuShortcut>
+              {/* <DropdownMenuShortcut>⇧⌘S</DropdownMenuShortcut> */}
             </DropdownMenuItem>
           </Link>
         </DropdownMenuGroup>
         <DropdownMenuSeparator />
         <DropdownMenuItem onClick={handleLogout}>
           Log out
-          <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut>
+          {/* <DropdownMenuShortcut>⇧⌘Q</DropdownMenuShortcut> */}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

@@ -27,7 +27,6 @@ import {
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 import {
   DateHoverableCell,
@@ -357,7 +356,7 @@ function getHistoryTableColumns({
               }}
             >
               Copy message ID
-              <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
+              {/* <DropdownMenuShortcut>⌘C</DropdownMenuShortcut> */}
             </DropdownMenuItem>
             <DropdownMenuItem>
               <Link
@@ -372,7 +371,7 @@ function getHistoryTableColumns({
               onClick={() => handleDuplicate(row.getValue("id"))}
             >
               Duplicate message
-              <DropdownMenuShortcut>⌘D</DropdownMenuShortcut>
+              {/* <DropdownMenuShortcut>⌘D</DropdownMenuShortcut> */}
             </DropdownMenuItem>
             {row.getValue<string>("status") !== "sent" && (
               <DropdownMenuItem>

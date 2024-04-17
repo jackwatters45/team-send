@@ -3,7 +3,6 @@ import * as AlertDialogPrimitive from "@radix-ui/react-alert-dialog";
 
 import { cn } from "@/lib/utils";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { DropdownMenuShortcut } from "./dropdown-menu";
 
 const AlertDialog = AlertDialogPrimitive.Root;
 
@@ -140,7 +139,7 @@ const ConfirmDeleteDialog = ({
         variant="ghost"
       >
         {triggerText}
-        <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+        {/* <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut> */}
       </Button>
     </AlertDialogTrigger>
     <AlertDialogContent>

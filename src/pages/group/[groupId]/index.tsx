@@ -44,7 +44,6 @@ import { HoverableCell } from "@/components/ui/hover-card";
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
@@ -443,7 +442,7 @@ const getMemberRecipientsColumns = ({
             className="w-48"
           >
             Copy member ID
-            <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
+            {/* <DropdownMenuShortcut>⌘C</DropdownMenuShortcut> */}
           </DropdownMenuItem>
           <DropdownMenuItem
             onClick={async () => {
@@ -457,7 +456,7 @@ const getMemberRecipientsColumns = ({
             className="w-48"
           >
             Copy contact ID
-            <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
+            {/* <DropdownMenuShortcut>⌘C</DropdownMenuShortcut> */}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <Link href={`/contact/${row.original.contact.id}`}>
@@ -467,7 +466,7 @@ const getMemberRecipientsColumns = ({
             onClick={() => handleDeleteMember(row.getValue<string>("id"))}
           >
             Remove from group
-            <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+            {/* <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut> */}
           </DropdownMenuItem>
         </DataTableRowActions>
       ),

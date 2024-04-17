@@ -333,79 +333,7 @@ export const messageRouter = createTRPCRouter({
         }
       },
     ),
-  sendById: protectedProcedure
-    .input(z.object({ messageId: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
 
-      try {
-        await useRateLimit(userId);
-
-        const user = await ctx.db.user.findUnique({
-          where: { id: userId },
-          include: {
-            emailConfig: true,
-            smsConfig: true,
-            groupMeConfig: true,
-          },
-        });
-
-        if (!user) {
-          throw new TRPCError({
-            code: "INTERNAL_SERVER_ERROR",
-          });
-        }
-
-        const existingMessage = await ctx.db.message.findUnique({
-          where: { id: input.messageId, createdById: userId },
-          include: {
-            recipients: {
-              select: { member: { select: { contact: true } } },
-            },
-            reminders: true,
-          },
-        });
-
-        if (!existingMessage) throw messageNotFoundError(input.messageId);
-        else if (existingMessage?.status === "sent") {
-          throw messageAlreadySentError(input.messageId);
-        }
-
-        const message = await ctx.db.message.update({
-          where: { id: input.messageId },
-          data: { status: "sent", sendAt: new Date() },
-          include: {
-            reminders: true,
-            recipients: { select: { member: { select: { contact: true } } } },
-          },
-        });
-        const recipients = message.recipients.map((r) => r.member.contact);
-
-        // send message
-        try {
-          await sendMessage({
-            message: {
-              ...message,
-              recipients: recipients,
-            },
-            emailConfig: user.emailConfig,
-            smsConfig: user.smsConfig,
-            groupMeConfig: user.groupMeConfig,
-          });
-        } catch (error) {
-          await ctx.db.message.update({
-            where: { id: message.id },
-            data: { status: "failed" },
-          });
-
-          throw handleError(error);
-        }
-
-        return message;
-      } catch (err) {
-        throw handleError(err);
-      }
-    }),
   send: protectedProcedure
     .input(messageInputSchema)
     .mutation(
@@ -417,21 +345,6 @@ export const messageRouter = createTRPCRouter({
 
         try {
           await useRateLimit(userId);
-
-          const user = await ctx.db.user.findUnique({
-            where: { id: userId },
-            include: {
-              emailConfig: true,
-              smsConfig: true,
-              groupMeConfig: true,
-            },
-          });
-
-          if (!user) {
-            throw new TRPCError({
-              code: "INTERNAL_SERVER_ERROR",
-            });
-          }
 
           let existingMessage: MessageWithMembersAndReminders | null = null;
           if (input.id) {
@@ -479,6 +392,12 @@ export const messageRouter = createTRPCRouter({
             return { ...message, recipients: rec, reminders: rem };
           });
 
+          const user = await ctx.db.user.findUnique({
+            where: { id: userId },
+            select: { emailConfig: true, smsConfig: true, groupMeConfig: true },
+          });
+          if (!user) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
           await sendMessage({
             message,
             emailConfig: user.emailConfig,
@@ -492,6 +411,57 @@ export const messageRouter = createTRPCRouter({
         }
       },
     ),
+  sendById: protectedProcedure
+    .input(z.object({ messageId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      try {
+        await useRateLimit(userId);
+
+        const message = await ctx.db.message.update({
+          where: {
+            id: input.messageId,
+            status: { not: "sent" },
+            createdById: userId,
+          },
+          // TODO this doesn't seem right - could be recurring or scheduled
+          data: { status: "sent", sendAt: new Date() },
+          include: {
+            reminders: true,
+            recipients: { include: { member: { select: { contact: true } } } },
+          },
+        });
+
+        const recipientsContacts = message.recipients
+          .filter((r) => r.isRecipient)
+          .map((r) => r.member.contact);
+
+        try {
+          const user = await ctx.db.user.findUnique({
+            where: { id: userId },
+            select: { emailConfig: true, smsConfig: true, groupMeConfig: true },
+          });
+          if (!user) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+          await sendMessage({
+            message: { ...message, recipients: recipientsContacts },
+            ...user,
+          });
+        } catch (error) {
+          await ctx.db.message.update({
+            where: { id: message.id },
+            data: { status: "failed" },
+          });
+
+          throw handleError(error);
+        }
+
+        return message;
+      } catch (err) {
+        throw handleError(err);
+      }
+    }),
 });
 
 type UpdateMessageInput = {

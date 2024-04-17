@@ -30,7 +30,6 @@ import {
   DropdownMenuLabel,
   DropdownMenuLinkItem,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 import { ConfirmDeleteDialog } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
@@ -213,7 +212,7 @@ const getGroupColumns = (
             className="w-48"
           >
             Copy group ID
-            <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
+            {/* <DropdownMenuShortcut>⌘C</DropdownMenuShortcut> */}
           </DropdownMenuItem>
           <DropdownMenuSeparator />
           <DropdownMenuLabel className="font-semibold">

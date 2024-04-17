@@ -29,7 +29,6 @@ import { HoverableCell } from "@/components/ui/hover-card";
 import {
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuShortcut,
 } from "@/components/ui/dropdown-menu";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "@/components/ui/use-toast";
@@ -276,7 +275,7 @@ const getGroupMembersColumns = (
           className="w-48"
         >
           Copy member ID
-          <DropdownMenuShortcut>⌘C</DropdownMenuShortcut>
+          {/* <DropdownMenuShortcut>⌘C</DropdownMenuShortcut> */}
         </DropdownMenuItem>
         <DropdownMenuSeparator />
         <Link href={`/contact/${row.original.member.contact.id}`}>
@@ -284,7 +283,7 @@ const getGroupMembersColumns = (
         </Link>
         <DropdownMenuItem onClick={handleDeleteMessage}>
           Remove from group
-          <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut>
+          {/* <DropdownMenuShortcut>⌘⌫</DropdownMenuShortcut> */}
         </DropdownMenuItem>
       </DataTableRowActions>
     ),
