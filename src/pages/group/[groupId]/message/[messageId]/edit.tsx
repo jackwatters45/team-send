@@ -61,6 +61,7 @@ import {
   DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { renderErrorComponent } from "@/components/error/renderErrorComponent";
+import { Separator } from "@/components/ui/separator";
 
 export default function EditMessage({
   groupId,
@@ -214,7 +215,13 @@ export default function EditMessage({
   return (
     <PageLayout
       title={`Edit Message ${messageId}`}
-      description={`Current Status: ${data?.status.charAt(0).toUpperCase() + data?.status.slice(1)}`}
+      description={
+        <div className="flex items-center gap-3">
+          <div>Current Status: {capitalize(data?.status)}</div>
+          <Separator orientation="vertical" className="h-5" />
+          <div>Current Type: {capitalize(data?.type)}</div>
+        </div>
+      }
       rightSidebar={<DeleteButton onClick={handleDelete} />}
     >
       <Form {...form}>
