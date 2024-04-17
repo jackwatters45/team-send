@@ -153,6 +153,9 @@ export function camelCaseToSentenceCase(input: string): string {
   return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
+export const capitalize = (str: string) =>
+  str.charAt(0).toUpperCase() + str.slice(1);
+
 export function getPeriodMillis(
   period: Message["recurringPeriod"] | ReminderPeriod,
 ) {

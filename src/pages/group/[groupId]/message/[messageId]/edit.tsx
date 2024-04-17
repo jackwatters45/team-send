@@ -17,6 +17,7 @@ import type { ColumnDef } from "@tanstack/react-table";
 import type { MemberSnapshotWithContact } from "@/server/api/routers/member";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import {
+  capitalize,
   getInitialSelectedMembersSnapshot,
   utcToLocalDateTimeString,
 } from "@/lib/utils";

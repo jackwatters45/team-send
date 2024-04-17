@@ -11,7 +11,7 @@ import { TRPCClientError } from "@trpc/client";
 
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { getServerAuthSession } from "@/server/auth";
-import { getInitialSelectedMembersSnapshot } from "@/lib/utils";
+import { capitalize, getInitialSelectedMembersSnapshot } from "@/lib/utils";
 import type { MemberSnapshotWithContact } from "@/server/api/routers/member";
 import { api } from "@/utils/api";
 import useDataTable from "@/hooks/useDataTable";

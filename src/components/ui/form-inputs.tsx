@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "./checkbox";
-import { cn, utcToLocalDateTimeString } from "@/lib/utils";
+import { capitalize, cn, utcToLocalDateTimeString } from "@/lib/utils";
 
 export interface SharedInputNoNameProps<T extends z.ZodType> {
   control: Control<z.infer<T>>;
@@ -241,11 +241,7 @@ function BooleanSelect<T extends z.ZodType>({
           >
             <FormControl>
               <SelectTrigger>
-                <SelectValue
-                  placeholder={
-                    placeholder.charAt(0).toUpperCase() + placeholder.slice(1)
-                  }
-                />
+                <SelectValue placeholder={capitalize(placeholder)} />
               </SelectTrigger>
             </FormControl>
             <SelectContent>
