@@ -2,13 +2,9 @@ import { z } from "zod";
 import { reminderSchema } from "./reminderSchema.ts";
 import { recurMaxValues } from "@/lib/validations";
 
-const messageStatus = [
-  "draft",
-  "scheduled",
-  "sent",
-  "recurring",
-  "failed",
-] as const;
+export const messageStatus = ["draft", "pending", "sent", "failed"] as const;
+
+export const messageType = ["scheduled", "recurring", "default"] as const;
 
 const recurPeriod = ["years", "months", "weeks", "days"] as const;
 
@@ -16,6 +12,7 @@ const baseMessageFormSchema = z.object({
   id: z.string().optional(),
   groupId: z.string(),
   status: z.enum(messageStatus),
+  type: z.enum(messageType),
   content: z.string().max(500).min(1),
   subject: z.string().max(100).nullish(),
   isScheduled: z.enum(["no", "yes"]),

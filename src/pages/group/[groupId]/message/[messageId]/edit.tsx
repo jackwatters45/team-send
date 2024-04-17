@@ -96,6 +96,7 @@ export default function EditMessage({
       id: messageId,
       groupId,
       status: data?.status,
+      type: data?.type,
       content: data?.content,
       isScheduled: data?.isScheduled ? "yes" : "no",
       scheduledDate: utcToLocalDateTimeString(data?.scheduledDate),

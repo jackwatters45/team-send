@@ -7,6 +7,7 @@ import type { GroupPreview } from "@/server/api/routers/group";
 import type { MemberWithContact } from "@/server/api/routers/member";
 import type { Contact, ReminderPeriod } from "@prisma/client";
 import { reminderPeriod } from "@/schemas/reminderSchema.ts";
+import { messageStatus, messageType } from "@/schemas/messageSchema";
 
 const log = debug("team-send:seed");
 
@@ -105,9 +106,12 @@ async function createGroup(userId: string, contactIds: string[]) {
   }
 }
 
-const statusOptions = ["sent", "draft", "scheduled", "failed"] as const;
-const getRandomStatus = (): (typeof statusOptions)[number] => {
-  return statusOptions[Math.floor(Math.random() * statusOptions.length)]!;
+const getRandomStatus = (): (typeof messageStatus)[number] => {
+  return messageStatus[Math.floor(Math.random() * messageStatus.length)]!;
+};
+
+const getRandomType = (): (typeof messageType)[number] => {
+  return messageType[Math.floor(Math.random() * messageType.length)]!;
 };
 
 const recurringPeriodOptions = ["days", "weeks", "months", "years"] as const;
@@ -153,6 +157,7 @@ export async function createMessage(group: GroupPreview, userId: string) {
         lastUpdatedBy: { connect: { id: userId } },
         createdBy: { connect: { id: userId } },
         status: getRandomStatus(),
+        type: getRandomType(),
         sendAt: isScheduled ? randomFutureDate : randomPastDate,
         isScheduled,
         scheduledDate: isScheduled ? randomFutureDate : null,

@@ -105,18 +105,37 @@ export function validateMessageForm(
     formData.recurringPeriod = null;
   }
 
-  if (formData.isScheduled === "yes") {
-    formData.status = "scheduled";
-  }
+  formData.type = getMessageTypeFromForm(formData);
+
+  const formattedOtherFields = formatFormFieldsForBackend(formData);
+
+  return { ...formData, ...formattedOtherFields };
+}
+
+// make changes for different desired format on backend
+function formatFormFieldsForBackend(formData: MessageFormType) {
+  // convert string to boolean
+  const isRecurring = formData.isRecurring === "yes";
+  const isScheduled = formData.isScheduled === "yes";
+  const isReminders = formData.isReminders === "yes";
+
+  // scheduledDate is a string in input, convert to Date
+  const scheduledDate = formData.scheduledDate
+    ? new Date(formData.scheduledDate)
+    : null;
 
   return {
-    ...formData,
-    status: formData.status,
-    scheduledDate: formData.scheduledDate
-      ? new Date(formData.scheduledDate)
-      : null,
-    isRecurring: formData.isRecurring === "yes",
-    isScheduled: formData.isScheduled === "yes",
-    isReminders: formData.isReminders === "yes",
+    isRecurring,
+    isScheduled,
+    isReminders,
+    scheduledDate,
   };
+}
+
+function getMessageTypeFromForm(formData: MessageFormType): Message["type"] {
+  if (formData.isRecurring === "yes") return "recurring";
+
+  if (formData.isScheduled === "yes") return "scheduled";
+
+  return "default";
 }

@@ -291,6 +291,16 @@ function getHistoryTableColumns({
       },
     },
     {
+      accessorKey: "type",
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title="Type" />
+      ),
+      cell: ({ row }) => {
+        const type = row.getValue<string>("type");
+        return type?.[0]?.toUpperCase() + type?.slice(1);
+      },
+    },
+    {
       accessorKey: "sendAt",
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Send Time" />
@@ -394,7 +404,8 @@ function getHistoryTableColumns({
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            {/* {row.getValue<string>("status") === "scheduled" && (
+            {/* TODO */}
+            {/* {row.getValue<string>("status") === "pending" && (
               <DropdownMenuItem onClick={() => handleSend(row.getValue("id"))}>
                 Send message now
               </DropdownMenuItem>

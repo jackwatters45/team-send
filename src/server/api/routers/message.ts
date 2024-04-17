@@ -81,7 +81,7 @@ export const messageRouter = createTRPCRouter({
           include: { reminders: true },
         });
 
-        if (message.status === "scheduled") {
+        if (message.type === "scheduled") {
           const messageKey = getMessageKey(message.id);
 
           const messageId = await upstash.get<string>(messageKey);
@@ -93,7 +93,7 @@ export const messageRouter = createTRPCRouter({
             const reminderId = await upstash.get<string>(reminderKey);
             if (reminderId) await qstashClient.messages.delete(reminderId);
           }
-        } else if (message.status === "recurring") {
+        } else if (message.type === "recurring") {
           const messageKey = getMessageKey(message.id);
 
           const messageId = await upstash.get<string>(messageKey);
@@ -471,6 +471,7 @@ type UpdateMessageInput = {
   isRecurring: Message["isRecurring"];
   isReminders: Message["isReminders"];
   status: Message["status"];
+  type: Message["type"];
   id?: Message["id"];
   subject?: Message["subject"];
   scheduledDate?: Message["scheduledDate"];
@@ -487,14 +488,17 @@ async function updateMessage({
   prisma: PrismaClient | Prisma.TransactionClient;
   userId: string;
 }) {
+  const sendAt = messageData.scheduledDate
+    ? new Date(messageData.scheduledDate)
+    : undefined;
+
   let message: Message;
   if (!messageData?.id) {
     message = await prisma.message.create({
       data: {
         ...messageData,
-        sendAt: messageData.scheduledDate
-          ? new Date(messageData.scheduledDate)
-          : undefined,
+        status: "pending",
+        sendAt: sendAt,
         group: { connect: { id: groupId } },
         sentBy: { connect: { id: userId } },
         createdBy: { connect: { id: userId } },

@@ -105,10 +105,15 @@ enum ReccurPeriod {
 
 enum MessageStatus {
   draft
+  sent
+  pending
+  failed
+}
+
+enum MessageType {
   scheduled
   recurring
-  sent
-  failed
+  default
 }
 
 model Message {
@@ -141,6 +146,7 @@ model Message {
 
   recipients MemberSnapshot[]
   status     MessageStatus
+  type       MessageType      @default(default)
 }
 
 // Necessary for Next auth
