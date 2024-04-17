@@ -1,7 +1,12 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { type RowSelectionState } from "@tanstack/react-table";
-import type { Message, ReminderPeriod } from "@prisma/client";
+import type {
+  Message,
+  Prisma,
+  PrismaClient,
+  ReminderPeriod,
+} from "@prisma/client";
 import { TRPCError } from "@trpc/server";
 
 import type {
@@ -215,4 +220,18 @@ export function getMessageKey(messageId: string, reminderId?: string) {
   return reminderId
     ? `message-${messageId}-reminder-${reminderId}`
     : `message-${messageId}`;
+}
+
+export async function getUserConfig(
+  userId: string,
+  db: PrismaClient | Prisma.TransactionClient,
+) {
+  const user = await db.user.findUnique({
+    where: { id: userId },
+    select: { emailConfig: true, smsConfig: true, groupMeConfig: true },
+  });
+
+  if (!user) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+
+  return user;
 }

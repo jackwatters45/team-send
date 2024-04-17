@@ -61,13 +61,18 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
         message: message,
       });
     }
+
+    await db.message.update({
+      where: { id: message.id },
+      data: { status: "sent" },
+    });
   } catch (error) {
     await db.message.update({
       where: { id: message.id },
       data: { status: "failed" },
     });
 
-    throw handleError(error);
+    // throw handleError(error); TODO need a way to actually alert on error
   }
 
   res.status(200).json({ message: "Message sent successfully" });

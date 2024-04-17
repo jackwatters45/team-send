@@ -16,8 +16,16 @@ import { TRPCError } from "@trpc/server";
 import { useRateLimit } from "@/server/helpers/rateLimit";
 import { handleError } from "@/server/helpers/handleError";
 import { env } from "@/env";
-import { messageInputSchema } from "@/schemas/messageSchema";
-import { getDelayInSec, getMessageKey, getPeriodMillis } from "@/lib/utils";
+import {
+  type MessageInputType,
+  messageInputSchema,
+} from "@/schemas/messageSchema";
+import {
+  getDelayInSec,
+  getMessageKey,
+  getPeriodMillis,
+  getUserConfig,
+} from "@/lib/utils";
 import { validateRecurringData, validateScheduleDate } from "@/lib/validations";
 import type { SendMessageBody } from "@/pages/api/sendMessage";
 
@@ -171,291 +179,88 @@ export const messageRouter = createTRPCRouter({
         throw handleError(err);
       }
     }),
-  update: protectedProcedure
-    .input(messageInputSchema)
-    .mutation(
-      async ({
-        ctx,
-        input: { reminders, saveRecipientState, recipients, ...data },
-      }) => {
-        if (!data.id) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Message ID is required",
-          });
-        }
-
-        const userId = ctx.session.user.id;
-
-        try {
-          await useRateLimit(userId);
-
-          const user = await ctx.db.user.findUnique({
-            where: { id: userId },
-            include: {
-              emailConfig: true,
-              smsConfig: true,
-              groupMeConfig: true,
-            },
-          });
-
-          if (!user) {
-            throw new TRPCError({
-              code: "INTERNAL_SERVER_ERROR",
-            });
-          }
-
-          const existingMessage = await ctx.db.message.findUnique({
-            where: { id: data.id, createdById: userId },
-            include: {
-              recipients: {
-                select: { member: { select: { contact: true } } },
-              },
-              reminders: true,
-            },
-          });
-
-          if (!existingMessage) throw messageNotFoundError(data.id);
-          else if (existingMessage?.status === "sent") {
-            throw messageAlreadySentError(data.id);
-          }
-
-          const message = await ctx.db.$transaction(async (prisma) => {
-            // update message
-            const message = await updateMessage({
-              messageData: data,
-              prisma,
-              userId,
-            });
-
-            // update recipients
-            const rec = await updateRecipients({
-              messageId: message.id,
-              prisma,
-              recipients,
-              isExistingMessage: !!existingMessage,
-              saveRecipientState,
-            });
-
-            // update reminders
-            const rem = await updateReminders({
-              messageId: message.id,
-              reminders,
-              prisma,
-              existingReminders: existingMessage.reminders,
-            });
-
-            return { ...message, recipients: rec, reminders: rem };
-          });
-
-          try {
-            // send message
-            await sendMessage({
-              message,
-              emailConfig: user.emailConfig,
-              smsConfig: user.smsConfig,
-              groupMeConfig: user.groupMeConfig,
-            });
-          } catch (error) {
-            await ctx.db.message.update({
-              where: { id: message.id },
-              data: { status: "failed" },
-            });
-
-            throw handleError(error);
-          }
-          return message;
-        } catch (err) {
-          throw handleError(err);
-        }
-      },
-    ),
-  saveDraft: protectedProcedure
-    .input(messageInputSchema)
-    .mutation(
-      async ({
-        ctx,
-        input: { reminders, saveRecipientState, recipients, ...input },
-      }) => {
-        const userId = ctx.session.user.id;
-
-        try {
-          await useRateLimit(userId);
-
-          let existingMessage: MessageWithMembersAndReminders | null = null;
-          if (input.id) {
-            existingMessage = await ctx.db.message.findUnique({
-              where: { id: input.id, createdById: userId },
-              include: {
-                recipients: {
-                  select: { member: { select: { contact: true } } },
-                },
-                reminders: true,
-              },
-            });
-          }
-
-          if (existingMessage?.status === "sent") {
-            throw messageAlreadySentError(existingMessage.id);
-          }
-
-          const message = await ctx.db.$transaction(async (prisma) => {
-            // create/update message
-            const message = await updateMessage({
-              messageData: input,
-              prisma,
-              userId,
-            });
-
-            // create/update recipients
-            const messageRecipients = await updateRecipients({
-              messageId: message.id,
-              prisma,
-              recipients,
-              isExistingMessage: !!existingMessage,
-              saveRecipientState,
-            });
-
-            // create/update reminders
-            const updatedReminders = await updateReminders({
-              messageId: message.id,
-              reminders,
-              prisma,
-              existingReminders: existingMessage?.reminders,
-            });
-
-            return { messageRecipients, updatedReminders, ...message };
-          });
-
-          return message;
-        } catch (err) {
-          throw handleError(err);
-        }
-      },
-    ),
-
   send: protectedProcedure
     .input(messageInputSchema)
-    .mutation(
-      async ({
-        ctx,
-        input: { reminders, saveRecipientState, recipients, ...input },
-      }) => {
-        const userId = ctx.session.user.id;
-
-        try {
-          await useRateLimit(userId);
-
-          let existingMessage: MessageWithMembersAndReminders | null = null;
-          if (input.id) {
-            existingMessage = await ctx.db.message.findUnique({
-              where: { id: input.id, createdById: userId },
-              include: {
-                recipients: {
-                  select: { member: { select: { contact: true } } },
-                },
-                reminders: true,
-              },
-            });
-          }
-
-          if (existingMessage?.status === "sent") {
-            throw messageAlreadySentError(existingMessage.id);
-          }
-
-          const message = await ctx.db.$transaction(async (prisma) => {
-            // create/update message
-            const message = await updateMessage({
-              messageData: input,
-              prisma,
-              userId,
-            });
-
-            const [rec, rem] = await Promise.all([
-              // create/update recipients
-              updateRecipients({
-                messageId: message.id,
-                prisma,
-                recipients,
-                isExistingMessage: !!existingMessage,
-                saveRecipientState,
-              }),
-              // create/update reminders
-              updateReminders({
-                messageId: message.id,
-                reminders,
-                prisma,
-                existingReminders: existingMessage?.reminders,
-              }),
-            ]);
-
-            return { ...message, recipients: rec, reminders: rem };
-          });
-
-          const user = await ctx.db.user.findUnique({
-            where: { id: userId },
-            select: { emailConfig: true, smsConfig: true, groupMeConfig: true },
-          });
-          if (!user) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
-
-          await sendMessage({
-            message,
-            emailConfig: user.emailConfig,
-            smsConfig: user.smsConfig,
-            groupMeConfig: user.groupMeConfig,
-          });
-
-          return message;
-        } catch (err) {
-          throw handleError(err);
-        }
-      },
-    ),
-  sendById: protectedProcedure
-    .input(z.object({ messageId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
 
       try {
         await useRateLimit(userId);
 
-        const message = await ctx.db.message.update({
-          where: {
-            id: input.messageId,
-            status: { not: "sent" },
-            createdById: userId,
-          },
-          // TODO this doesn't seem right - could be recurring or scheduled
-          data: { status: "sent", sendAt: new Date() },
+        let existingMessage: MessageWithMembersAndReminders | null = null;
+        if (input.id) {
+          existingMessage = await ctx.db.message.findUnique({
+            where: { id: input.id, createdById: userId },
+            include: {
+              recipients: {
+                include: { member: { select: { contact: true } } },
+              },
+              reminders: true,
+            },
+          });
+        }
+
+        if (input.id && !existingMessage) throw messageNotFoundError(input.id);
+        else if (existingMessage?.status === "sent") {
+          throw messageAlreadySentError(existingMessage.id);
+        }
+
+        const message = await updateMessage({
+          db: ctx.db,
+          message: input,
+          existingMessage,
+          userId,
+        });
+
+        if (message.status === "draft") return message;
+
+        const userConfig = await getUserConfig(userId, ctx.db);
+
+        await sendMessage({ message, ...userConfig });
+
+        return message;
+      } catch (err) {
+        throw handleError(err);
+      }
+    }),
+  sendById: protectedProcedure
+    .input(z.object({ messageId: z.string() }))
+    .mutation(async ({ ctx, input: { messageId } }) => {
+      const userId = ctx.session.user.id;
+
+      try {
+        await useRateLimit(userId);
+
+        const message = await ctx.db.message.findUnique({
+          where: { id: messageId, createdById: userId },
           include: {
-            reminders: true,
             recipients: { include: { member: { select: { contact: true } } } },
+            reminders: true,
           },
         });
 
+        if (!message) throw messageNotFoundError(messageId);
+        else if (message?.status === "sent") {
+          throw messageAlreadySentError(messageId);
+        }
+
+        // update message status to pending
+        await ctx.db.message.update({
+          where: { id: messageId },
+          data: { sendAt: new Date(), status: "pending" },
+        });
+
+        // format recipients
         const recipientsContacts = message.recipients
           .filter((r) => r.isRecipient)
           .map((r) => r.member.contact);
 
-        try {
-          const user = await ctx.db.user.findUnique({
-            where: { id: userId },
-            select: { emailConfig: true, smsConfig: true, groupMeConfig: true },
-          });
-          if (!user) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });
+        const userConfig = await getUserConfig(userId, ctx.db);
 
-          await sendMessage({
-            message: { ...message, recipients: recipientsContacts },
-            ...user,
-          });
-        } catch (error) {
-          await ctx.db.message.update({
-            where: { id: message.id },
-            data: { status: "failed" },
-          });
-
-          throw handleError(error);
-        }
+        await sendMessage({
+          message: { ...message, recipients: recipientsContacts },
+          ...userConfig,
+        });
 
         return message;
       } catch (err) {
@@ -463,6 +268,44 @@ export const messageRouter = createTRPCRouter({
       }
     }),
 });
+
+async function updateMessage({
+  db,
+  message: { recipients, reminders, saveRecipientState, ...messageData },
+  existingMessage,
+  userId,
+}: {
+  db: PrismaClient;
+  message: MessageInputType;
+  existingMessage: MessageWithMembersAndReminders | null;
+  userId: string;
+}) {
+  return await db.$transaction(async (prisma) => {
+    const message = await updateMessageData({
+      messageData,
+      prisma,
+      userId,
+    });
+
+    const [rec, rem] = await Promise.all([
+      updateRecipients({
+        messageId: message.id,
+        prisma,
+        recipients,
+        isExistingMessage: !!existingMessage,
+        saveRecipientState,
+      }),
+      updateReminders({
+        messageId: message.id,
+        reminders,
+        prisma,
+        existingReminders: existingMessage?.reminders,
+      }),
+    ]);
+
+    return { ...message, recipients: rec, reminders: rem };
+  });
+}
 
 type UpdateMessageInput = {
   content: Message["content"];
@@ -479,7 +322,7 @@ type UpdateMessageInput = {
   recurringPeriod?: Message["recurringPeriod"];
 };
 
-async function updateMessage({
+async function updateMessageData({
   messageData: { groupId, ...messageData },
   prisma,
   userId,
@@ -508,12 +351,7 @@ async function updateMessage({
   } else {
     message = await prisma.message.update({
       where: { id: messageData.id, createdById: userId },
-      data: {
-        status: "sent",
-        sendAt: messageData.scheduledDate
-          ? new Date(messageData.scheduledDate)
-          : undefined,
-      },
+      data: { ...messageData, status: "pending", sendAt: sendAt },
     });
   }
 
@@ -536,24 +374,27 @@ async function updateRecipients({
   const operations = [];
   const messageRecipients: Contact[] = [];
 
-  for (const [memberId, isRecipient] of Object.entries(recipients)) {
+  for (const [snapshotId, isRecipient] of Object.entries(recipients)) {
     const operation = (async () => {
+      let memberId: string;
       if (!isExistingMessage) {
         const snapshot = await prisma.memberSnapshot.create({
           data: {
             isRecipient,
             message: { connect: { id: messageId } },
-            member: { connect: { id: memberId } },
+            member: { connect: { id: snapshotId } },
           },
-          select: { member: { select: { contact: true } } },
+          select: { member: { select: { contact: true, id: true } } },
         });
+        memberId = snapshot.member.id;
         if (isRecipient) messageRecipients.push(snapshot.member.contact);
       } else {
         const snapshot = await prisma.memberSnapshot.update({
-          where: { id: memberId },
+          where: { id: snapshotId },
           data: { isRecipient },
-          select: { member: { select: { contact: true } } },
+          select: { member: { select: { contact: true, id: true } } },
         });
+        memberId = snapshot.member.id;
         if (isRecipient) messageRecipients.push(snapshot.member.contact);
       }
 
@@ -652,14 +493,55 @@ const updateReminders = async ({
 export async function sendMessage(body: SendMessageBody) {
   const { isRecurring, isScheduled } = body.message;
 
-  if (!isRecurring && !isScheduled) {
-    await sendOnce({ body });
-  } else if (isScheduled && !isRecurring) {
-    await sendScheduledNotRecurring(body);
-  } else if (isRecurring && !isScheduled) {
-    await sendRecurringNotScheduled(body);
-  } else if (isRecurring && isScheduled) {
-    await sendRecurringScheduled(body);
+  // not recurring or scheduled
+  if (!isRecurring && !isScheduled) return await sendOnce({ body });
+
+  // scheduled but not recurring
+  if (isScheduled && !isRecurring) {
+    const { reminders } = body.message;
+
+    const scheduledDate = validateScheduleDate(body.message.scheduledDate);
+
+    for (const reminder of reminders) {
+      const reminderDate = getReminderDate(reminder, scheduledDate);
+      const reminderDelay = getDelayInSec(reminderDate);
+
+      await sendOnce({ body, delay: reminderDelay, reminderId: reminder.id });
+    }
+
+    const messageDelay = getDelayInSec(scheduledDate);
+
+    return await sendOnce({ body, delay: messageDelay });
+  }
+
+  // recurring but not scheduled
+  if (isRecurring && !isScheduled) {
+    const { recurringNum, recurringPeriod } = body.message;
+
+    const recurData = validateRecurringData({ recurringNum, recurringPeriod });
+
+    return await createRecurringMessage({ body, recurData });
+  }
+
+  // recurring and scheduled
+  if (isRecurring && isScheduled) {
+    const { recurringNum, recurringPeriod, scheduledDate } = body.message;
+
+    const startDate = validateScheduleDate(scheduledDate);
+    const recurData = validateRecurringData({ recurringNum, recurringPeriod });
+
+    for (const reminder of body.message.reminders) {
+      const reminderDate = getReminderDate(reminder, startDate);
+
+      await createRecurringMessage({
+        body,
+        startDate: reminderDate,
+        reminderId: reminder.id,
+        recurData,
+      });
+    }
+
+    return await createRecurringMessage({ body, startDate, recurData });
   }
 }
 
@@ -672,12 +554,9 @@ interface SendMessageInput {
 async function sendOnce({ body, delay, reminderId }: SendMessageInput) {
   const key = getMessageKey(body.message.id, reminderId);
 
-  const existingMessageId = await upstash.get(key);
+  const existingMessageId = await upstash.get<string>(key);
   if (existingMessageId) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: `Message with id "${body.message.id}" is already scheduled`,
-    });
+    await qstashClient.messages.delete(existingMessageId);
   }
 
   const message = await qstashClient.publishJSON({
@@ -692,115 +571,31 @@ async function sendOnce({ body, delay, reminderId }: SendMessageInput) {
   return message;
 }
 
-async function sendScheduledNotRecurring(body: SendMessageBody) {
-  const { reminders, isReminders } = body.message;
-
-  const scheduledDate = validateScheduleDate(body.message.scheduledDate);
-
-  if (isReminders) {
-    if (!reminders?.length) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Message must have at least one reminder",
-      });
-    }
-
-    for (const reminder of reminders) {
-      const reminderDate = getReminderDate(reminder, scheduledDate);
-
-      const reminderDelay = getDelayInSec(reminderDate);
-
-      await sendOnce({ body, delay: reminderDelay, reminderId: reminder.id });
-    }
-  }
-
-  const messageDelay = getDelayInSec(scheduledDate);
-
-  return await sendOnce({ body, delay: messageDelay });
-}
-
-async function sendRecurringNotScheduled(body: SendMessageBody) {
-  const { recurringNum, recurringPeriod } = validateRecurringData({
-    recurringNum: body.message.recurringNum,
-    recurringPeriod: body.message.recurringPeriod,
-  });
-
-  return await createRecurringMessage({
-    body,
-    recurringNum,
-    recurringPeriod,
-  });
-}
-
-async function sendRecurringScheduled(body: SendMessageBody) {
-  const { reminders, isReminders } = body.message;
-
-  const scheduledDate = validateScheduleDate(body.message.scheduledDate);
-
-  const { recurringNum, recurringPeriod } = validateRecurringData({
-    recurringNum: body.message.recurringNum,
-    recurringPeriod: body.message.recurringPeriod,
-  });
-
-  if (isReminders) {
-    if (!reminders?.length) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Message must have at least one reminder",
-      });
-    }
-
-    for (const reminder of reminders) {
-      const reminderDate = getReminderDate(reminder, scheduledDate);
-
-      await createRecurringMessage({
-        body,
-        recurringNum,
-        recurringPeriod,
-        startDate: reminderDate,
-        reminderId: reminder.id,
-      });
-    }
-  }
-
-  await createRecurringMessage({
-    body,
-    recurringNum,
-    recurringPeriod,
-    startDate: scheduledDate,
-  });
-}
+type RecurData = {
+  recurringNum: number;
+  recurringPeriod: Message["recurringPeriod"];
+};
 
 interface CreateRecurringMessageInput {
   body: SendMessageBody;
-  recurringNum: number;
-  recurringPeriod: Message["recurringPeriod"];
+  recurData: RecurData;
   startDate?: Date;
   reminderId?: string;
 }
-
 async function createRecurringMessage({
   body,
-  recurringNum,
-  recurringPeriod,
-  startDate,
+  recurData,
+  startDate = new Date(),
   reminderId,
 }: CreateRecurringMessageInput) {
   const key = getMessageKey(body.message.id, reminderId);
 
-  const existingMessageId = await upstash.get(key);
+  const existingMessageId = await upstash.get<string>(key);
   if (existingMessageId) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: `Message with id "${body.message.id}" is already scheduled`,
-    });
+    await qstashClient.schedules.delete(existingMessageId);
   }
 
-  const cron = generateCronExpression({
-    startDate: startDate ?? new Date(),
-    recurPeriod: recurringPeriod,
-    recurNum: recurringNum,
-  });
+  const cron = generateCronExpression({ startDate, recurData });
 
   const schedule = await qstashClient.schedules.create({
     destination: `${env.NGROK_URL}/api/sendMessage`,
@@ -813,30 +608,29 @@ async function createRecurringMessage({
   return schedule;
 }
 
+interface GenerateCronExpressionParams {
+  startDate: Date;
+  recurData: RecurData;
+}
 function generateCronExpression({
   startDate,
-  recurPeriod,
-  recurNum,
-}: {
-  startDate: Date;
-  recurPeriod: Message["recurringPeriod"];
-  recurNum: number;
-}): string {
+  recurData: { recurringPeriod, recurringNum },
+}: GenerateCronExpressionParams): string {
   const minutes = startDate.getMinutes();
   const hours = startDate.getHours();
   const dayOfMonth = startDate.getDate();
-  const month = startDate.getMonth() + 1; // JS months zero-indexed
+  const month = startDate.getMonth() + 1;
   const dayOfWeek = startDate.getDay();
 
-  switch (recurPeriod) {
+  switch (recurringPeriod) {
     case "days":
-      return `${minutes} ${hours} */${recurNum} * *`;
+      return `${minutes} ${hours} */${recurringNum} * *`;
     case "weeks":
       return `${minutes} ${hours} * * ${dayOfWeek === 0 ? 7 : dayOfWeek}/7`;
     case "months":
-      return `${minutes} ${hours} ${dayOfMonth} */${recurNum} *`;
+      return `${minutes} ${hours} ${dayOfMonth} */${recurringNum} *`;
     case "years":
-      return `${minutes} ${hours} ${dayOfMonth} ${month} */${recurNum}`;
+      return `${minutes} ${hours} ${dayOfMonth} ${month} */${recurringNum}`;
     default:
       throw new Error(
         "Invalid recurrence period. Choose from 'minute', 'hour', 'day', 'week', 'month', or 'year'.",
