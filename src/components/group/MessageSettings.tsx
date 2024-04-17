@@ -55,6 +55,11 @@ export function MessageSettings({ form }: MessageSettingsProps) {
                     periodName={`reminders.${index}.period`}
                     label={`Remind before ${index + 1}`}
                     numGreaterThanOne={reminder.num > 1}
+                    periodOptions={[
+                      { label: "Month", value: "months" },
+                      { label: "Week", value: "weeks" },
+                      { label: "Day", value: "days" },
+                    ]}
                   />
                   <Button
                     variant="outline"
@@ -70,7 +75,7 @@ export function MessageSettings({ form }: MessageSettingsProps) {
                   </Button>
                 </div>
               ))}
-              {reminders.length < 6 && (
+              {reminders.length < 3 && (
                 <Button
                   variant="ghost"
                   type="button"

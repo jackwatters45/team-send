@@ -21,7 +21,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Checkbox } from "./checkbox";
-import { cn } from "@/lib/utils";
+import { cn, utcToLocalDateTimeString } from "@/lib/utils";
 
 export interface SharedInputNoNameProps<T extends z.ZodType> {
   control: Control<z.infer<T>>;
@@ -95,7 +95,16 @@ interface NumPeriodInputs<T extends z.ZodType>
   numName: Path<z.infer<T>>;
   periodName: Path<z.infer<T>>;
   numGreaterThanOne: boolean;
+  periodOptions?: { label: string; value: string }[];
 }
+
+const defaultPeriodOptions = [
+  { label: "Year", value: "years" },
+  { label: "Month", value: "months" },
+  { label: "Week", value: "weeks" },
+  { label: "Day", value: "days" },
+];
+
 function NumPeriodInputs<T extends z.ZodType>({
   numName,
   numGreaterThanOne,
@@ -103,6 +112,7 @@ function NumPeriodInputs<T extends z.ZodType>({
   control,
   label,
   description,
+  periodOptions = defaultPeriodOptions,
 }: NumPeriodInputs<T>) {
   return (
     <div className="flex flex-1 items-start justify-evenly gap-4">
@@ -146,18 +156,11 @@ function NumPeriodInputs<T extends z.ZodType>({
               <SelectContent>
                 <SelectGroup>
                   <SelectLabel hidden>{label}</SelectLabel>
-                  <SelectItem value="years">
-                    Year{numGreaterThanOne ? "s" : ""}
-                  </SelectItem>
-                  <SelectItem value="months">
-                    Month{numGreaterThanOne ? "s" : ""}
-                  </SelectItem>
-                  <SelectItem value="weeks">
-                    Week{numGreaterThanOne ? "s" : ""}
-                  </SelectItem>
-                  <SelectItem value="days">
-                    Day{numGreaterThanOne ? "s" : ""}
-                  </SelectItem>
+                  {periodOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {`${option.label}${numGreaterThanOne ? "s" : ""}`}
+                    </SelectItem>
+                  ))}
                 </SelectGroup>
               </SelectContent>
             </Select>
@@ -190,10 +193,10 @@ function DateTimeInput<T extends z.ZodType>({
               {...field}
               value={
                 field.value
-                  ? new Date(field.value).toISOString().slice(0, 16)
+                  ? utcToLocalDateTimeString(new Date(field.value))
                   : new Date().toISOString().slice(0, 16)
               }
-              onChange={(e) => field.onChange(new Date(e.target.value))}
+              onChange={(e) => field.onChange(e.target.value)}
             />
           </FormControl>
           {description && <FormDescription>{description}</FormDescription>}
@@ -223,12 +226,16 @@ function BooleanSelect<T extends z.ZodType>({
           <FormLabel>{label}</FormLabel>
           <Select
             onValueChange={field.onChange}
-            defaultValue={field.value as string}
+            value={field.value as string}
             name={name}
           >
             <FormControl>
               <SelectTrigger>
-                <SelectValue placeholder={placeholder} />
+                <SelectValue
+                  placeholder={
+                    placeholder.charAt(0).toUpperCase() + placeholder.slice(1)
+                  }
+                />
               </SelectTrigger>
             </FormControl>
             <SelectContent>

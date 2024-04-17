@@ -16,12 +16,15 @@ import type { ColumnDef } from "@tanstack/react-table";
 
 import type { MemberSnapshotWithContact } from "@/server/api/routers/member";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
-import { getInitialSelectedMembersSnapshot } from "@/lib/utils";
+import {
+  getInitialSelectedMembersSnapshot,
+  utcToLocalDateTimeString,
+} from "@/lib/utils";
 import { api } from "@/utils/api";
 import { defaultReminder } from "@/schemas/reminderSchema.ts";
 import { getServerAuthSession } from "@/server/auth";
 import useDataTable from "@/hooks/useDataTable";
-import { validateMessageForm } from "@/lib/utils";
+import { validateMessageForm } from "@/lib/validations";
 import { db } from "@/server/db";
 
 import PageLayout from "@/layouts/PageLayout";
@@ -96,7 +99,7 @@ export default function EditMessage({
       status: data?.status,
       content: data?.content,
       isScheduled: data?.isScheduled ? "yes" : "no",
-      scheduledDate: data?.scheduledDate,
+      scheduledDate: utcToLocalDateTimeString(data?.scheduledDate),
       isRecurring: data?.isRecurring ? "yes" : "no",
       recurringNum: data?.recurringNum,
       recurringPeriod: data?.recurringPeriod ?? "weeks",

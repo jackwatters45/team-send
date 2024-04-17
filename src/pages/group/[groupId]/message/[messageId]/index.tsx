@@ -101,7 +101,7 @@ export default function MessageDetails({
         <div className="space-y-1">
           <div className="font-semibold">Send Time</div>
           <div className="text-sm">
-            {new Date(data.sendAt).toLocaleString()}{" "}
+            {new Date(data.sendAt).toLocaleString()}
           </div>
         </div>
         <div className="border-b dark:border-stone-500 dark:border-opacity-20" />

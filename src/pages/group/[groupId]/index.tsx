@@ -20,8 +20,8 @@ import {
 import { defaultReminder } from "@/schemas/reminderSchema.ts";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { getServerAuthSession } from "@/server/auth";
-import { getInitialSelectedMembers } from "@/lib/utils";
-import { validateMessageForm } from "@/lib/utils";
+import { getInitialSelectedMembers, nextDayNoonUTCString } from "@/lib/utils";
+import { validateMessageForm } from "@/lib/validations";
 import useDataTable from "@/hooks/useDataTable";
 
 import { GroupLayout } from "@/layouts/GroupLayout";
@@ -87,7 +87,7 @@ export default function GroupSendMessage({
       subject: "",
       status: "sent",
       isScheduled: "no",
-      scheduledDate: null,
+      scheduledDate: nextDayNoonUTCString(),
       isRecurring: "no",
       recurringNum: 1,
       recurringPeriod: "months",
@@ -116,8 +116,10 @@ export default function GroupSendMessage({
     },
   });
 
-  const { mutate: send } = api.message.send.useMutation({
+  const { mutate: send, isLoading: isSending } = api.message.send.useMutation({
     onSuccess: (data) => {
+      form.reset();
+
       const title =
         data.status === "scheduled" ? " Message Scheduled" : "Message sent";
 
@@ -143,24 +145,27 @@ export default function GroupSendMessage({
     },
   });
 
-  const { mutate: saveDraft } = api.message.saveDraft.useMutation({
-    onSuccess: () => {
-      toast({
-        title: "Message draft saved",
-        description: "Your message has been saved as a draft",
-      });
-    },
-    onError: (err) => {
-      const errorMessage = err?.data?.zodError?.fieldErrors?.content;
-      toast({
-        title: "Error saving draft",
-        description:
-          errorMessage?.[0] ??
-          err.message ??
-          "An error occurred while saving the draft",
-      });
-    },
-  });
+  const { mutate: saveDraft, isLoading: isSavingDraft } =
+    api.message.saveDraft.useMutation({
+      onSuccess: () => {
+        form.reset();
+
+        toast({
+          title: "Message draft saved",
+          description: "Your message has been saved as a draft",
+        });
+      },
+      onError: (err) => {
+        const errorMessage = err?.data?.zodError?.fieldErrors?.content;
+        toast({
+          title: "Error saving draft",
+          description:
+            errorMessage?.[0] ??
+            err.message ??
+            "An error occurred while saving the draft",
+        });
+      },
+    });
 
   const onSubmit = (formData: MessageFormType) => {
     const data = validateMessageForm(formData);
@@ -235,7 +240,9 @@ export default function GroupSendMessage({
                 onClick={() => form.setValue("status", "draft")}
                 disabled={
                   !(isTableDirty || form.formState.isDirty) ||
-                  !form.formState.isValid
+                  !form.formState.isValid ||
+                  isSending ||
+                  isSavingDraft
                 }
               >
                 Save as Draft
@@ -244,7 +251,9 @@ export default function GroupSendMessage({
                 type="submit"
                 disabled={
                   !(isTableDirty || form.formState.isDirty) ||
-                  !form.formState.isValid
+                  !form.formState.isValid ||
+                  isSending ||
+                  isSavingDraft
                 }
               >
                 {form.watch("isScheduled") === "yes"
