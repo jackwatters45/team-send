@@ -135,43 +135,31 @@ export default function EditMessage({
   });
 
   const router = useRouter();
-  // const { mutate } = api.message.update.useMutation({
-  //   onSuccess: async (data) => {
-  //     await router.push(`/group/${groupId}/message/${messageId}`);
-  //     if (data?.status === "sent") {
-  //       toast({
-  //         title: "Message Sent",
-  //         description: `Message "${data?.id}" has been sent.`,
-  //       });
-  //     } else {
-  //       toast({
-  //         title: "Message Updated",
-  //         description: `Message "${data?.id}" has been updated.`,
-  //       });
-  //     }
-  //   },
-  //   onError: (error) => {
-  //     const errorMessage = error.data?.zodError?.fieldErrors?.content;
-  //     toast({
-  //       title: "Message Update Failed",
-  //       description:
-  //         errorMessage?.[0] ??
-  //         error.message ??
-  //         "An error occurred while updating the message. Please try again.",
-  //       variant: "destructive",
-  //     });
-  //   },
-  // });
-
   const { mutate } = api.message.send.useMutation({
-    onSuccess: (data) => {
-      toast({
-        title: "Message sent",
-        description: JSON.stringify(data),
-      });
+    onSuccess: async (data) => {
+      await router.push(`/group/${groupId}/message/${messageId}`);
+      if (data?.status === "sent") {
+        toast({
+          title: "Message Sent",
+          description: `Message "${data?.id}" has been sent.`,
+        });
+      } else {
+        toast({
+          title: "Message Updated",
+          description: `Message "${data?.id}" has been updated.`,
+        });
+      }
     },
     onError: (err) => {
-      console.log("Error sending message", err);
+      const errorMessage = err.data?.zodError?.fieldErrors?.content;
+      toast({
+        title: "Message Update Failed",
+        description:
+          errorMessage?.[0] ??
+          err.message ??
+          "An error occurred while updating the message. Please try again.",
+        variant: "destructive",
+      });
     },
   });
 

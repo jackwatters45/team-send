@@ -120,12 +120,16 @@ export default function GroupSendMessage({
     onSuccess: (data) => {
       form.reset();
 
-      const title =
-        data.status === "scheduled" ? " Message Scheduled" : "Message sent";
+      const title = data.isScheduled
+        ? " Message Scheduled"
+        : data.status === "draft"
+          ? "Message saved as draft"
+          : "Message sent";
 
-      const description =
-        data.status === "scheduled"
-          ? "Your message has been scheduled"
+      const description = data.isScheduled
+        ? "Your message has been scheduled"
+        : data.status === "draft"
+          ? "Your message has been saved as a draft"
           : "Your message has been sent";
 
       toast({
@@ -135,65 +139,38 @@ export default function GroupSendMessage({
     },
     onError: (err) => {
       const errorMessage = err.data?.zodError?.fieldErrors?.content;
+
       toast({
-        title: "Error sending message",
+        title: "Error creating message",
         description:
           errorMessage?.[0] ??
           err.message ??
-          "An error occurred while sending the message",
+          "An error occurred while creating the message",
       });
     },
   });
 
-  const { mutate: saveDraft, isLoading: isSavingDraft } =
-    api.message.saveDraft.useMutation({
-      onSuccess: () => {
-        form.reset();
-
-        toast({
-          title: "Message draft saved",
-          description: "Your message has been saved as a draft",
-        });
-      },
-      onError: (err) => {
-        const errorMessage = err?.data?.zodError?.fieldErrors?.content;
-        toast({
-          title: "Error saving draft",
-          description:
-            errorMessage?.[0] ??
-            err.message ??
-            "An error occurred while saving the draft",
-        });
-      },
-    });
-
   const onSubmit = (formData: MessageFormType) => {
     const data = validateMessageForm(formData);
 
-    const title =
-      data.status === "scheduled"
-        ? "Scheduling Message"
-        : data.status === "draft"
-          ? "Saving Draft"
-          : "Sending Message";
+    const title = data.isScheduled
+      ? "Scheduling Message"
+      : data.status === "draft"
+        ? "Saving Draft"
+        : "Sending Message";
 
-    const description =
-      data.status === "scheduled"
-        ? "Your message is being scheduled"
-        : data.status === "draft"
-          ? "Your message is being saved as a draft"
-          : "Your message is being sent";
+    const description = data.isScheduled
+      ? "Your message is being scheduled"
+      : data.status === "draft"
+        ? "Your message is being saved as a draft"
+        : "Your message is being sent";
 
     toastWithLoading({
       title: title,
       description: description,
     });
 
-    if (data.status === "draft") {
-      saveDraft(data);
-    } else {
-      send(data);
-    }
+    send(data);
   };
 
   const [parent] = useAutoAnimate();
@@ -241,8 +218,7 @@ export default function GroupSendMessage({
                 disabled={
                   !(isTableDirty || form.formState.isDirty) ||
                   !form.formState.isValid ||
-                  isSending ||
-                  isSavingDraft
+                  isSending
                 }
               >
                 Save as Draft
@@ -252,8 +228,7 @@ export default function GroupSendMessage({
                 disabled={
                   !(isTableDirty || form.formState.isDirty) ||
                   !form.formState.isValid ||
-                  isSending ||
-                  isSavingDraft
+                  isSending
                 }
               >
                 {form.watch("isScheduled") === "yes"
