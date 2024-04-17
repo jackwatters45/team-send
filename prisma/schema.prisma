@@ -84,6 +84,8 @@ enum ReminderPeriod {
   months
   weeks
   days
+  hours
+  minutes
 }
 
 model Reminder {

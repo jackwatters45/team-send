@@ -47,6 +47,8 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_URL: z.string().url(),
     UPSTASH_REDIS_REST_TOKEN: z.string(),
     QSTASH_TOKEN: z.string(),
+    QSTASH_CURRENT_SIGNING_KEY: z.string(),
+    QSTASH_NEXT_SIGNING_KEY: z.string(),
 
     TWILIO_ACCOUNT_SID: z.string().min(34).max(34),
     TWILIO_AUTH_TOKEN: z.string().min(32).max(32),
@@ -57,6 +59,7 @@ export const env = createEnv({
       .max(12),
 
     GROUPME_ACCESS_TOKEN: z.string(),
+    NGROK_URL: z.string().url().optional(),
   },
 
   /**
@@ -105,6 +108,8 @@ export const env = createEnv({
     UPSTASH_REDIS_REST_URL: process.env.UPSTASH_REDIS_REST_URL,
     UPSTASH_REDIS_REST_TOKEN: process.env.UPSTASH_REDIS_REST_TOKEN,
     QSTASH_TOKEN: process.env.QSTASH_TOKEN,
+    QSTASH_CURRENT_SIGNING_KEY: process.env.QSTASH_CURRENT_SIGNING_KEY,
+    QSTASH_NEXT_SIGNING_KEY: process.env.QSTASH_NEXT_SIGNING_KEY,
 
     TWILIO_ACCOUNT_SID: process.env.TWILIO_ACCOUNT_SID,
     TWILIO_AUTH_TOKEN: process.env.TWILIO_AUTH_TOKEN,
@@ -115,6 +120,7 @@ export const env = createEnv({
       process.env.NEXT_PUBLIC_GROUPME_REDIRECT_URI,
 
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
+    NGROK_URL: process.env.NGROK_URL,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

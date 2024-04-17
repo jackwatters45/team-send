@@ -1,10 +1,8 @@
 import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { type RowSelectionState } from "@tanstack/react-table";
-import type {
-  MessageFormType,
-  MessageInputType,
-} from "@/schemas/messageSchema";
+import type { Message } from "@prisma/client";
+import { TRPCError } from "@trpc/server";
 
 import type {
   MemberSnapshotWithContact,
@@ -155,50 +153,49 @@ export function camelCaseToSentenceCase(input: string): string {
   return result.charAt(0).toUpperCase() + result.slice(1);
 }
 
-export function validateMessageForm(
-  formData: MessageFormType,
-): MessageInputType {
-  if (formData.isScheduled === "yes" && !formData.scheduledDate) {
-    formData.isScheduled = "no";
+export function getPeriodMillis(period: Message["recurringPeriod"]) {
+  switch (period) {
+    case "months":
+      return 60 * 60 * 1000;
+    case "days":
+      return 24 * 60 * 60 * 1000;
+    case "weeks":
+      return 7 * 24 * 60 * 60 * 1000;
+    default:
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Invalid period",
+      });
   }
-  if (formData.isScheduled === "no") {
-    formData.scheduledDate = null;
-    formData.isReminders = "no";
-  }
+}
 
-  formData.reminders = Array.from(
-    new Map(
-      formData.reminders
-        ?.filter((reminder) => reminder.num && reminder.period)
-        .map((reminder) => [`${reminder.num}-${reminder.period}`, reminder]),
-    ).values(),
+export const getFormattedIsoString = (date: Date): string => {
+  return date.toISOString().slice(0, 16);
+};
+
+export const nextDayNoonUTCString = (): string => {
+  const today = new Date();
+  const nextDay = new Date(
+    Date.UTC(
+      today.getUTCFullYear(),
+      today.getUTCMonth(),
+      today.getUTCDate() + 1,
+      12,
+      0,
+      0,
+    ),
   );
 
-  if (formData.isReminders === "yes" && !formData.reminders?.length) {
-    formData.isReminders = "no";
-  } else if (formData.isReminders === "no") {
-    formData.reminders = [];
-  }
+  return getFormattedIsoString(nextDay);
+};
 
-  if (
-    formData.isRecurring === "yes" &&
-    !(formData.recurringNum && formData.recurringPeriod)
-  ) {
-    formData.isRecurring = "no";
-  } else if (formData.isRecurring === "no") {
-    formData.recurringNum = null;
-    formData.recurringPeriod = null;
-  }
+export const utcToLocalDateTimeString = (date?: Date | null): string => {
+  if (!date) return nextDayNoonUTCString();
 
-  if (formData.isScheduled === "yes") {
-    formData.status = "scheduled";
-  }
+  const offset = date.getTimezoneOffset();
+  const localDate = new Date(date.getTime() - offset * 60 * 1000);
+  return getFormattedIsoString(localDate);
+};
 
-  return {
-    ...formData,
-    status: formData.status,
-    isRecurring: formData.isRecurring === "yes",
-    isScheduled: formData.isScheduled === "yes",
-    isReminders: formData.isReminders === "yes",
-  };
-}
+export const getDelayInSec = (date: Date) =>
+  (date.getTime() - Date.now()) / 1000;

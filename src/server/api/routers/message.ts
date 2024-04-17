@@ -1,7 +1,7 @@
 import { z } from "zod";
 import debug from "debug";
-import nodemailer from "nodemailer";
 import type {
+  Contact,
   EmailConfig,
   GroupMeConfig,
   Message,
@@ -10,8 +10,8 @@ import type {
   Reminder,
   SmsConfig,
 } from "@prisma/client";
-import TwilioClient from "twilio";
 import { Client as QStashClient } from "@upstash/qstash";
+import { Redis } from "@upstash/redis";
 
 import type { NewReminder } from "@/schemas/reminderSchema.ts";
 import { createTRPCRouter, protectedProcedure } from "../trpc";
@@ -19,19 +19,34 @@ import { TRPCError } from "@trpc/server";
 import { useRateLimit } from "@/server/helpers/rateLimit";
 import { handleError } from "@/server/helpers/handleError";
 import { env } from "@/env";
-import {
-  type MessagePeriod,
-  messageInputSchema,
-} from "@/schemas/messageSchema";
-import type { MemberSnapshotWithContact } from "./member";
+import { messageInputSchema } from "@/schemas/messageSchema";
+import { getDelayInSec, getPeriodMillis } from "@/lib/utils";
+import { validateRecurringData, validateScheduleDate } from "@/lib/validations";
 
 const log = debug("team-send:api:message");
 
-type MessageWithContacts = Message & {
-  recipients: MemberSnapshotWithContact[];
+export const upstash = new Redis({
+  url: env.UPSTASH_REDIS_REST_URL,
+  token: env.UPSTASH_REDIS_REST_TOKEN,
+});
+
+const qstashClient = new QStashClient({
+  token: env.QSTASH_TOKEN,
+});
+
+type RecipientWithOnlyContact = { member: { contact: Contact } };
+
+type MessageWithMembersAndReminders = Message & {
+  recipients: RecipientWithOnlyContact[];
   reminders: Reminder[];
 };
 
+type MessageWithContactsAndReminders = Message & {
+  recipients: Contact[];
+  reminders: Reminder[];
+};
+
+// TODO update other routes
 export const messageRouter = createTRPCRouter({
   getMessageById: protectedProcedure
     .input(z.object({ messageId: z.string() }))
@@ -51,7 +66,6 @@ export const messageRouter = createTRPCRouter({
         });
 
         if (!message) return throwMessageNotFoundError(input.messageId);
-
         return message;
       } catch (err) {
         throw handleError(err);
@@ -95,7 +109,7 @@ export const messageRouter = createTRPCRouter({
             where: { id: data.id, createdById: userId },
             include: {
               recipients: {
-                include: { member: { include: { contact: true } } },
+                select: { member: { select: { contact: true } } },
               },
               reminders: true,
             },
@@ -115,66 +129,42 @@ export const messageRouter = createTRPCRouter({
             });
           }
 
-          const { message, messageRecipients } = await ctx.db.$transaction(
-            async (prisma) => {
-              // update message
-              const message = await updateMessage({
-                messageData: data,
-                prisma,
-                userId,
-              });
+          const message = await ctx.db.$transaction(async (prisma) => {
+            // update message
+            const message = await updateMessage({
+              messageData: data,
+              prisma,
+              userId,
+            });
 
-              // update recipients
-              const messageRecipients = await updateRecipients({
-                messageId: message.id,
-                prisma,
-                recipients,
-                isExistingMessage: !!existingMessage,
-                saveRecipientState,
-              });
+            // update recipients
+            const rec = await updateRecipients({
+              messageId: message.id,
+              prisma,
+              recipients,
+              isExistingMessage: !!existingMessage,
+              saveRecipientState,
+            });
 
-              // update reminders
-              await updateReminders({
-                messageId: message.id,
-                reminders,
-                prisma,
-                existingReminders: existingMessage.reminders,
-              });
+            // update reminders
+            const rem = await updateReminders({
+              messageId: message.id,
+              reminders,
+              prisma,
+              existingReminders: existingMessage.reminders,
+            });
 
-              return { message, messageRecipients };
-            },
-          );
+            return { ...message, recipients: rec, reminders: rem };
+          });
 
           try {
             // send message
-            const emailConfig = user.emailConfig;
-            if (!!emailConfig) {
-              await sendEmail({
-                emailConfig: emailConfig,
-                recipients: messageRecipients,
-                message: message,
-              });
-            }
-
-            const smsConfig = user.smsConfig;
-            if (!!smsConfig) {
-              await sendSMS({
-                smsConfig: smsConfig,
-                recipients: messageRecipients,
-                message: message,
-              });
-            }
-
-            // TODO cron/schedule shit
-            // TODO send groupme
-            const groupMeConfig = user.groupMeConfig;
-            if (!!groupMeConfig) {
-              await sendGroupMe({
-                groupMeConfig: groupMeConfig,
-                recipients: messageRecipients,
-                message: message,
-              });
-            }
+            await sendMessage({
+              message,
+              emailConfig: user.emailConfig,
+              smsConfig: user.smsConfig,
+              groupMeConfig: user.groupMeConfig,
+            });
           } catch (error) {
             await ctx.db.message.update({
               where: { id: message.id },
@@ -278,13 +268,13 @@ export const messageRouter = createTRPCRouter({
         try {
           await useRateLimit(userId);
 
-          let existingMessage: MessageWithContacts | null = null;
+          let existingMessage: MessageWithMembersAndReminders | null = null;
           if (input.id) {
             existingMessage = await ctx.db.message.findUnique({
               where: { id: input.id, createdById: userId },
               include: {
                 recipients: {
-                  include: { member: { include: { contact: true } } },
+                  select: { member: { select: { contact: true } } },
                 },
                 reminders: true,
               },
@@ -359,7 +349,7 @@ export const messageRouter = createTRPCRouter({
           where: { id: input.messageId, createdById: userId },
           include: {
             recipients: {
-              include: { member: { include: { contact: true } } },
+              select: { member: { select: { contact: true } } },
             },
             reminders: true,
           },
@@ -383,40 +373,23 @@ export const messageRouter = createTRPCRouter({
           where: { id: input.messageId },
           data: { status: "sent", sendAt: new Date() },
           include: {
-            recipients: { include: { member: { include: { contact: true } } } },
+            reminders: true,
+            recipients: { select: { member: { select: { contact: true } } } },
           },
         });
+        const recipients = message.recipients.map((r) => r.member.contact);
 
         // send message
         try {
-          const emailConfig = user.emailConfig;
-          if (!!emailConfig) {
-            await sendEmail({
-              emailConfig: emailConfig,
-              recipients: message.recipients,
-              message: message,
-            });
-          }
-
-          const smsConfig = user.smsConfig;
-          if (!!smsConfig) {
-            await sendSMS({
-              smsConfig: smsConfig,
-              recipients: message.recipients,
-              message: message,
-            });
-          }
-
-          // TODO cron/schedule shit
-          // TODO send groupme
-          const groupMeConfig = user.groupMeConfig;
-          if (!!groupMeConfig) {
-            await sendGroupMe({
-              groupMeConfig: groupMeConfig,
-              recipients: message.recipients,
-              message: message,
-            });
-          }
+          await sendMessage({
+            message: {
+              ...message,
+              recipients: recipients,
+            },
+            emailConfig: user.emailConfig,
+            smsConfig: user.smsConfig,
+            groupMeConfig: user.groupMeConfig,
+          });
         } catch (error) {
           await ctx.db.message.update({
             where: { id: message.id },
@@ -431,7 +404,6 @@ export const messageRouter = createTRPCRouter({
         throw handleError(err);
       }
     }),
-  // TODO cron/schedule
   send: protectedProcedure
     .input(messageInputSchema)
     .mutation(
@@ -459,13 +431,13 @@ export const messageRouter = createTRPCRouter({
             });
           }
 
-          let existingMessage: MessageWithContacts | null = null;
+          let existingMessage: MessageWithMembersAndReminders | null = null;
           if (input.id) {
             existingMessage = await ctx.db.message.findUnique({
               where: { id: input.id, createdById: userId },
               include: {
                 recipients: {
-                  include: { member: { include: { contact: true } } },
+                  select: { member: { select: { contact: true } } },
                 },
                 reminders: true,
               },
@@ -479,84 +451,41 @@ export const messageRouter = createTRPCRouter({
             });
           }
 
-          const { message, messageRecipients } = await ctx.db.$transaction(
-            async (prisma) => {
-              // create/update message
-              const message = await updateMessage({
-                messageData: input,
-                prisma,
-                userId,
-              });
+          const message = await ctx.db.$transaction(async (prisma) => {
+            // create/update message
+            const message = await updateMessage({
+              messageData: input,
+              prisma,
+              userId,
+            });
 
+            const [rec, rem] = await Promise.all([
               // create/update recipients
-              const messageRecipients = await updateRecipients({
+              updateRecipients({
                 messageId: message.id,
                 prisma,
                 recipients,
                 isExistingMessage: !!existingMessage,
                 saveRecipientState,
-              });
-
+              }),
               // create/update reminders
-              await updateReminders({
+              updateReminders({
                 messageId: message.id,
                 reminders,
                 prisma,
                 existingReminders: existingMessage?.reminders,
-              });
+              }),
+            ]);
 
-              return { message, messageRecipients };
-            },
-          );
-
-          const qstashClient = new QStashClient({
-            token: env.QSTASH_TOKEN,
+            return { ...message, recipients: rec, reminders: rem };
           });
 
-          const res = await qstashClient.publishJSON({
-            // url: "https://jackwatters.requestcatcher.com/",
-            url: `${env.BASE_URL}/api/sendMessage`,
-            body: message,
+          await sendMessage({
+            message,
+            emailConfig: user.emailConfig,
+            smsConfig: user.smsConfig,
+            groupMeConfig: user.groupMeConfig,
           });
-
-          // send message
-          // try {
-          //   const emailConfig = user.emailConfig;
-          //   if (!!emailConfig) {
-          //     await sendEmail({
-          //       emailConfig: emailConfig,
-          //       recipients: messageRecipients,
-          //       message: message,
-          //     });
-          //   }
-
-          //   const smsConfig = user.smsConfig;
-          //   if (!!smsConfig) {
-          //     await sendSMS({
-          //       smsConfig: smsConfig,
-          //       recipients: messageRecipients,
-          //       message: message,
-          //     });
-          //   }
-
-          //   // TODO cron/schedule shit
-          //   // TODO send groupme
-          //   const groupMeConfig = user.groupMeConfig;
-          //   if (!!groupMeConfig) {
-          //     await sendGroupMe({
-          //       groupMeConfig: groupMeConfig,
-          //       recipients: messageRecipients,
-          //       message: message,
-          //     });
-          //   }
-          // } catch (error) {
-          //   await ctx.db.message.update({
-          //     where: { id: message.id },
-          //     data: { status: "failed" },
-          //   });
-
-          //   throw handleError(error);
-          // }
 
           return message;
         } catch (err) {
@@ -567,17 +496,17 @@ export const messageRouter = createTRPCRouter({
 });
 
 type UpdateMessageInput = {
-  content: string;
-  groupId: string;
-  isScheduled: boolean;
-  isRecurring: boolean;
-  isReminders: boolean;
-  status: "draft" | "scheduled" | "sent" | "failed";
-  id?: string | undefined;
-  subject?: string | null | undefined;
-  scheduledDate?: Date | null | undefined;
-  recurringNum?: number | null | undefined;
-  recurringPeriod?: MessagePeriod | null | undefined;
+  content: Message["content"];
+  groupId: Message["groupId"];
+  isScheduled: Message["isScheduled"];
+  isRecurring: Message["isRecurring"];
+  isReminders: Message["isReminders"];
+  status: Message["status"];
+  id?: Message["id"];
+  subject?: Message["subject"];
+  scheduledDate?: Message["scheduledDate"];
+  recurringNum?: Message["recurringNum"];
+  recurringPeriod?: Message["recurringPeriod"];
 };
 
 async function updateMessage({
@@ -594,7 +523,9 @@ async function updateMessage({
     message = await prisma.message.create({
       data: {
         ...messageData,
-        sendAt: new Date(),
+        sendAt: messageData.scheduledDate
+          ? new Date(messageData.scheduledDate)
+          : undefined,
         group: { connect: { id: groupId } },
         sentBy: { connect: { id: userId } },
         createdBy: { connect: { id: userId } },
@@ -604,12 +535,18 @@ async function updateMessage({
   } else {
     message = await prisma.message.update({
       where: { id: messageData.id, createdById: userId },
-      data: { status: "sent", sendAt: new Date() },
+      data: {
+        status: "sent",
+        sendAt: messageData.scheduledDate
+          ? new Date(messageData.scheduledDate)
+          : undefined,
+      },
     });
   }
 
   return message;
 }
+
 async function updateRecipients({
   messageId,
   prisma,
@@ -622,35 +559,42 @@ async function updateRecipients({
   recipients: Record<string, boolean>;
   isExistingMessage: boolean;
   saveRecipientState: boolean;
-}) {
-  const messageRecipients: MemberSnapshotWithContact[] = [];
-  for (const [memberId, isRecipient] of Object.entries(recipients)) {
-    if (!isExistingMessage) {
-      const snapshot = await prisma.memberSnapshot.create({
-        data: {
-          isRecipient,
-          message: { connect: { id: messageId } },
-          member: { connect: { id: memberId } },
-        },
-        include: { member: { include: { contact: true } } },
-      });
-      if (isRecipient) messageRecipients.push(snapshot);
-    } else {
-      const snapshot = await prisma.memberSnapshot.update({
-        where: { id: memberId },
-        data: { isRecipient },
-        include: { member: { include: { contact: true } } },
-      });
-      if (isRecipient) messageRecipients.push(snapshot);
-    }
+}): Promise<Contact[]> {
+  const operations = [];
+  const messageRecipients: Contact[] = [];
 
-    if (saveRecipientState) {
-      await prisma.member.update({
-        where: { id: memberId },
-        data: { isRecipient },
-      });
-    }
+  for (const [memberId, isRecipient] of Object.entries(recipients)) {
+    const operation = (async () => {
+      if (!isExistingMessage) {
+        const snapshot = await prisma.memberSnapshot.create({
+          data: {
+            isRecipient,
+            message: { connect: { id: messageId } },
+            member: { connect: { id: memberId } },
+          },
+          select: { member: { select: { contact: true } } },
+        });
+        if (isRecipient) messageRecipients.push(snapshot.member.contact);
+      } else {
+        const snapshot = await prisma.memberSnapshot.update({
+          where: { id: memberId },
+          data: { isRecipient },
+          select: { member: { select: { contact: true } } },
+        });
+        if (isRecipient) messageRecipients.push(snapshot.member.contact);
+      }
+
+      if (saveRecipientState) {
+        await prisma.member.update({
+          where: { id: memberId },
+          data: { isRecipient },
+        });
+      }
+    })();
+    operations.push(operation);
   }
+
+  await Promise.all(operations);
 
   if (!messageRecipients.length) {
     throw new TRPCError({
@@ -732,105 +676,248 @@ const updateReminders = async ({
   }
 };
 
-async function sendEmail({
-  emailConfig,
-  recipients,
-  message,
-}: {
-  emailConfig: EmailConfig;
-  recipients: MemberSnapshotWithContact[];
-  message: Message;
-}) {
-  const { accessToken, refreshToken, email } = emailConfig;
-  if (!email || !accessToken || !refreshToken) {
+export type SendMessageBody = {
+  message: MessageWithContactsAndReminders;
+  emailConfig: EmailConfig | null;
+  smsConfig: SmsConfig | null;
+  groupMeConfig: GroupMeConfig | null;
+};
+
+export async function sendMessage(body: SendMessageBody) {
+  const { isRecurring, isScheduled } = body.message;
+
+  if (!isRecurring && !isScheduled) {
+    await sendOnce({ body });
+  } else if (isScheduled && !isRecurring) {
+    await sendScheduledNotRecurring(body);
+  } else if (isRecurring && !isScheduled) {
+    await sendRecurringNotScheduled(body);
+  } else if (isRecurring && isScheduled) {
+    await sendRecurringScheduled(body);
+  }
+}
+
+interface SendMessageInput {
+  body: SendMessageBody;
+  delay?: number;
+  reminderId?: string;
+}
+
+async function sendOnce({ body, delay, reminderId }: SendMessageInput) {
+  const key = reminderId
+    ? `message-${body.message.id}-reminder-${reminderId}`
+    : `message-${body.message.id}`;
+
+  const existingMessageId = await upstash.get(key);
+  if (existingMessageId) {
     throw new TRPCError({
       code: "BAD_REQUEST",
-      message: "Account is not properly configured to send email messages",
+      message: `Message with id "${body.message.id}" is already scheduled`,
     });
   }
 
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    auth: {
-      type: "OAuth2",
-      user: email,
-      clientId: env.GOOGLE_ID_DEV,
-      clientSecret: env.GOOGLE_SECRET_DEV,
-      refreshToken: refreshToken,
-      accessToken: accessToken,
-    },
+  const message = await qstashClient.publishJSON({
+    url: `${env.NGROK_URL}/api/sendMessage`,
+    body: body,
+    deduplicationId: key,
+    delay: delay,
   });
 
-  try {
-    for (const recipient of recipients) {
-      const recipientEmail = recipient.member.contact.email;
-      if (!recipientEmail) return false;
+  await upstash.set(key, message.messageId);
 
-      await transporter.sendMail({
-        from: email,
-        to: "jack.watters@me.com",
-        // to: recipientEmail,
-        subject: message.subject ? message.subject : undefined,
-        text: message.content,
+  return message;
+}
+
+async function sendScheduledNotRecurring(body: SendMessageBody) {
+  const { reminders, isReminders } = body.message;
+
+  const scheduledDate = validateScheduleDate(body.message.scheduledDate);
+
+  if (isReminders) {
+    if (!reminders?.length) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Message must have at least one reminder",
       });
     }
-  } catch (err) {
-    throw handleError(err);
+
+    for (const reminder of reminders) {
+      const reminderDate = getReminderDate(reminder, scheduledDate);
+
+      const reminderDelay = getDelayInSec(reminderDate);
+
+      await sendOnce({ body, delay: reminderDelay, reminderId: reminder.id });
+    }
+  }
+
+  const messageDelay = getDelayInSec(scheduledDate);
+
+  return await sendOnce({ body, delay: messageDelay });
+}
+
+async function sendRecurringNotScheduled(body: SendMessageBody) {
+  const { recurringNum, recurringPeriod } = validateRecurringData({
+    recurringNum: body.message.recurringNum,
+    recurringPeriod: body.message.recurringPeriod,
+  });
+
+  return await createRecurringMessage({
+    body,
+    recurringNum,
+    recurringPeriod,
+  });
+}
+
+async function sendRecurringScheduled(body: SendMessageBody) {
+  const { reminders, isReminders } = body.message;
+
+  const scheduledDate = validateScheduleDate(body.message.scheduledDate);
+
+  const { recurringNum, recurringPeriod } = validateRecurringData({
+    recurringNum: body.message.recurringNum,
+    recurringPeriod: body.message.recurringPeriod,
+  });
+
+  if (isReminders) {
+    if (!reminders?.length) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Message must have at least one reminder",
+      });
+    }
+
+    for (const reminder of reminders) {
+      const reminderDate = getReminderDate(reminder, scheduledDate);
+
+      await createRecurringMessage({
+        body,
+        recurringNum,
+        recurringPeriod,
+        startDate: reminderDate,
+        reminderId: reminder.id,
+      });
+    }
+  }
+
+  await createRecurringMessage({
+    body,
+    recurringNum,
+    recurringPeriod,
+    startDate: scheduledDate,
+  });
+}
+
+interface CreateRecurringMessageInput {
+  body: SendMessageBody;
+  recurringNum: number;
+  recurringPeriod: Message["recurringPeriod"];
+  startDate?: Date;
+  reminderId?: string;
+}
+
+async function createRecurringMessage({
+  body,
+  recurringNum,
+  recurringPeriod,
+  startDate,
+  reminderId,
+}: CreateRecurringMessageInput) {
+  const key = reminderId
+    ? `message-${body.message.id}-reminder-${reminderId}`
+    : `message-${body.message.id}`;
+
+  const existingMessageId = await upstash.get(key);
+  if (existingMessageId) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: `Message with id "${body.message.id}" is already scheduled`,
+    });
+  }
+
+  const cron = generateCronExpression({
+    startDate: startDate ?? new Date(),
+    recurPeriod: recurringPeriod,
+    recurNum: recurringNum,
+  });
+
+  const schedule = await qstashClient.schedules.create({
+    destination: `${env.NGROK_URL}/api/sendMessage`,
+    body: JSON.stringify(body),
+    cron: cron,
+  });
+
+  await upstash.set(key, schedule.scheduleId);
+
+  return schedule;
+}
+
+function generateCronExpression({
+  startDate,
+  recurPeriod,
+  recurNum,
+}: {
+  startDate: Date;
+  recurPeriod: Message["recurringPeriod"];
+  recurNum: number;
+}): string {
+  const minutes = startDate.getMinutes();
+  const hours = startDate.getHours();
+  const dayOfMonth = startDate.getDate();
+  const month = startDate.getMonth() + 1; // JS months are zero-indexed
+  const dayOfWeek = startDate.getDay();
+
+  switch (recurPeriod) {
+    case "days":
+      return `${minutes} ${hours} */${recurNum} * *`;
+    case "weeks":
+      return `${minutes} ${hours} * * ${dayOfWeek === 0 ? 7 : dayOfWeek}/7`;
+    case "months":
+      return `${minutes} ${hours} ${dayOfMonth} */${recurNum} *`;
+    case "years":
+      return `${minutes} ${hours} ${dayOfMonth} ${month} */${recurNum}`;
+    default:
+      throw new Error(
+        "Invalid recurrence period. Choose from 'minute', 'hour', 'day', 'week', 'month', or 'year'.",
+      );
   }
 }
 
-async function sendSMS({
-  smsConfig,
-  recipients,
-  message,
-}: {
-  smsConfig: SmsConfig;
-  recipients: MemberSnapshotWithContact[];
-  message: Message;
-}) {
-  const { accountSid, authToken, phoneNumber } = smsConfig;
-  const client = TwilioClient(accountSid, authToken);
-
-  try {
-    for (const recipient of recipients) {
-      const recipientPhone = recipient.member.contact.phone;
-      if (!recipientPhone) return false;
-
-      await client.messages.create({
-        from: phoneNumber,
-        to: "+19544949167",
-        // to: recipientPhone,
-        body: message.content,
-      });
-    }
-  } catch (err) {
-    throw handleError(err);
+function getReminderDate(reminder: Reminder, scheduledDate: Date | null) {
+  if (!scheduledDate) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Scheduled date is required for reminders",
+    });
   }
-}
 
-async function sendGroupMe({
-  groupMeConfig,
-  recipients,
-  message,
-}: {
-  groupMeConfig: GroupMeConfig;
-  recipients: MemberSnapshotWithContact[];
-  message: Message;
-}) {
-  console.log("sendGroupMe");
-
-  const { id, accessToken, userId } = groupMeConfig;
-
-  try {
-    for (const recipient of recipients) {
-      const contact = recipient.member.contact;
-      if (!contact) return false;
-
-      log("sendGroupMe", contact, id, accessToken, userId, message);
-    }
-  } catch (err) {
-    throw handleError(err);
+  if (!reminder.num || !reminder.period) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Reminder number and period are required",
+    });
   }
+
+  const isScheduledDatePast = scheduledDate < new Date();
+  if (isScheduledDatePast) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Scheduled date must be in the future",
+    });
+  }
+
+  const reminderDiff = reminder.num * getPeriodMillis(reminder.period);
+
+  const reminderDate = new Date(scheduledDate.getTime() - reminderDiff);
+
+  const isReminderDatePast = reminderDate < new Date();
+  if (isReminderDatePast) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Reminder date must be in the future",
+    });
+  }
+
+  return reminderDate;
 }
 
 function throwMessageNotFoundError(messageId: string) {

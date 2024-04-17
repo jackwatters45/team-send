@@ -24,6 +24,10 @@ export interface MemberSnapshotWithContact extends MemberSnapshot {
   member: { contact: Contact };
 }
 
+export interface MemberSnapshotOnlyContact {
+  member: { contact: Contact };
+}
+
 export const memberRouter = createTRPCRouter({
   delete: protectedProcedure
     .input(
