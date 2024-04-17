@@ -106,6 +106,7 @@ enum ReccurPeriod {
 enum MessageStatus {
   draft
   scheduled
+  recurring
   sent
   failed
 }

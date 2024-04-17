@@ -8,7 +8,6 @@ import debug from "debug";
 import { verifySignature } from "@upstash/qstash/dist/nextjs";
 
 import { handleError } from "@/server/helpers/handleError";
-import type { SendMessageBody } from "@/server/api/routers/message";
 import { db } from "@/server/db";
 import type {
   Contact,
@@ -18,6 +17,7 @@ import type {
   SmsConfig,
 } from "@prisma/client";
 import { env } from "@/env";
+import type { MessageWithContactsAndReminders } from "@/server/api/routers/message";
 
 const log = debug("team-send:pages:api:sendMessage");
 
@@ -25,6 +25,13 @@ export const upstash = new Redis({
   url: env.UPSTASH_REDIS_REST_URL,
   token: env.UPSTASH_REDIS_REST_TOKEN,
 });
+
+export type SendMessageBody = {
+  message: MessageWithContactsAndReminders;
+  emailConfig: EmailConfig | null;
+  smsConfig: SmsConfig | null;
+  groupMeConfig: GroupMeConfig | null;
+};
 
 async function handler(req: NextApiRequest, res: NextApiResponse) {
   const { message, emailConfig, smsConfig, groupMeConfig } =

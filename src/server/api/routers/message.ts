@@ -2,13 +2,10 @@ import { z } from "zod";
 import debug from "debug";
 import type {
   Contact,
-  EmailConfig,
-  GroupMeConfig,
   Message,
   Prisma,
   PrismaClient,
   Reminder,
-  SmsConfig,
 } from "@prisma/client";
 import { Client as QStashClient } from "@upstash/qstash";
 import { Redis } from "@upstash/redis";
@@ -20,8 +17,9 @@ import { useRateLimit } from "@/server/helpers/rateLimit";
 import { handleError } from "@/server/helpers/handleError";
 import { env } from "@/env";
 import { messageInputSchema } from "@/schemas/messageSchema";
-import { getDelayInSec, getPeriodMillis } from "@/lib/utils";
+import { getDelayInSec, getMessageKey, getPeriodMillis } from "@/lib/utils";
 import { validateRecurringData, validateScheduleDate } from "@/lib/validations";
+import type { SendMessageBody } from "@/pages/api/sendMessage";
 
 const log = debug("team-send:api:message");
 
@@ -41,12 +39,11 @@ type MessageWithMembersAndReminders = Message & {
   reminders: Reminder[];
 };
 
-type MessageWithContactsAndReminders = Message & {
+export type MessageWithContactsAndReminders = Message & {
   recipients: Contact[];
   reminders: Reminder[];
 };
 
-// TODO update other routes
 export const messageRouter = createTRPCRouter({
   getMessageById: protectedProcedure
     .input(z.object({ messageId: z.string() }))
@@ -65,8 +62,111 @@ export const messageRouter = createTRPCRouter({
           },
         });
 
-        if (!message) return throwMessageNotFoundError(input.messageId);
+        if (!message) throw messageNotFoundError(input.messageId);
         return message;
+      } catch (err) {
+        throw handleError(err);
+      }
+    }),
+  delete: protectedProcedure
+    .input(z.object({ messageId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      try {
+        await useRateLimit(userId);
+
+        const message = await ctx.db.message.delete({
+          where: { id: input.messageId },
+          include: { reminders: true },
+        });
+
+        if (message.status === "scheduled") {
+          const messageKey = getMessageKey(message.id);
+
+          const messageId = await upstash.get<string>(messageKey);
+          if (messageId) await qstashClient.messages.delete(messageId);
+
+          for (const reminder of message?.reminders) {
+            const reminderKey = getMessageKey(message.id, reminder.id);
+
+            const reminderId = await upstash.get<string>(reminderKey);
+            if (reminderId) await qstashClient.messages.delete(reminderId);
+          }
+        } else if (message.status === "recurring") {
+          const messageKey = getMessageKey(message.id);
+
+          const messageId = await upstash.get<string>(messageKey);
+          if (messageId) await qstashClient.schedules.delete(messageId);
+
+          for (const reminder of message?.reminders) {
+            const reminderKey = getMessageKey(message.id, reminder.id);
+
+            const reminderId = await upstash.get<string>(reminderKey);
+            if (reminderId) await qstashClient.schedules.delete(reminderId);
+          }
+        }
+
+        return message;
+      } catch (err) {
+        throw handleError(err);
+      }
+    }),
+  duplicate: protectedProcedure
+    .input(z.object({ messageId: z.string() }))
+    .mutation(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      try {
+        await useRateLimit(userId);
+
+        const existingMessage = await ctx.db.message.findUnique({
+          where: { id: input.messageId },
+          select: {
+            content: true,
+            groupId: true,
+            sentById: true,
+            createdById: true,
+            lastUpdatedById: true,
+            isScheduled: true,
+            scheduledDate: true,
+            isRecurring: true,
+            recurringNum: true,
+            recurringPeriod: true,
+            isReminders: true,
+          },
+        });
+
+        if (!existingMessage) throw messageNotFoundError(input.messageId);
+
+        const existingReminders = await ctx.db.reminder.findMany({
+          where: { messageId: input.messageId },
+        });
+
+        const existingRecipients = await ctx.db.memberSnapshot.findMany({
+          where: { messageId: input.messageId },
+        });
+
+        const newReminders = existingReminders.map((reminder) => ({
+          ...reminder,
+          id: undefined,
+          messageId: undefined,
+        }));
+
+        const newRecipients = existingRecipients.map((recipient) => ({
+          ...recipient,
+          id: undefined,
+          messageId: undefined,
+        }));
+
+        return await ctx.db.message.create({
+          data: {
+            ...existingMessage,
+            status: "draft",
+            recipients: { create: newRecipients },
+            reminders: { create: newReminders },
+          },
+        });
       } catch (err) {
         throw handleError(err);
       }
@@ -115,18 +215,9 @@ export const messageRouter = createTRPCRouter({
             },
           });
 
-          if (!existingMessage) {
-            throw new TRPCError({
-              code: "NOT_FOUND",
-              message: `Message with id "${data.id}" not found`,
-            });
-          }
-
-          if (existingMessage?.status === "sent") {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: "Message has already been sent",
-            });
+          if (!existingMessage) throw messageNotFoundError(data.id);
+          else if (existingMessage?.status === "sent") {
+            throw messageAlreadySentError(data.id);
           }
 
           const message = await ctx.db.$transaction(async (prisma) => {
@@ -179,83 +270,6 @@ export const messageRouter = createTRPCRouter({
         }
       },
     ),
-  delete: protectedProcedure
-    .input(z.object({ messageId: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
-
-      try {
-        await useRateLimit(userId);
-
-        const message = await ctx.db.message.delete({
-          where: { id: input.messageId },
-        });
-
-        // TODO: cancel send jobs if any (might need a transaction)
-        return message;
-      } catch (err) {
-        throw handleError(err);
-      }
-    }),
-  duplicate: protectedProcedure
-    .input(z.object({ messageId: z.string() }))
-    .mutation(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
-
-      try {
-        await useRateLimit(userId);
-
-        const existingMessage = await ctx.db.message.findUnique({
-          where: { id: input.messageId },
-          select: {
-            content: true,
-            groupId: true,
-            sentById: true,
-            createdById: true,
-            lastUpdatedById: true,
-            isScheduled: true,
-            scheduledDate: true,
-            isRecurring: true,
-            recurringNum: true,
-            recurringPeriod: true,
-            isReminders: true,
-          },
-        });
-
-        if (!existingMessage) return throwMessageNotFoundError(input.messageId);
-
-        const existingReminders = await ctx.db.reminder.findMany({
-          where: { messageId: input.messageId },
-        });
-
-        const existingRecipients = await ctx.db.memberSnapshot.findMany({
-          where: { messageId: input.messageId },
-        });
-
-        const newReminders = existingReminders.map((reminder) => ({
-          ...reminder,
-          id: undefined,
-          messageId: undefined,
-        }));
-
-        const newRecipients = existingRecipients.map((recipient) => ({
-          ...recipient,
-          id: undefined,
-          messageId: undefined,
-        }));
-
-        return await ctx.db.message.create({
-          data: {
-            ...existingMessage,
-            status: "draft",
-            recipients: { create: newRecipients },
-            reminders: { create: newReminders },
-          },
-        });
-      } catch (err) {
-        throw handleError(err);
-      }
-    }),
   saveDraft: protectedProcedure
     .input(messageInputSchema)
     .mutation(
@@ -282,10 +296,7 @@ export const messageRouter = createTRPCRouter({
           }
 
           if (existingMessage?.status === "sent") {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: "Message has already been sent",
-            });
+            throw messageAlreadySentError(existingMessage.id);
           }
 
           const message = await ctx.db.$transaction(async (prisma) => {
@@ -322,7 +333,7 @@ export const messageRouter = createTRPCRouter({
         }
       },
     ),
-  sendExisting: protectedProcedure
+  sendById: protectedProcedure
     .input(z.object({ messageId: z.string() }))
     .mutation(async ({ ctx, input }) => {
       const userId = ctx.session.user.id;
@@ -355,18 +366,9 @@ export const messageRouter = createTRPCRouter({
           },
         });
 
-        if (!existingMessage) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: `Message with id "${input.messageId}" not found`,
-          });
-        }
-
-        if (existingMessage?.status === "sent") {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Message has already been sent",
-          });
+        if (!existingMessage) throw messageNotFoundError(input.messageId);
+        else if (existingMessage?.status === "sent") {
+          throw messageAlreadySentError(input.messageId);
         }
 
         const message = await ctx.db.message.update({
@@ -445,10 +447,7 @@ export const messageRouter = createTRPCRouter({
           }
 
           if (existingMessage?.status === "sent") {
-            throw new TRPCError({
-              code: "BAD_REQUEST",
-              message: "Message has already been sent",
-            });
+            throw messageAlreadySentError(existingMessage.id);
           }
 
           const message = await ctx.db.$transaction(async (prisma) => {
@@ -676,13 +675,6 @@ const updateReminders = async ({
   }
 };
 
-export type SendMessageBody = {
-  message: MessageWithContactsAndReminders;
-  emailConfig: EmailConfig | null;
-  smsConfig: SmsConfig | null;
-  groupMeConfig: GroupMeConfig | null;
-};
-
 export async function sendMessage(body: SendMessageBody) {
   const { isRecurring, isScheduled } = body.message;
 
@@ -704,9 +696,7 @@ interface SendMessageInput {
 }
 
 async function sendOnce({ body, delay, reminderId }: SendMessageInput) {
-  const key = reminderId
-    ? `message-${body.message.id}-reminder-${reminderId}`
-    : `message-${body.message.id}`;
+  const key = getMessageKey(body.message.id, reminderId);
 
   const existingMessageId = await upstash.get(key);
   if (existingMessageId) {
@@ -822,9 +812,7 @@ async function createRecurringMessage({
   startDate,
   reminderId,
 }: CreateRecurringMessageInput) {
-  const key = reminderId
-    ? `message-${body.message.id}-reminder-${reminderId}`
-    : `message-${body.message.id}`;
+  const key = getMessageKey(body.message.id, reminderId);
 
   const existingMessageId = await upstash.get(key);
   if (existingMessageId) {
@@ -863,7 +851,7 @@ function generateCronExpression({
   const minutes = startDate.getMinutes();
   const hours = startDate.getHours();
   const dayOfMonth = startDate.getDate();
-  const month = startDate.getMonth() + 1; // JS months are zero-indexed
+  const month = startDate.getMonth() + 1; // JS months zero-indexed
   const dayOfWeek = startDate.getDay();
 
   switch (recurPeriod) {
@@ -920,9 +908,16 @@ function getReminderDate(reminder: Reminder, scheduledDate: Date | null) {
   return reminderDate;
 }
 
-function throwMessageNotFoundError(messageId: string) {
-  throw new TRPCError({
+function messageNotFoundError(messageId: string) {
+  return new TRPCError({
     code: "NOT_FOUND",
     message: `Message with id "${messageId}" not found`,
+  });
+}
+
+function messageAlreadySentError(messageId: string) {
+  return new TRPCError({
+    code: "BAD_REQUEST",
+    message: `Message with id "${messageId}" has already been sent`,
   });
 }

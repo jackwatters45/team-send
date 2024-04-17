@@ -207,3 +207,9 @@ export const utcToLocalDateTimeString = (date?: Date | null): string => {
 
 export const getDelayInSec = (date: Date) =>
   (date.getTime() - Date.now()) / 1000;
+
+export function getMessageKey(messageId: string, reminderId?: string) {
+  return reminderId
+    ? `message-${messageId}-reminder-${reminderId}`
+    : `message-${messageId}`;
+}

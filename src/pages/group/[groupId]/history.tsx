@@ -81,7 +81,7 @@ export default function GroupHistory({
     deleteMessage({ messageId });
   };
 
-  const { mutate: sendMessage } = api.message.sendExisting.useMutation({
+  const { mutate: sendMessage } = api.message.sendById.useMutation({
     onSuccess: (data) => {
       void ctx.group.getGroupHistoryById.invalidate();
       toast({
@@ -395,11 +395,11 @@ function getHistoryTableColumns({
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            {row.getValue<string>("status") === "scheduled" && (
+            {/* {row.getValue<string>("status") === "scheduled" && (
               <DropdownMenuItem onClick={() => handleSend(row.getValue("id"))}>
                 Send message now
               </DropdownMenuItem>
-            )}
+            )} */}
             <ConfirmDeleteDialog
               triggerText="Delete message"
               onConfirm={() => handleDelete(row.getValue("id"))}

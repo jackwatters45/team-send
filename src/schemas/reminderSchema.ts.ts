@@ -24,9 +24,8 @@ export const reminderSchema = z
   })
   .refine(
     (data) => {
-      if (data.num > maxValues[data.period]) {
-        return false;
-      }
+      if (data.num > maxValues[data.period]) return false;
+
       return true;
     },
     {
