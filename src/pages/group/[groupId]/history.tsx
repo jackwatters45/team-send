@@ -400,8 +400,9 @@ function getHistoryTableColumns({
               </DropdownMenuItem>
             )} */}
             <ConfirmDeleteDialog
-              triggerText="Delete message"
               onConfirm={() => handleDelete(row.getValue("id"))}
+              triggerText="Delete message"
+              dialogDescription="This cannot be undone and will permanently delete the message."
             />
           </DataTableRowActions>
         );

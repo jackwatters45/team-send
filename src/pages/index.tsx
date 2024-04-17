@@ -234,6 +234,7 @@ const getGroupColumns = (
           <ConfirmDeleteDialog
             triggerText="Delete group"
             onConfirm={() => handleDelete(id)}
+            dialogDescription="Are you sure you want to delete this group? This action cannot be undone."
           />
         </DataTableRowActions>
       );

@@ -125,17 +125,19 @@ const AlertDialogCancel = React.forwardRef<
 AlertDialogCancel.displayName = AlertDialogPrimitive.Cancel.displayName;
 
 interface ConfirmDeleteDialogProps {
-  triggerText: string;
   onConfirm: () => void;
+  triggerText: string;
+  dialogDescription: string;
 }
 const ConfirmDeleteDialog = ({
-  triggerText,
   onConfirm,
+  triggerText,
+  dialogDescription,
 }: ConfirmDeleteDialogProps) => (
   <AlertDialog>
     <AlertDialogTrigger asChild className="w-full">
       <Button
-        className="h-fit select-none items-center rounded-sm px-2 py-1.5 text-sm font-normal outline-none transition-colors hover:bg-stone-100 focus:bg-stone-100 focus:text-stone-900 dark:hover:bg-stone-800 dark:hover:text-stone-50 dark:focus:bg-stone-800 dark:focus:text-stone-50"
+        className="h-fit select-none items-center justify-start rounded-sm px-2 py-1.5 text-sm font-normal outline-none transition-colors hover:bg-stone-100 focus:bg-stone-100 focus:text-stone-900 dark:hover:bg-stone-800 dark:hover:text-stone-50 dark:focus:bg-stone-800 dark:focus:text-stone-50"
         variant="ghost"
       >
         {triggerText}
@@ -145,10 +147,7 @@ const ConfirmDeleteDialog = ({
     <AlertDialogContent>
       <AlertDialogHeader>
         <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
-        <AlertDialogDescription>
-          This action cannot be undone. This will permanently delete your
-          account and remove your data from our servers.
-        </AlertDialogDescription>
+        <AlertDialogDescription>{dialogDescription}</AlertDialogDescription>
       </AlertDialogHeader>
       <AlertDialogFooter>
         <AlertDialogCancel>Cancel</AlertDialogCancel>
