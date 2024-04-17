@@ -2,6 +2,8 @@ import {
   BooleanSelect,
   DateTimeInput,
   NumPeriodInputs,
+  recurPeriodOptions,
+  remindersPeriodOptions,
 } from "@/components/ui/form-inputs";
 
 import { type UseFormReturn } from "react-hook-form";
@@ -55,11 +57,7 @@ export function MessageSettings({ form }: MessageSettingsProps) {
                     periodName={`reminders.${index}.period`}
                     label={`Remind before ${index + 1}`}
                     numGreaterThanOne={reminder.num > 1}
-                    periodOptions={[
-                      { label: "Month", value: "months" },
-                      { label: "Week", value: "weeks" },
-                      { label: "Day", value: "days" },
-                    ]}
+                    periodOptions={remindersPeriodOptions}
                   />
                   <Button
                     variant="outline"
@@ -113,9 +111,12 @@ export function MessageSettings({ form }: MessageSettingsProps) {
             periodName="recurringPeriod"
             label="Recurring every"
             numGreaterThanOne={Number(form.watch("recurringNum")) > 1}
+            periodOptions={recurPeriodOptions}
           />
         </div>
       )}
     </>
   );
 }
+
+// TODO commit 250

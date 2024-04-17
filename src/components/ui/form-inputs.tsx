@@ -90,20 +90,30 @@ function FormTextarea<T extends z.ZodType>({
   );
 }
 
-interface NumPeriodInputs<T extends z.ZodType>
-  extends SharedInputNoNameProps<T> {
-  numName: Path<z.infer<T>>;
-  periodName: Path<z.infer<T>>;
-  numGreaterThanOne: boolean;
-  periodOptions?: { label: string; value: string }[];
-}
+type periodOptions = { label: string; value: string }[];
 
-const defaultPeriodOptions = [
+export const recurPeriodOptions: periodOptions = [
   { label: "Year", value: "years" },
   { label: "Month", value: "months" },
   { label: "Week", value: "weeks" },
   { label: "Day", value: "days" },
 ];
+
+export const remindersPeriodOptions: periodOptions = [
+  { label: "Month", value: "months" },
+  { label: "Week", value: "weeks" },
+  { label: "Day", value: "days" },
+  { label: "Hour", value: "hours" },
+  { label: "Minute", value: "minutes" },
+];
+
+interface NumPeriodInputs<T extends z.ZodType>
+  extends SharedInputNoNameProps<T> {
+  numName: Path<z.infer<T>>;
+  periodName: Path<z.infer<T>>;
+  numGreaterThanOne: boolean;
+  periodOptions: periodOptions;
+}
 
 function NumPeriodInputs<T extends z.ZodType>({
   numName,
@@ -112,7 +122,7 @@ function NumPeriodInputs<T extends z.ZodType>({
   control,
   label,
   description,
-  periodOptions = defaultPeriodOptions,
+  periodOptions,
 }: NumPeriodInputs<T>) {
   return (
     <div className="flex flex-1 items-start justify-evenly gap-4">
