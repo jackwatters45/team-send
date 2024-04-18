@@ -45,7 +45,7 @@ export function SMSConnections({ form }: { form: GroupConnectionsFormReturn }) {
             <Separator />
           </div>
           <CheckboxInput
-            name="change-global-sms"
+            name="changeGlobalSms"
             label="Change setting for all groups"
             description="Change the SMS setting for all your groups."
             control={form.control}
@@ -82,7 +82,7 @@ export function EmailConnection({
             <Separator />
           </div>
           <CheckboxInput
-            name="change-global-email"
+            name="changeGlobalEmail"
             label="Change setting for all groups"
             description="Change the email setting for all your groups."
             control={form.control}

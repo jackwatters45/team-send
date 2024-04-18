@@ -19,6 +19,7 @@ import {
   userSettingsFormSchema,
 } from "@/schemas/userSettingsSchema";
 import { renderErrorComponent } from "@/components/error/renderErrorComponent";
+import { UserAvatarUpload } from "@/components/ui/upload-input";
 
 export default function AccountProfile() {
   const { data: user, error } = api.user.getCurrentUser.useQuery();
@@ -27,9 +28,8 @@ export default function AccountProfile() {
     resolver: zodResolver(userSettingsFormSchema),
     defaultValues: {
       name: user?.name ?? "",
-      image: user?.image ?? "",
-      imageFile: undefined,
       email: user?.email ?? "",
+      phone: user?.phone ?? "",
       username: user?.username ?? "",
     },
   });
@@ -52,8 +52,8 @@ export default function AccountProfile() {
     },
   });
 
-  const onSubmit = ({ image, imageFile, ...data }: UserSettingsFormType) => {
-    mutate({ ...data, image: imageFile ?? image });
+  const onSubmit = (data: UserSettingsFormType) => {
+    mutate(data);
   };
 
   if (!user) return renderErrorComponent(error);
@@ -95,24 +95,15 @@ export default function AccountProfile() {
           </div>
           <div className="flex justify-between gap-12">
             <div className="flex-1">
-              <FormInput<typeof userSettingsFormSchema>
-                name="imageFile"
-                label="Avatar"
-                type="file"
-                accept=".png, .jpg, .jpeg"
-                className="dark:file:text-white "
-                control={form.control}
+              <UserAvatarUpload
+                handleUploadComplete={() => {
+                  void ctx.user.getCurrentUser.invalidate();
+                }}
               />
             </div>
-            {(form.watch("name") ??
-              form.watch("image") ??
-              form.watch("imageFile")) && (
+            {(form.watch("name") ?? user.image) && (
               <Avatar className="h-20 w-20">
-                <AvatarImage
-                  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-                  src={form.watch("imageFile") || form.watch("image")}
-                  alt="User Avatar"
-                />
+                <AvatarImage src={user.image ?? undefined} alt="User Avatar" />
                 <AvatarFallback className="text-4xl font-medium ">
                   {extractInitials(form.watch("name"))}
                 </AvatarFallback>

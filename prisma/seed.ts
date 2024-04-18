@@ -49,7 +49,11 @@ async function createContact(userId: string) {
   }
 }
 
-async function createMember(contactId: string, groupId: string) {
+async function createMember(
+  contactId: string,
+  groupId: string,
+  userId: string,
+) {
   try {
     return await db.member.create({
       data: {
@@ -57,6 +61,8 @@ async function createMember(contactId: string, groupId: string) {
         group: { connect: { id: groupId } },
         memberNotes: faker.lorem.sentence(),
         isRecipient: faker.datatype.boolean(0.8),
+        createdBy: { connect: { id: userId } },
+        lastUpdatedBy: { connect: { id: userId } },
       },
     });
   } catch (e) {
@@ -95,7 +101,7 @@ async function createGroup(userId: string, contactIds: string[]) {
 
     const members = (await Promise.all(
       selectedContactIds.map((contactId) =>
-        limit(() => createMember(contactId, group.id)),
+        limit(() => createMember(contactId, group.id, userId)),
       ),
     )) as unknown as MemberWithContact[];
 
@@ -202,13 +208,6 @@ async function _dropAllTables() {
     await db.memberSnapshot.deleteMany({});
     await db.member.deleteMany({});
     await db.reminder.deleteMany({});
-    await db.account.deleteMany({
-      where: {
-        providerAccountId: {
-          not: "70183051",
-        },
-      },
-    });
     await db.message.deleteMany({});
     await db.contact.deleteMany({});
     await db.group.deleteMany({});
@@ -235,10 +234,7 @@ async function main() {
     update: {},
     create: {
       name: "Jack Watters",
-      email: "jack.watters@me.com",
-      phone: "+14155552671",
       username: "jackwatters",
-      image: faker.image.avatar(),
     },
   });
 

@@ -6,9 +6,9 @@ import type { UseFormReturn } from "react-hook-form";
 export const groupConnectionsSchema = z.object({
   groupId: z.string().optional(),
   useSMS: z.boolean(),
-  "change-global-sms": z.boolean(),
+  changeGlobalSms: z.boolean(),
   useEmail: z.boolean(),
-  "change-global-email": z.boolean(),
+  changeGlobalEmail: z.boolean(),
   useGroupMe: z.boolean(),
   groupMeId: z
     .string()
@@ -33,8 +33,7 @@ export const groupBasicInfoSchema = z.object({
     .string()
     .max(100, "Description must not exceed 100 characters.")
     .optional(),
-  image: z.string().url("Image must be a valid URL.").optional(),
-  imageFile: z.string().optional(),
+  image: z.string().optional(),
 });
 export type GroupBasicInfoFormType = z.infer<typeof groupBasicInfoSchema>;
 export type GroupBasicInfoFormReturn = UseFormReturn<GroupBasicInfoFormType>;

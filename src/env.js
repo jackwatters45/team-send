@@ -60,6 +60,9 @@ export const env = createEnv({
 
     GROUPME_ACCESS_TOKEN: z.string(),
     NGROK_URL: z.string().url().optional(),
+
+    UPLOADTHING_SECRET: z.string(),
+    UPLOADTHING_APP_ID: z.string(),
   },
 
   /**
@@ -121,6 +124,9 @@ export const env = createEnv({
 
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
     NGROK_URL: process.env.NGROK_URL,
+
+    UPLOADTHING_SECRET: process.env.UPLOADTHING_SECRET,
+    UPLOADTHING_APP_ID: process.env.UPLOADTHING_APP_ID,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

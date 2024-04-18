@@ -26,6 +26,7 @@ import { FormInput } from "@/components/ui/form-inputs";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { renderErrorComponent } from "@/components/error/renderErrorComponent";
+import { GroupAvatarUpload } from "@/components/ui/upload-input";
 import {
   EmailConnection,
   GroupMeConnectionExistingGroup,
@@ -125,24 +126,11 @@ export default function GroupSettings({
         >
           <div className="flex justify-between gap-12">
             <div className="flex-1">
-              <FormInput<typeof groupSettingsSchema>
-                name="imageFile"
-                label="Group Avatar"
-                type="file"
-                accept=".png, .jpg, .jpeg"
-                className="dark:file:text-white "
-                control={form.control}
-              />
+              <GroupAvatarUpload groupId={groupId} />
             </div>
-            {(form.watch("name") ??
-              form.watch("image") ??
-              form.watch("imageFile")) && (
+            {(form.watch("name") ?? data.image) && (
               <Avatar className="h-20 w-20">
-                <AvatarImage
-                  // eslint-disable-next-line @typescript-eslint/prefer-nullish-coalescing
-                  src={form.watch("imageFile") || form.watch("image")}
-                  alt="Group Avatar"
-                />
+                <AvatarImage src={data.image ?? undefined} alt="Group Avatar" />
                 <AvatarFallback className="text-4xl font-medium ">
                   {extractInitials(form.watch("name"))}
                 </AvatarFallback>
@@ -278,12 +266,10 @@ const getDefaultFormValues = (data: Partial<GetGroupSettingsByIdOutput>) => ({
   groupId: data?.id ?? "",
   name: data?.name ?? "",
   description: data?.description ?? "",
-  image: data?.image ?? undefined,
-  imageFile: undefined,
   useSMS: data?.useSMS ?? false,
   useEmail: data?.useEmail ?? false,
   groupMeId: data?.groupMeId ?? "",
   useGroupMe: data?.useGroupMe ?? false,
-  "change-global-sms": false,
-  "change-global-email": false,
+  changeGlobalSms: false,
+  changeGlobalEmail: false,
 });

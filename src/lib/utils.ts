@@ -68,8 +68,8 @@ export function getInitialSelectedMembersSnapshot(
 export const createNewMember = (newMember?: Partial<NewMember>): NewMember => ({
   contact: {
     name: newMember?.contact?.name ?? "",
-    email: newMember?.contact?.email ?? "",
-    phone: newMember?.contact?.phone ?? "",
+    email: newMember?.contact?.email ?? undefined,
+    phone: newMember?.contact?.phone ?? undefined,
     notes: newMember?.contact?.notes ?? "",
     id: newMember?.contact?.id ?? undefined,
   },

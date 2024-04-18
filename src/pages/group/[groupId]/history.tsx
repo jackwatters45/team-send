@@ -393,18 +393,20 @@ function getHistoryTableColumns({
                 </Link>
               </DropdownMenuItem>
             )}
-            {row.getValue<string>("status") === "failed" && (
-              <DropdownMenuItem onClick={() => handleSend(row.getValue("id"))}>
-                Retry send message
-              </DropdownMenuItem>
-            )}
+            {/* {row.getValue<string>("status") === "failed" &&
+              !row.getValue<string>("hasRetried") && (
+                <DropdownMenuItem
+                  onClick={() => handleSend(row.getValue("id"))}
+                >
+                  Retry send message
+                </DropdownMenuItem>
+              )} */}
             {row.getValue<string>("status") === "draft" && (
               <DropdownMenuItem onClick={() => handleSend(row.getValue("id"))}>
                 Send message
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
-            {/* TODO */}
             {/* {row.getValue<string>("status") === "pending" && (
               <DropdownMenuItem onClick={() => handleSend(row.getValue("id"))}>
                 Send message now

@@ -45,7 +45,7 @@ export default function GroupMembersFormContent({
       <GroupMembersRecents form={form} />
       <Button
         type="submit"
-        disabled={!form.formState.isDirty || !form.formState.isValid}
+        // disabled={!form.formState.isDirty || !form.formState.isValid}
       >
         {submitText}
       </Button>

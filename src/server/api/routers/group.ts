@@ -190,65 +190,106 @@ export const groupRouter = createTRPCRouter({
     }),
   create: protectedProcedure
     .input(createGroupSchema)
-    .mutation(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
+    .mutation(
+      async ({
+        ctx,
+        input: { changeGlobalEmail, changeGlobalSms, ...data },
+      }) => {
+        const userId = ctx.session.user.id;
 
-      try {
-        await useRateLimit(userId);
+        log(data.image);
+        try {
+          await useRateLimit(userId);
 
-        const result = await ctx.db.$transaction(async (prisma) => {
-          const members = await Promise.all(
-            input.members
-              .filter((member) => member.contact.name)
-              .map(async (member) => {
-                if (member.contact.id) {
-                  // TODO improvement: prevent redundant contact updates
-                  await prisma.contact.upsert({
-                    where: { id: member.contact.id, createdById: userId },
-                    update: { ...member.contact },
-                    create: {
-                      ...member.contact,
-                      createdBy: { connect: { id: userId } },
-                    },
-                  });
+          const result = await ctx.db.$transaction(async (prisma) => {
+            const members = await Promise.all(
+              data.members
+                .filter((member) => member.contact.name)
+                .map(async (member) => {
+                  if (member.contact.id) {
+                    // TODO improvement: prevent redundant contact updates
+                    await prisma.contact.upsert({
+                      where: { id: member.contact.id, createdById: userId },
+                      update: { ...member.contact },
+                      create: {
+                        ...member.contact,
+                        createdBy: { connect: { id: userId } },
+                      },
+                    });
 
-                  return {
-                    contact: { connect: { id: member.contact.id } },
-                    memberNotes: member.memberNotes,
-                    isRecipient: member.isRecipient,
-                  };
-                } else {
-                  const contact = await prisma.contact.create({
-                    data: {
-                      ...member.contact,
-                      createdBy: { connect: { id: userId } },
-                    },
-                  });
+                    return {
+                      contact: { connect: { id: member.contact.id } },
+                      memberNotes: member.memberNotes,
+                      isRecipient: member.isRecipient,
+                    };
+                  } else {
+                    const contact = await prisma.contact.create({
+                      data: {
+                        ...member.contact,
+                        createdBy: { connect: { id: userId } },
+                      },
+                    });
 
-                  return {
-                    contact: { connect: { id: contact.id } },
-                    memberNotes: member.memberNotes,
-                    isRecipient: member.isRecipient,
+                    return {
+                      contact: { connect: { id: contact.id } },
+                      memberNotes: member.memberNotes,
+                      isRecipient: member.isRecipient,
+                    };
+                  }
+                }),
+            );
+
+            const group = await prisma.group.create({
+              data: {
+                ...data,
+                members: {
+                  create: members.map((member) => ({
+                    ...member,
                     createdBy: { connect: { id: userId } },
-                  };
-                }
-              }),
-          );
+                    lastUpdatedBy: { connect: { id: userId } },
+                  })),
+                },
+                createdBy: { connect: { id: userId } },
+              },
+            });
 
-          return await prisma.group.create({
-            data: {
-              ...input,
-              members: { create: members },
-              createdBy: { connect: { id: ctx.session.user.id } },
-            },
+            if (changeGlobalEmail) {
+              const updateAll = await prisma.group.updateMany({
+                where: { createdBy: { id: userId } },
+                data: { useEmail: data.useEmail },
+              });
+
+              if (!updateAll) {
+                throw new TRPCError({
+                  code: "INTERNAL_SERVER_ERROR",
+                  message: "Failed to update all group connections",
+                });
+              }
+            }
+
+            if (changeGlobalSms) {
+              const updateAll = await prisma.group.updateMany({
+                where: { createdBy: { id: userId } },
+                data: { useSMS: data.useSMS },
+              });
+
+              if (!updateAll) {
+                throw new TRPCError({
+                  code: "INTERNAL_SERVER_ERROR",
+                  message: "Failed to update all group connections",
+                });
+              }
+            }
+
+            return group;
           });
-        });
 
-        return result;
-      } catch (err) {
-        throw handleError(err);
-      }
-    }),
+          return result;
+        } catch (err) {
+          throw handleError(err);
+        }
+      },
+    ),
   delete: protectedProcedure
     .input(z.object({ groupId: z.string() }))
     .mutation(async ({ ctx, input }) => {
@@ -298,7 +339,6 @@ export const groupRouter = createTRPCRouter({
             data: {
               name: input.name,
               description: input.description,
-              image: input.imageFile ?? input.image,
               useSMS: input.useSMS,
               useEmail: input.useEmail,
             },
@@ -306,7 +346,7 @@ export const groupRouter = createTRPCRouter({
 
           if (!group) throw throwGroupNotFoundError(input.groupId);
 
-          if (input["change-global-email"]) {
+          if (input.changeGlobalEmail) {
             const updateAll = await prisma.group.updateMany({
               where: { createdBy: { id: userId } },
               data: { useEmail: input.useEmail },
@@ -320,7 +360,7 @@ export const groupRouter = createTRPCRouter({
             }
           }
 
-          if (input["change-global-sms"]) {
+          if (input.changeGlobalSms) {
             const updateAll = await prisma.group.updateMany({
               where: { createdBy: { id: userId } },
               data: { useSMS: input.useSMS },
@@ -443,6 +483,8 @@ export const groupRouter = createTRPCRouter({
                   memberNotes: member.memberNotes,
                   contact: { connect: { id: contactUpsert.id } },
                   group: { connect: { id: input.groupId } },
+                  createdBy: { connect: { id: userId } },
+                  lastUpdatedBy: { connect: { id: userId } },
                 },
               });
             }),

@@ -267,6 +267,71 @@ export const messageRouter = createTRPCRouter({
         throw handleError(err);
       }
     }),
+  sendNow: protectedProcedure
+    .input(z.object({ messageId: z.string() }))
+    .mutation(async ({ ctx, input: { messageId } }) => {
+      const userId = ctx.session.user.id;
+
+      try {
+        await useRateLimit(userId);
+
+        const message = await ctx.db.message.findUnique({
+          where: { id: messageId, createdById: userId },
+          include: {
+            recipients: { include: { member: { select: { contact: true } } } },
+            reminders: true,
+          },
+        });
+
+        if (!message) throw messageNotFoundError(messageId);
+        else if (message?.status === "sent") {
+          throw messageAlreadySentError(messageId);
+        }
+
+        // update message status to pending, set sendAt/scheduledDate to now, set isReminders/isScheduled to false
+        await ctx.db.message.update({
+          where: { id: messageId },
+          data: {
+            sendAt: new Date(),
+            scheduledDate: new Date(),
+            isReminders: false,
+            isScheduled: false,
+            hasRetried: message.status === "failed",
+            status: "pending",
+          },
+        });
+
+        // format recipients
+        const recipientsContacts = message.recipients
+          .filter((r) => r.isRecipient)
+          .map((r) => r.member.contact);
+
+        const userConfig = await getUserConfig(userId, ctx.db);
+
+        // if message is scheduled, send it now
+        await sendOnce({
+          body: {
+            message: { ...message, recipients: recipientsContacts },
+            ...userConfig,
+          },
+        });
+
+        // if any reminders, remove
+        await ctx.db.reminder.deleteMany({
+          where: { messageId: messageId },
+        });
+
+        for (const reminder of message.reminders) {
+          const reminderKey = getMessageKey(message.id, reminder.id);
+          const reminderId = await upstash.get<string>(reminderKey);
+
+          if (reminderId) await qstashClient.messages.delete(reminderId);
+          await upstash.del(reminderKey);
+        }
+      } catch (err) {
+        throw handleError(err);
+      }
+    }),
 });
 
 async function updateMessage({

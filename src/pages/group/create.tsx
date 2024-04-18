@@ -12,6 +12,7 @@ import type {
   GroupConnectionsFormReturn,
   GroupMembersFormReturn,
 } from "@/schemas/groupSchema";
+import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 
 import GroupMembersFormContent from "@/components/group/GroupMembersForm";
 import { toast } from "@/components/ui/use-toast";
@@ -25,11 +26,11 @@ import {
   SMSConnections,
 } from "@/components/group/Connections";
 import { renderErrorComponent } from "@/components/error/renderErrorComponent";
-import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
+import { CreateGroupAvatarUpload } from "@/components/ui/upload-input";
+import { useState } from "react";
 
 export default function CreateGroup() {
   const { data, error } = api.user.getCurrentUser.useQuery();
-  // TODO: Add connections
   const form = useForm<CreateGroupFormType>({
     resolver: zodResolver(createGroupSchema),
     defaultValues: {
@@ -39,11 +40,11 @@ export default function CreateGroup() {
       members: [createNewMember()],
       addedGroupIds: [],
       useSMS: false,
-      "change-global-sms": false,
+      changeGlobalSms: false,
       useEmail: false,
-      "change-global-email": false,
+      changeGlobalEmail: false,
       useGroupMe: false,
-      groupMeId: "",
+      groupMeId: undefined,
     },
   });
 
@@ -69,11 +70,15 @@ export default function CreateGroup() {
     },
   });
 
+  const [imageUrl, setImageUrl] = useState<string | undefined>(undefined);
+
   const onSubmit = form.handleSubmit((data) => {
     toast({
       title: "Creating Group",
       description: "Please wait while we create the group.",
     });
+
+    data.image = imageUrl;
 
     mutate(data);
   });
@@ -89,14 +94,7 @@ export default function CreateGroup() {
         <form onSubmit={onSubmit} className="flex w-full flex-col gap-16">
           <section className="flex flex-col-reverse items-center lg:flex-row lg:justify-between lg:gap-12">
             <div className="flex w-full  flex-col gap-8 px-4 py-4  sm:px-0 lg:max-w-lg">
-              <FormInput<typeof createGroupSchema>
-                control={form.control}
-                name="image"
-                label="Group Avatar"
-                type="file"
-                accept=".png, .jpg, .jpeg"
-                className="dark:file:text-white"
-              />
+              <CreateGroupAvatarUpload setImageURL={setImageUrl} />
               <FormInput<typeof createGroupSchema>
                 control={form.control}
                 name="name"
@@ -112,9 +110,9 @@ export default function CreateGroup() {
                 placeholder="Enter a Group Description (optional)"
               />
             </div>
-            {(form.watch("name") || form.watch("image")) && (
+            {(form.watch("name") || imageUrl) && (
               <Avatar className="h-24 w-24 lg:h-48 lg:w-48">
-                <AvatarImage src={form.watch("image")} alt="Group Avatar" />
+                <AvatarImage src={imageUrl} alt="Group Avatar" />
                 <AvatarFallback className="text-4xl font-medium lg:text-8xl">
                   {extractInitials(form.watch("name"))}
                 </AvatarFallback>
