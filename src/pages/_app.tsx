@@ -2,6 +2,7 @@ import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
 import { type AppType } from "next/app";
 import { Inter } from "next/font/google";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 import { api } from "@/utils/api";
 
@@ -21,6 +22,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
       <div className={`font-sans ${inter.variable}`}>
         <Component {...pageProps} />
       </div>
+      <SpeedInsights />
     </SessionProvider>
   );
 };
