@@ -222,7 +222,9 @@ function getHistoryTableColumns({
   handleDelete: (messageId: string) => void;
   handleSend: (messageId: string) => void;
   handleDuplicate: (messageId: string) => void;
-}): ColumnDef<RouterOutputs["group"]["getAll"][number]["messages"][number]>[] {
+}): ColumnDef<
+  RouterOutputs["group"]["getGroupHistoryById"]["messages"][number]
+>[] {
   return [
     {
       id: "select",
