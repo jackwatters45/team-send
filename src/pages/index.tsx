@@ -1,5 +1,6 @@
 import type { GetServerSideProps } from "next";
 import type { ColumnDef } from "@tanstack/react-table";
+import { useEffect } from "react";
 
 import { type RouterOutputs, api } from "@/utils/api";
 import useDataTable from "@/hooks/useDataTable";
