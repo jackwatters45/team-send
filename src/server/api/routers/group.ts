@@ -31,7 +31,7 @@ export const groupRouter = createTRPCRouter({
     try {
       await useRateLimit(userId);
 
-      return await ctx.db.group.findMany({
+      const groups = await ctx.db.group.findMany({
         where: { createdBy: { id: userId } },
         include: {
           members: {
@@ -45,6 +45,12 @@ export const groupRouter = createTRPCRouter({
           },
         },
       });
+
+      return groups.map(({ messages, ...group }) => ({
+        ...group,
+        lastMessage: messages[0]?.content,
+        lastMessageTime: messages[0]?.sendAt,
+      }));
     } catch (err) {
       throw handleError(err);
     }

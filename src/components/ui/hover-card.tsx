@@ -130,9 +130,11 @@ function MembersHoverableCell({ members }: MemberHoverableCellProps) {
 }
 
 interface DateHoverableCellProps {
-  dateInput: string | Date;
+  dateInput: string | Date | null | undefined;
 }
 function DateHoverableCell({ dateInput }: DateHoverableCellProps) {
+  if (!dateInput) return null;
+
   const date = new Date(dateInput);
   const dateTime = formatRelativeDateAndTime(date);
 

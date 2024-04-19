@@ -32,11 +32,15 @@ import {
   GroupMeConnectionExistingGroup as _,
   SMSConnections,
 } from "@/components/group/Connections";
+import Link from "next/link";
 
 export default function GroupSettings({
   groupId,
 }: InferGetServerSidePropsType<typeof getServerSideProps>) {
   const { data, error } = api.group.getGroupSettingsById.useQuery({ groupId });
+
+  const isActiveConnections =
+    data?.useSMS ?? data?.useEmail ?? data?.useGroupMe;
 
   const form = useForm<GroupSettingsFormType>({
     resolver: zodResolver(groupSettingsSchema),
@@ -160,23 +164,39 @@ export default function GroupSettings({
                 on.
               </FormDescription>
               <div className="flex flex-col gap-5 pt-5">
-                {data.isSMSConfig && (
-                  <SMSConnections
-                    form={form as unknown as GroupConnectionsFormReturn}
-                  />
-                )}
-                {data.isEmailConfig && (
-                  <EmailConnection
-                    form={form as unknown as GroupConnectionsFormReturn}
-                  />
-                )}
-                {/* {data.isGroupMeConfig && (
+                {isActiveConnections ? (
+                  <>
+                    {data.isSMSConfig && (
+                      <SMSConnections
+                        form={form as unknown as GroupConnectionsFormReturn}
+                      />
+                    )}
+                    {data.isEmailConfig && (
+                      <EmailConnection
+                        form={form as unknown as GroupConnectionsFormReturn}
+                      />
+                    )}
+                    {/* {data.isGroupMeConfig && (
                   <GroupMeConnectionExistingGroup
                     form={form as unknown as GroupConnectionsFormReturn}
                     groupId={groupId}
                     groupMeId={data.groupMeId}
-                  />
-                )} */}
+                    />
+                  )} */}
+                  </>
+                ) : (
+                  <div className="text-sm text-red-500 dark:text-red-600">
+                    No connections are active. Turn on at least one connection
+                    to send messages. Go to your{" "}
+                    <Link
+                      href="/account/settings"
+                      className="text-red-500 underline underline-offset-4 hover:text-red-500/90 dark:text-red-600 dark:hover:text-red-500"
+                    >
+                      profile settings
+                    </Link>{" "}
+                    to set up your first connection.
+                  </div>
+                )}
               </div>
             </div>
           </div>

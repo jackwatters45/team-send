@@ -421,21 +421,6 @@ function DataTableContent<TData, TValue>({
   );
 }
 
-interface DataTableProps {
-  header: React.ReactNode;
-  content: React.ReactNode;
-  footer: React.ReactNode;
-}
-function DataTable({ header, content, footer }: DataTableProps) {
-  return (
-    <div>
-      <div className="flex items-center py-4">{header}</div>
-      <div className="rounded-md border dark:border-stone-700">{content}</div>
-      <div className="flex items-center justify-between p-2">{footer}</div>
-    </div>
-  );
-}
-
 export {
   DataTableFilter,
   DataTableColumnOptions,
@@ -446,5 +431,4 @@ export {
   DataTablePagination,
   DataTableSkeleton,
   DataTableContent,
-  DataTable,
 };

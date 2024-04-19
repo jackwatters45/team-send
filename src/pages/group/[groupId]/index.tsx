@@ -222,7 +222,7 @@ export default function GroupSendMessage({
               </Button>
             </div>
           ) : (
-            <Link href="settings">
+            <Link href={`/group/${groupId}/settings`}>
               <Button
                 type="button"
                 onClick={(e) => e.preventDefault()}

@@ -160,8 +160,7 @@ const getGroupColumns = (
       <DataTableColumnHeader column={column} title="Last Message" />
     ),
     cell: ({ row }) => {
-      const lastMessage = row.original.messages?.[0]?.content;
-      return <HoverableCell value={lastMessage} />;
+      return <HoverableCell value={row.original.lastMessage} />;
     },
   },
   {
@@ -172,11 +171,7 @@ const getGroupColumns = (
       );
     },
     cell: ({ row }) => {
-      const lastMessageTime = row.original.messages?.[0]?.sendAt;
-
-      if (!lastMessageTime) return null;
-
-      return <DateHoverableCell dateInput={lastMessageTime} />;
+      return <DateHoverableCell dateInput={row.original.lastMessageTime} />;
     },
   },
   {

@@ -149,11 +149,11 @@ async function createReminder({ messageId }: { messageId: string }) {
 export async function createMessage(group: GroupPreview, userId: string) {
   try {
     const randomPastDate = faker.date.past();
-    const randomFutureDate = faker.date.future();
+    const randomFutureDate = faker.date.soon();
 
-    const isScheduled = faker.datatype.boolean(0.25);
-    const isRecurring = faker.datatype.boolean(0.25);
-    const isReminders = faker.datatype.boolean(0.25);
+    const isScheduled = faker.datatype.boolean(0.2);
+    const isRecurring = faker.datatype.boolean(0.2);
+    const isReminders = faker.datatype.boolean(0.1);
 
     const message = await db.message.create({
       data: {
