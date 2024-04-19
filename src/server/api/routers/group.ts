@@ -203,7 +203,6 @@ export const groupRouter = createTRPCRouter({
       }) => {
         const userId = ctx.session.user.id;
 
-        log(data.image);
         try {
           await useRateLimit(userId);
 
@@ -214,10 +213,9 @@ export const groupRouter = createTRPCRouter({
                 .map(async (member) => {
                   if (member.contact.id) {
                     // TODO improvement: prevent redundant contact updates
-                    await prisma.contact.upsert({
+                    await prisma.contact.update({
                       where: { id: member.contact.id, createdById: userId },
-                      update: { ...member.contact },
-                      create: {
+                      data: {
                         ...member.contact,
                         createdBy: { connect: { id: userId } },
                       },
@@ -333,101 +331,61 @@ export const groupRouter = createTRPCRouter({
     }),
   updateSettings: protectedProcedure
     .input(groupSettingsSchema)
-    .mutation(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
+    .mutation(
+      async ({
+        ctx,
+        input: { changeGlobalEmail, changeGlobalSms, ...data },
+      }) => {
+        const userId = ctx.session.user.id;
 
-      try {
-        await useRateLimit(userId);
+        try {
+          await useRateLimit(userId);
 
-        const result = await ctx.db.$transaction(async (prisma) => {
-          const group = await prisma.group.update({
-            where: { id: input.groupId, createdById: userId },
-            data: {
-              name: input.name,
-              description: input.description,
-              useSMS: input.useSMS,
-              useEmail: input.useEmail,
-            },
+          const result = await ctx.db.$transaction(async (prisma) => {
+            const group = await prisma.group.update({
+              where: { id: data.groupId, createdById: userId },
+              data: data,
+            });
+
+            if (!group) throw throwGroupNotFoundError(data.groupId);
+
+            if (changeGlobalEmail) {
+              const updateAll = await prisma.group.updateMany({
+                where: { createdBy: { id: userId } },
+                data: { useEmail: data.useEmail },
+              });
+
+              if (!updateAll) {
+                throw new TRPCError({
+                  code: "INTERNAL_SERVER_ERROR",
+                  message: "Failed to update all group connections",
+                });
+              }
+            }
+
+            if (changeGlobalSms) {
+              const updateAll = await prisma.group.updateMany({
+                where: { createdBy: { id: userId } },
+                data: { useSMS: data.useSMS },
+              });
+
+              if (!updateAll) {
+                throw new TRPCError({
+                  code: "INTERNAL_SERVER_ERROR",
+                  message: "Failed to update all group connections",
+                });
+              }
+            }
+
+            return group;
           });
 
-          if (!group) throw throwGroupNotFoundError(input.groupId);
-
-          if (input.changeGlobalEmail) {
-            const updateAll = await prisma.group.updateMany({
-              where: { createdBy: { id: userId } },
-              data: { useEmail: input.useEmail },
-            });
-
-            if (!updateAll) {
-              throw new TRPCError({
-                code: "INTERNAL_SERVER_ERROR",
-                message: "Failed to update all group connections",
-              });
-            }
-          }
-
-          if (input.changeGlobalSms) {
-            const updateAll = await prisma.group.updateMany({
-              where: { createdBy: { id: userId } },
-              data: { useSMS: input.useSMS },
-            });
-
-            if (!updateAll) {
-              throw new TRPCError({
-                code: "INTERNAL_SERVER_ERROR",
-                message: "Failed to update all group connections",
-              });
-            }
-          }
-
-          return group;
-        });
-
-        return result;
-      } catch (err) {
-        throw handleError(err);
-      }
-    }),
-  checkGroupMeId: protectedProcedure
-    .input(z.object({ groupMeId: z.string() }))
-    .mutation(async ({ ctx, input: { groupMeId } }) => {
-      const userId = ctx.session.user.id;
-
-      try {
-        await useRateLimit(userId);
-
-        return await getGroupMeGroup({
-          userId,
-          db: ctx.db,
-          groupMeId,
-          throwErrorOnFail: false,
-        });
-      } catch (err) {
-        throw handleError(err);
-      }
-    }),
-  saveGroupMeId: protectedProcedure
-    .input(z.object({ groupId: z.string(), groupMeId: z.string() }))
-    .mutation(async ({ ctx, input: { groupId, groupMeId } }) => {
-      const userId = ctx.session.user.id;
-
-      try {
-        await useRateLimit(userId);
-
-        await getGroupMeGroup({ userId, db: ctx.db, groupMeId });
-
-        const group = await ctx.db.group.update({
-          where: { id: groupId, createdById: userId },
-          data: { groupMeId: groupMeId },
-        });
-
-        if (!group) throw throwGroupNotFoundError(groupId);
-
-        return group;
-      } catch (err) {
-        throw handleError(err);
-      }
-    }),
+          return result;
+        } catch (err) {
+          throw handleError(err);
+        }
+      },
+    ),
   updateMembers: protectedProcedure
     .input(groupMembersFormSchema)
     .mutation(async ({ ctx, input }) => {
@@ -503,6 +461,46 @@ export const groupRouter = createTRPCRouter({
         });
 
         return result;
+      } catch (err) {
+        throw handleError(err);
+      }
+    }),
+  checkGroupMeId: protectedProcedure
+    .input(z.object({ groupMeId: z.string() }))
+    .mutation(async ({ ctx, input: { groupMeId } }) => {
+      const userId = ctx.session.user.id;
+
+      try {
+        await useRateLimit(userId);
+
+        return await getGroupMeGroup({
+          userId,
+          db: ctx.db,
+          groupMeId,
+          throwErrorOnFail: false,
+        });
+      } catch (err) {
+        throw handleError(err);
+      }
+    }),
+  saveGroupMeId: protectedProcedure
+    .input(z.object({ groupId: z.string(), groupMeId: z.string() }))
+    .mutation(async ({ ctx, input: { groupId, groupMeId } }) => {
+      const userId = ctx.session.user.id;
+
+      try {
+        await useRateLimit(userId);
+
+        await getGroupMeGroup({ userId, db: ctx.db, groupMeId });
+
+        const group = await ctx.db.group.update({
+          where: { id: groupId, createdById: userId },
+          data: { groupMeId: groupMeId },
+        });
+
+        if (!group) throw throwGroupNotFoundError(groupId);
+
+        return group;
       } catch (err) {
         throw handleError(err);
       }

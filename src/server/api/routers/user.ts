@@ -190,9 +190,18 @@ export const userRouter = createTRPCRouter({
     try {
       await useRateLimit(userId);
 
-      return await ctx.db.emailConfig.delete({
-        where: { userId: userId },
+      const result = await ctx.db.$transaction(async (prisma) => {
+        await prisma.group.updateMany({
+          where: { createdById: userId },
+          data: { useEmail: false },
+        });
+
+        return await ctx.db.emailConfig.delete({
+          where: { userId: userId },
+        });
       });
+
+      return result;
     } catch (error) {
       throw handleError(error);
     }
@@ -280,9 +289,18 @@ export const userRouter = createTRPCRouter({
     try {
       await useRateLimit(userId);
 
-      return await ctx.db.smsConfig.delete({
-        where: { userId: userId },
+      const result = await ctx.db.$transaction(async (prisma) => {
+        await prisma.group.updateMany({
+          where: { createdById: userId },
+          data: { useSMS: false },
+        });
+
+        return await ctx.db.smsConfig.delete({
+          where: { userId: userId },
+        });
       });
+
+      return result;
     } catch (error) {
       throw handleError(error);
     }
@@ -313,9 +331,18 @@ export const userRouter = createTRPCRouter({
     try {
       await useRateLimit(userId);
 
-      return await ctx.db.groupMeConfig.delete({
-        where: { userId: userId },
+      const result = await ctx.db.$transaction(async (prisma) => {
+        await prisma.group.updateMany({
+          where: { createdById: userId },
+          data: { groupMeId: null, useGroupMe: false },
+        });
+
+        return await prisma.groupMeConfig.delete({
+          where: { userId: userId },
+        });
       });
+
+      return result;
     } catch (error) {
       throw handleError(error);
     }
