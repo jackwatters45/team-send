@@ -63,6 +63,11 @@ export const env = createEnv({
 
     UPLOADTHING_SECRET: z.string(),
     UPLOADTHING_APP_ID: z.string(),
+
+    PUSHER_APP_ID: z.string(),
+    PUSHER_KEY: z.string(),
+    PUSHER_SECRET: z.string(),
+    PUSHER_CLUSTER: z.string(),
   },
 
   /**
@@ -80,6 +85,10 @@ export const env = createEnv({
           "Redirect URI should start with https://oauth.groupme.com/oauth/authorize?client_id=",
       }),
     NEXT_PUBLIC_API_BASE_URL: z.string().url(),
+    NEXT_PUBLIC_API_BASE_URL_DEV: z.string().url(),
+
+    NEXT_PUBLIC_PUSHER_KEY: z.string(),
+    NEXT_PUBLIC_PUSHER_CLUSTER: z.string(),
   },
 
   /**
@@ -123,10 +132,18 @@ export const env = createEnv({
       process.env.NEXT_PUBLIC_GROUPME_REDIRECT_URI,
 
     NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
+    NEXT_PUBLIC_API_BASE_URL_DEV: process.env.NEXT_PUBLIC_API_BASE_URL_DEV,
     NGROK_URL: process.env.NGROK_URL,
 
     UPLOADTHING_SECRET: process.env.UPLOADTHING_SECRET,
     UPLOADTHING_APP_ID: process.env.UPLOADTHING_APP_ID,
+
+    PUSHER_APP_ID: process.env.PUSHER_APP_ID,
+    PUSHER_KEY: process.env.PUSHER_KEY,
+    PUSHER_SECRET: process.env.PUSHER_SECRET,
+    PUSHER_CLUSTER: process.env.PUSHER_CLUSTER,
+    NEXT_PUBLIC_PUSHER_KEY: process.env.NEXT_PUBLIC_PUSHER_KEY,
+    NEXT_PUBLIC_PUSHER_CLUSTER: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

@@ -6,9 +6,7 @@ import { TRPCError } from "@trpc/server";
 import { Redis } from "@upstash/redis";
 import debug from "debug";
 import { verifySignature } from "@upstash/qstash/dist/nextjs";
-
-import { handleError } from "@/server/helpers/handleError";
-import { db } from "@/server/db";
+import Pusher from "pusher";
 import type {
   Contact,
   EmailConfig,
@@ -16,8 +14,11 @@ import type {
   Message,
   SmsConfig,
 } from "@prisma/client";
+
+import { handleError } from "@/server/helpers/handleError";
+import { db } from "@/server/db";
 import { env } from "@/env";
-import type { MessageWithContactsAndReminders } from "@/server/api/routers/message";
+import type { PopulatedMessageWithGroupName } from "@/server/api/routers/message";
 
 const log = debug("team-send:pages:api:sendMessage");
 
@@ -26,16 +27,31 @@ export const upstash = new Redis({
   token: env.UPSTASH_REDIS_REST_TOKEN,
 });
 
-export type SendMessageBody = {
-  message: MessageWithContactsAndReminders;
+const pusher = new Pusher({
+  appId: env.PUSHER_APP_ID,
+  key: env.PUSHER_KEY,
+  secret: env.PUSHER_SECRET,
+  cluster: env.PUSHER_CLUSTER,
+  useTLS: true,
+});
+
+type UserIdWithConfig = {
+  id: string;
   emailConfig: EmailConfig | null;
   smsConfig: SmsConfig | null;
   groupMeConfig: GroupMeConfig | null;
 };
 
+export type SendMessageBody = {
+  message: PopulatedMessageWithGroupName;
+  user: UserIdWithConfig;
+};
+
 async function handler(req: NextApiRequest, res: NextApiResponse) {
-  const { message, emailConfig, smsConfig, groupMeConfig } =
-    req.body as SendMessageBody;
+  const {
+    message,
+    user: { emailConfig, smsConfig, groupMeConfig, id: userId },
+  } = req.body as SendMessageBody;
 
   try {
     if (!!emailConfig) {
@@ -62,17 +78,34 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
       });
     }
 
+    const status = "sent";
+
     await db.message.update({
       where: { id: message.id },
-      data: { status: "sent" },
-    });
-  } catch (error) {
-    await db.message.update({
-      where: { id: message.id },
-      data: { status: "failed" },
+      data: { status },
     });
 
-    // throw handleError(error); TODO need a way to actually alert on error
+    log(`user-${userId}`, "message-status");
+    await pusher.trigger(`user-${userId}`, "message-status", {
+      status,
+      messageId: message.id,
+      groupName: message.group.name,
+    });
+  } catch (error) {
+    const status = "failed";
+
+    await db.message.update({
+      where: { id: message.id },
+      data: { status },
+    });
+
+    await pusher.trigger(`user-${userId}`, "message-status", {
+      status,
+      messageId: message.id,
+      groupName: message.group.name,
+    });
+
+    res.status(500).json({ message: "Message send failed" });
   }
 
   res.status(200).json({ message: "Message sent successfully" });

@@ -47,9 +47,17 @@ type MessageWithMembersAndReminders = Message & {
   reminders: Reminder[];
 };
 
+type PopulatedMessageWithGroupNameMembers = MessageWithMembersAndReminders & {
+  group: { name: string };
+};
+
 export type MessageWithContactsAndReminders = Message & {
   recipients: Contact[];
   reminders: Reminder[];
+};
+
+export type PopulatedMessageWithGroupName = MessageWithContactsAndReminders & {
+  group: { name: string };
 };
 
 export const messageRouter = createTRPCRouter({
@@ -187,7 +195,7 @@ export const messageRouter = createTRPCRouter({
       try {
         await useRateLimit(userId);
 
-        let existingMessage: MessageWithMembersAndReminders | null = null;
+        let existingMessage: PopulatedMessageWithGroupNameMembers | null = null;
         if (input.id) {
           existingMessage = await ctx.db.message.findUnique({
             where: { id: input.id, createdById: userId },
@@ -196,6 +204,7 @@ export const messageRouter = createTRPCRouter({
                 include: { member: { select: { contact: true } } },
               },
               reminders: true,
+              group: { select: { name: true } },
             },
           });
         }
@@ -214,9 +223,9 @@ export const messageRouter = createTRPCRouter({
 
         if (message.status === "draft") return message;
 
-        const userConfig = await getUserConfig(userId, ctx.db);
+        const user = await getUserConfig(userId, ctx.db);
 
-        await sendMessage({ message, ...userConfig });
+        await sendMessage({ message, user });
 
         return message;
       } catch (err) {
@@ -236,6 +245,7 @@ export const messageRouter = createTRPCRouter({
           include: {
             recipients: { include: { member: { select: { contact: true } } } },
             reminders: true,
+            group: { select: { name: true } },
           },
         });
 
@@ -255,11 +265,11 @@ export const messageRouter = createTRPCRouter({
           .filter((r) => r.isRecipient)
           .map((r) => r.member.contact);
 
-        const userConfig = await getUserConfig(userId, ctx.db);
+        const user = await getUserConfig(userId, ctx.db);
 
         await sendMessage({
           message: { ...message, recipients: recipientsContacts },
-          ...userConfig,
+          user,
         });
 
         return message;
@@ -280,6 +290,7 @@ export const messageRouter = createTRPCRouter({
           include: {
             recipients: { include: { member: { select: { contact: true } } } },
             reminders: true,
+            group: { select: { name: true } },
           },
         });
 
@@ -306,13 +317,13 @@ export const messageRouter = createTRPCRouter({
           .filter((r) => r.isRecipient)
           .map((r) => r.member.contact);
 
-        const userConfig = await getUserConfig(userId, ctx.db);
+        const user = await getUserConfig(userId, ctx.db);
 
         // if message is scheduled, send it now
         await sendOnce({
           body: {
             message: { ...message, recipients: recipientsContacts },
-            ...userConfig,
+            user,
           },
         });
 
@@ -344,7 +355,7 @@ async function updateMessage({
   message: MessageInputType;
   existingMessage: MessageWithMembersAndReminders | null;
   userId: string;
-}) {
+}): Promise<PopulatedMessageWithGroupName> {
   return await db.$transaction(async (prisma) => {
     const message = await updateMessageData({
       messageData,
@@ -400,7 +411,7 @@ async function updateMessageData({
     ? new Date(messageData.scheduledDate)
     : undefined;
 
-  let message: Message;
+  let message: Message & { group: { name: string } };
   if (!messageData?.id) {
     message = await prisma.message.create({
       data: {
@@ -412,11 +423,13 @@ async function updateMessageData({
         createdBy: { connect: { id: userId } },
         lastUpdatedBy: { connect: { id: userId } },
       },
+      include: { group: { select: { name: true } } },
     });
   } else {
     message = await prisma.message.update({
       where: { id: messageData.id, createdById: userId },
       data: { ...messageData, status: "pending", sendAt: sendAt },
+      include: { group: { select: { name: true } } },
     });
   }
 

@@ -1,8 +1,8 @@
-import { type Session } from "next-auth";
 import { SessionProvider } from "next-auth/react";
-import { type AppType } from "next/app";
 import { Inter } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { type Session } from "next-auth";
+import { type AppType } from "next/app";
 
 import { api } from "@/utils/api";
 

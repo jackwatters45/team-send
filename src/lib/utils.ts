@@ -228,7 +228,12 @@ export async function getUserConfig(
 ) {
   const user = await db.user.findUnique({
     where: { id: userId },
-    select: { emailConfig: true, smsConfig: true, groupMeConfig: true },
+    select: {
+      id: true,
+      emailConfig: true,
+      smsConfig: true,
+      groupMeConfig: true,
+    },
   });
 
   if (!user) throw new TRPCError({ code: "INTERNAL_SERVER_ERROR" });

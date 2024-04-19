@@ -29,7 +29,7 @@ import { Form, FormDescription } from "@/components/ui/form";
 import { MessageSettings } from "@/components/group/MessageSettings";
 import { Button } from "@/components/ui/button";
 import GroupMembersTable from "@/components/group/GroupMembersTable";
-import { toast, toastWithLoading } from "@/components/ui/use-toast";
+import { toast, toastWithLoading, useToast } from "@/components/ui/use-toast";
 import {
   CheckboxInput,
   FormInput,
@@ -116,26 +116,11 @@ export default function GroupSendMessage({
     },
   });
 
+  const { dismiss } = useToast();
   const { mutate: send, isLoading: isSending } = api.message.send.useMutation({
-    onSuccess: (data) => {
+    onSuccess: () => {
       form.reset();
-
-      const title = data.isScheduled
-        ? " Message Scheduled"
-        : data.status === "draft"
-          ? "Message saved as draft"
-          : "Message sent";
-
-      const description = data.isScheduled
-        ? "Your message has been scheduled"
-        : data.status === "draft"
-          ? "Your message has been saved as a draft"
-          : "Your message has been sent";
-
-      toast({
-        title: title,
-        description: description,
-      });
+      dismiss();
     },
     onError: (err) => {
       const errorMessage = err.data?.zodError?.fieldErrors?.content;
@@ -157,13 +142,13 @@ export default function GroupSendMessage({
       ? "Scheduling Message"
       : data.status === "draft"
         ? "Saving Draft"
-        : "Sending Message";
+        : "Creating Message";
 
     const description = data.isScheduled
       ? "Your message is being scheduled"
       : data.status === "draft"
         ? "Your message is being saved as a draft"
-        : "Your message is being sent";
+        : "Your message is being created";
 
     toastWithLoading({
       title: title,
