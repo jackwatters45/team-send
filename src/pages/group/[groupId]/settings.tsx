@@ -29,7 +29,7 @@ import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 import { GroupAvatarUpload } from "@/components/ui/upload-input";
 import {
   EmailConnection,
-  GroupMeConnectionExistingGroup,
+  GroupMeConnectionExistingGroup as _,
   SMSConnections,
 } from "@/components/group/Connections";
 
@@ -170,13 +170,13 @@ export default function GroupSettings({
                     form={form as unknown as GroupConnectionsFormReturn}
                   />
                 )}
-                {data.isGroupMeConfig && (
+                {/* {data.isGroupMeConfig && (
                   <GroupMeConnectionExistingGroup
                     form={form as unknown as GroupConnectionsFormReturn}
                     groupId={groupId}
                     groupMeId={data.groupMeId}
                   />
-                )}
+                )} */}
               </div>
             </div>
           </div>

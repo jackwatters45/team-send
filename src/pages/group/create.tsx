@@ -22,7 +22,7 @@ import { FormInput } from "@/components/ui/form-inputs";
 import { Form, FormDescription } from "@/components/ui/form";
 import {
   EmailConnection,
-  GroupMeConnectionNewGroup,
+  GroupMeConnectionNewGroup as _,
   SMSConnections,
 } from "@/components/group/Connections";
 import { renderErrorComponent } from "@/components/error/renderErrorComponent";
@@ -140,11 +140,11 @@ export default function CreateGroup() {
                     form={form as unknown as GroupConnectionsFormReturn}
                   />
                 )}
-                {!!data.groupMeConfig && (
+                {/* {!!data.groupMeConfig && (
                   <GroupMeConnectionNewGroup
                     form={form as unknown as GroupConnectionsFormReturn}
                   />
-                )}
+                )} */}
               </div>
             </div>
           </section>
