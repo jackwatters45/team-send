@@ -59,7 +59,39 @@ export const messageFormSchema = baseMessageFormSchema
         "Scheduled date must be in the future and no more than one year from today.",
       path: ["scheduledDate", "isScheduled"],
     },
-  );
+  )
+  .refine(({ scheduledDate, reminders }) => {
+    if (scheduledDate && reminders) {
+      return reminders.every((reminder) => {
+        const reminderDate = new Date(scheduledDate);
+
+        if (!reminderDate) return false;
+
+        switch (reminder.period) {
+          case "minutes":
+            reminderDate.setMinutes(reminderDate.getMinutes() - reminder.num);
+            break;
+          case "hours":
+            reminderDate.setHours(reminderDate.getHours() - reminder.num);
+            break;
+          case "days":
+            reminderDate.setDate(reminderDate.getDate() - reminder.num);
+            break;
+          case "weeks":
+            reminderDate.setDate(reminderDate.getDate() - reminder.num * 7);
+            break;
+          case "months":
+            reminderDate.setMonth(reminderDate.getMonth() - reminder.num);
+            break;
+        }
+
+        const fiveMinFromNow = new Date();
+        fiveMinFromNow.setMinutes(fiveMinFromNow.getMinutes() + 5);
+        return reminderDate > fiveMinFromNow;
+      });
+    }
+    return true;
+  });
 export type MessageFormType = z.infer<typeof messageFormSchema>;
 
 export const messageInputSchema = baseMessageFormSchema

@@ -161,12 +161,12 @@ export function camelCaseToSentenceCase(input: string): string {
 export const capitalize = (str: string) =>
   str.charAt(0).toUpperCase() + str.slice(1);
 
+export const removeTrailingS = (value: string) => value.replace(/s$/, "");
+
 export function getPeriodMillis(
   period: Message["recurringPeriod"] | ReminderPeriod,
 ): number {
-  const periodWithoutS = period?.replace(/s$/, "");
-
-  const millis = ms[periodWithoutS as keyof typeof ms];
+  const millis = ms[period?.slice(0, -1) as keyof typeof ms];
 
   if (!millis) {
     throw new TRPCError({

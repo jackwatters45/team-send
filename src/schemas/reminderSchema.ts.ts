@@ -1,19 +1,23 @@
+import type { ReminderPeriod } from "@prisma/client";
 import { z } from "zod";
 
 export const reminderPeriod = [
+  "minutes",
+  "hours",
   "months",
   "weeks",
   "days",
-  "hours",
-  "minutes",
 ] as const;
 
-const maxValues = {
-  days: 15,
-  weeks: 3,
-  months: 6,
-  hours: 24,
-  minutes: 59,
+export const defaultReminderConstraints: Record<
+  ReminderPeriod,
+  { max: number; min: number; maxLength: number; value: ReminderPeriod }
+> = {
+  minutes: { max: 59, min: 5, maxLength: 2, value: "minutes" },
+  hours: { max: 24, min: 1, maxLength: 2, value: "hours" },
+  days: { max: 15, min: 1, maxLength: 2, value: "days" },
+  weeks: { max: 3, min: 1, maxLength: 1, value: "weeks" },
+  months: { max: 6, min: 1, maxLength: 1, value: "months" },
 } as const;
 
 export const reminderSchema = z
@@ -24,7 +28,11 @@ export const reminderSchema = z
   })
   .refine(
     (data) => {
-      if (data.num > maxValues[data.period]) return false;
+      if (
+        data.num > defaultReminderConstraints[data.period].max ||
+        data.num < defaultReminderConstraints[data.period].min
+      )
+        return false;
 
       return true;
     },
@@ -36,6 +44,6 @@ export const reminderSchema = z
 export type NewReminder = z.infer<typeof reminderSchema>;
 
 export const defaultReminder: z.infer<typeof reminderSchema> = {
-  num: 1,
-  period: "weeks",
+  num: 15,
+  period: "minutes",
 };

@@ -96,6 +96,7 @@ export default function GroupSendMessage({
       saveRecipientState: false,
       recipients: getInitialSelectedMembers(data?.members ?? []),
     },
+    mode: "onBlur",
   });
 
   const [isTableDirty, setIsTableDirty] = useState(false);
@@ -222,7 +223,7 @@ export default function GroupSendMessage({
               </Button>
             </div>
           ) : (
-            <Link href={`/group/${groupId}/settings`}>
+            <Link href="settings">
               <Button
                 type="button"
                 onClick={(e) => e.preventDefault()}

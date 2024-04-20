@@ -163,27 +163,31 @@ export default function GroupHistory({
 
   return (
     <GroupLayout group={data.group}>
-      <div className="flex flex-col pb-4 pt-3">
-        <h2 className="text-xl font-semibold tracking-tight">Group History</h2>
-        <div className="text-sm text-stone-500 dark:text-stone-400">
-          View message and user history for this group.
+      <div className=" overflow-x-auto">
+        <div className="flex flex-col pb-4 pt-3">
+          <h2 className="text-xl font-semibold tracking-tight">
+            Group History
+          </h2>
+          <div className="text-sm text-stone-500 dark:text-stone-400">
+            View message and user history for this group.
+          </div>
         </div>
-      </div>
-      <div>
-        <div className="flex items-center py-4">
-          <DataTableFilter
-            table={table}
-            placeholder="Search history"
-            field="content"
-          />
-          <DataTableColumnOptions table={table} />
-        </div>
-        <div className="rounded-md border dark:border-stone-700">
-          <DataTableContent table={table} columns={historyTableColumns} />
-        </div>
-        <div className="flex items-center justify-between p-2">
-          <DataTableSelectedRowCount table={table} />
-          <DataTablePagination table={table} />
+        <div>
+          <div className="flex items-center py-4">
+            <DataTableFilter
+              table={table}
+              placeholder="Search history"
+              field="content"
+            />
+            <DataTableColumnOptions table={table} />
+          </div>
+          <div className="rounded-md border dark:border-stone-700">
+            <DataTableContent table={table} columns={historyTableColumns} />
+          </div>
+          <div className="flex items-center justify-between p-2">
+            <DataTableSelectedRowCount table={table} />
+            <DataTablePagination table={table} />
+          </div>
         </div>
       </div>
     </GroupLayout>

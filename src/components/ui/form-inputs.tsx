@@ -90,29 +90,13 @@ function FormTextarea<T extends z.ZodType>({
   );
 }
 
-type periodOptions = { label: string; value: string }[];
-
-export const recurPeriodOptions: periodOptions = [
-  { label: "Year", value: "years" },
-  { label: "Month", value: "months" },
-  { label: "Week", value: "weeks" },
-  { label: "Day", value: "days" },
-];
-
-export const remindersPeriodOptions: periodOptions = [
-  { label: "Month", value: "months" },
-  { label: "Week", value: "weeks" },
-  { label: "Day", value: "days" },
-  { label: "Hour", value: "hours" },
-  { label: "Minute", value: "minutes" },
-];
-
 interface NumPeriodInputs<T extends z.ZodType>
-  extends SharedInputNoNameProps<T> {
+  extends SharedInputNoNameProps<T>,
+    React.InputHTMLAttributes<HTMLInputElement> {
   numName: Path<z.infer<T>>;
   periodName: Path<z.infer<T>>;
   numGreaterThanOne: boolean;
-  periodOptions: periodOptions;
+  periodValues: string[];
 }
 
 function NumPeriodInputs<T extends z.ZodType>({
@@ -122,7 +106,8 @@ function NumPeriodInputs<T extends z.ZodType>({
   control,
   label,
   description,
-  periodOptions,
+  periodValues,
+  ...numInputProps
 }: NumPeriodInputs<T>) {
   return (
     <div className="flex flex-1 items-start justify-evenly gap-4">
@@ -142,6 +127,7 @@ function NumPeriodInputs<T extends z.ZodType>({
               onChange={(e) =>
                 field.onChange(parseInt(e.target.value, 10) || undefined)
               }
+              {...numInputProps}
             />
             <FormMessage className="col-span-full" />
           </FormItem>
@@ -166,11 +152,16 @@ function NumPeriodInputs<T extends z.ZodType>({
               <SelectContent>
                 <SelectGroup>
                   <SelectLabel hidden>{label}</SelectLabel>
-                  {periodOptions.map((option) => (
-                    <SelectItem key={option.value} value={option.value}>
-                      {`${option.label}${numGreaterThanOne ? "s" : ""}`}
-                    </SelectItem>
-                  ))}
+                  {periodValues.map((value) => {
+                    const label = capitalize(
+                      numGreaterThanOne ? value : value.slice(0, -1),
+                    );
+                    return (
+                      <SelectItem key={value} value={value}>
+                        {label}
+                      </SelectItem>
+                    );
+                  })}
                 </SelectGroup>
               </SelectContent>
             </Select>
