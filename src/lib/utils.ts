@@ -14,6 +14,7 @@ import type {
   MemberWithContact,
   NewMember,
 } from "@/server/api/routers/member";
+import { ms } from "@/constants/milliseconds";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -90,7 +91,7 @@ export function formatRelativeDateAndTime(
 
   const diff = now.getTime() - date.getTime();
 
-  const diffDays = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const diffDays = Math.floor(diff / ms.day);
 
   let currentDate: string;
   if (diffDays === 0) {
@@ -122,9 +123,8 @@ export function formatShortRelativeDate(dateInput: string | Date): string {
   const date = new Date(dateInput);
 
   let formattedDate: string;
-  const oneDay = 24 * 60 * 60 * 1000;
   const daysDifference = Math.floor(
-    (today.getTime() - date.getTime()) / oneDay,
+    (today.getTime() - date.getTime()) / ms.day,
   );
 
   if (daysDifference < 1 && today.getDate() === date.getDate()) {
@@ -163,26 +163,19 @@ export const capitalize = (str: string) =>
 
 export function getPeriodMillis(
   period: Message["recurringPeriod"] | ReminderPeriod,
-) {
-  switch (period) {
-    case "years":
-      return 365.25 * 24 * 60 * 60 * 1000;
-    case "months":
-      return 30.44 * 24 * 60 * 60 * 1000;
-    case "weeks":
-      return 7 * 24 * 60 * 60 * 1000;
-    case "days":
-      return 24 * 60 * 60 * 1000;
-    case "hours":
-      return 60 * 60 * 1000;
-    case "minutes":
-      return 60 * 1000;
-    default:
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: "Invalid period",
-      });
+): number {
+  const periodWithoutS = period?.replace(/s$/, "");
+
+  const millis = ms[periodWithoutS as keyof typeof ms];
+
+  if (!millis) {
+    throw new TRPCError({
+      code: "BAD_REQUEST",
+      message: "Invalid period",
+    });
   }
+
+  return millis;
 }
 
 export const getFormattedIsoString = (date: Date): string => {
@@ -209,7 +202,7 @@ export const utcToLocalDateTimeString = (date?: Date | null): string => {
   if (!date) return nextDayNoonUTCString();
 
   const offset = date.getTimezoneOffset();
-  const localDate = new Date(date.getTime() - offset * 60 * 1000);
+  const localDate = new Date(date.getTime() - offset * ms.minute);
   return getFormattedIsoString(localDate);
 };
 
