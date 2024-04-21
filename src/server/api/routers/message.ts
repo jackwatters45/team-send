@@ -245,50 +245,58 @@ export const messageRouter = createTRPCRouter({
       try {
         await useRateLimit(userId);
 
-        const message = await ctx.db.message.findUnique({
-          where: { id: messageId, createdById: userId },
-          include: {
-            recipients: { include: { member: { select: { contact: true } } } },
-            reminders: true,
-            group: { select: { name: true } },
-          },
+        const result = await ctx.db.$transaction(async (prisma) => {
+          // update message set sendAt to now, set isReminders/isScheduled to false
+          const message = await prisma.message.update({
+            where: {
+              id: messageId,
+              createdById: userId,
+              status: "pending",
+              type: "scheduled",
+            },
+            data: {
+              sendAt: new Date(),
+              isReminders: false,
+              isScheduled: false,
+            },
+            include: {
+              recipients: {
+                include: { member: { select: { contact: true } } },
+              },
+              reminders: true,
+              group: { select: { name: true } },
+            },
+          });
+
+          if (!message) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: `Message with id "${messageId}" not found or not a scheduled message`,
+            });
+          }
+
+          // if any reminders, remove
+          await prisma.reminder.deleteMany({
+            where: { messageId: messageId },
+          });
+
+          for (const reminder of message.reminders) {
+            const reminderKey = getMessageKey(message.id, reminder.id);
+            const reminderId = await upstash.get<string>(reminderKey);
+
+            if (reminderId) await qstashClient.messages.delete(reminderId);
+            await upstash.del(reminderKey);
+          }
+
+          const user = await getUserConfig(userId, prisma);
+
+          // send message now
+          await sendOnce({ body: { message, user } });
+
+          return message;
         });
 
-        if (!message) throw messageNotFoundError(messageId);
-        else if (message?.status === "sent") {
-          throw messageAlreadySentError(messageId);
-        }
-
-        // update message status to pending, set sendAt/scheduledDate to now, set isReminders/isScheduled to false
-        await ctx.db.message.update({
-          where: { id: messageId },
-          data: {
-            sendAt: new Date(),
-            scheduledDate: new Date(),
-            isReminders: false,
-            isScheduled: false,
-            hasRetried: message.status === "failed",
-            status: "pending",
-          },
-        });
-
-        const user = await getUserConfig(userId, ctx.db);
-
-        // TODO wrong - needs to do send message // if message is scheduled, send it now
-        await sendOnce({ body: { message, user } });
-
-        // if any reminders, remove
-        await ctx.db.reminder.deleteMany({
-          where: { messageId: messageId },
-        });
-
-        for (const reminder of message.reminders) {
-          const reminderKey = getMessageKey(message.id, reminder.id);
-          const reminderId = await upstash.get<string>(reminderKey);
-
-          if (reminderId) await qstashClient.messages.delete(reminderId);
-          await upstash.del(reminderKey);
-        }
+        return result;
       } catch (err) {
         throw handleError(err);
       }
@@ -546,10 +554,9 @@ export async function sendMessage(
     const { reminders } = body.message;
 
     const sendAt = validateScheduleDate(body.message.scheduledDate);
-
     if (sendAt !== body.message.scheduledDate) {
       await db.message.update({
-        where: { id: body.message.id },
+        where: { id: body.message.id, createdById: body.user.id },
         data: { sendAt: sendAt },
       });
     }
@@ -593,8 +600,6 @@ export async function sendMessage(
     const { recurringNum, recurringPeriod, scheduledDate } = body.message;
 
     const startDate = validateScheduleDate(scheduledDate);
-
-    // TODO check right?
     if (startDate !== body.message.scheduledDate) {
       await db.message.update({
         where: { id: body.message.id },
