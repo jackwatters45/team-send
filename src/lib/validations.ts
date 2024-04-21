@@ -26,10 +26,7 @@ export function validateScheduleDate(scheduledDate: Date | null) {
 
   const now = new Date();
   if (scheduledDate.getTime() < now.getTime()) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Scheduled date must be in the future",
-    });
+    return now;
   }
 
   return scheduledDate;

@@ -99,6 +99,7 @@ model Reminder {
   period    ReminderPeriod
   message   Message        @relation(fields: [messageId], references: [id], onDelete: Cascade)
   messageId String
+  isIgnored Boolean        @default(false)
 }
 
 enum ReccurPeriod {
@@ -152,7 +153,9 @@ model Message {
   recipients MemberSnapshot[]
   status     MessageStatus
   type       MessageType      @default(default)
-  hasRetried Boolean          @default(false)
+
+  hasRetried  Boolean @default(false)
+  isSentEarly Boolean @default(false)
 }
 
 // Necessary for Next auth

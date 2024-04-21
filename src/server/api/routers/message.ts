@@ -40,23 +40,14 @@ const qstashClient = new QStashClient({
   token: env.QSTASH_TOKEN,
 });
 
-type RecipientWithOnlyContact = { member: { contact: Contact } };
+export type RecipientOnlyContact = { member: { contact: Contact } };
 
-type MessageWithMembersAndReminders = Message & {
-  recipients: RecipientWithOnlyContact[];
+export type MessageWithMembersAndReminders = Message & {
+  recipients: RecipientOnlyContact[];
   reminders: Reminder[];
 };
 
-type PopulatedMessageWithGroupNameMembers = MessageWithMembersAndReminders & {
-  group: { name: string };
-};
-
-export type MessageWithContactsAndReminders = Message & {
-  recipients: Contact[];
-  reminders: Reminder[];
-};
-
-export type PopulatedMessageWithGroupName = MessageWithContactsAndReminders & {
+export type PopulatedMessageWithGroupName = MessageWithMembersAndReminders & {
   group: { name: string };
 };
 
@@ -98,29 +89,9 @@ export const messageRouter = createTRPCRouter({
         });
 
         if (message.type === "scheduled") {
-          const messageKey = getMessageKey(message.id);
-
-          const messageId = await upstash.get<string>(messageKey);
-          if (messageId) await qstashClient.messages.delete(messageId);
-
-          for (const reminder of message?.reminders) {
-            const reminderKey = getMessageKey(message.id, reminder.id);
-
-            const reminderId = await upstash.get<string>(reminderKey);
-            if (reminderId) await qstashClient.messages.delete(reminderId);
-          }
+          await removeScheduledFromQStash(message.id, message.reminders);
         } else if (message.type === "recurring") {
-          const messageKey = getMessageKey(message.id);
-
-          const messageId = await upstash.get<string>(messageKey);
-          if (messageId) await qstashClient.schedules.delete(messageId);
-
-          for (const reminder of message?.reminders) {
-            const reminderKey = getMessageKey(message.id, reminder.id);
-
-            const reminderId = await upstash.get<string>(reminderKey);
-            if (reminderId) await qstashClient.schedules.delete(reminderId);
-          }
+          await removeRecurringFromQStash(message.id, message.reminders);
         }
 
         return message;
@@ -195,7 +166,7 @@ export const messageRouter = createTRPCRouter({
       try {
         await useRateLimit(userId);
 
-        let existingMessage: PopulatedMessageWithGroupNameMembers | null = null;
+        let existingMessage: PopulatedMessageWithGroupName | null = null;
         if (input.id) {
           existingMessage = await ctx.db.message.findUnique({
             where: { id: input.id, createdById: userId },
@@ -225,14 +196,14 @@ export const messageRouter = createTRPCRouter({
 
         const user = await getUserConfig(userId, ctx.db);
 
-        await sendMessage({ message, user });
+        await sendMessage({ message, user }, ctx.db);
 
         return message;
       } catch (err) {
         throw handleError(err);
       }
     }),
-  sendById: protectedProcedure
+  sendDraft: protectedProcedure
     .input(z.object({ messageId: z.string() }))
     .mutation(async ({ ctx, input: { messageId } }) => {
       const userId = ctx.session.user.id;
@@ -240,8 +211,9 @@ export const messageRouter = createTRPCRouter({
       try {
         await useRateLimit(userId);
 
-        const message = await ctx.db.message.findUnique({
-          where: { id: messageId, createdById: userId },
+        const message = await ctx.db.message.update({
+          where: { id: messageId, createdById: userId, status: "draft" },
+          data: { status: "pending" },
           include: {
             recipients: { include: { member: { select: { contact: true } } } },
             reminders: true,
@@ -249,28 +221,16 @@ export const messageRouter = createTRPCRouter({
           },
         });
 
-        if (!message) throw messageNotFoundError(messageId);
-        else if (message?.status === "sent") {
-          throw messageAlreadySentError(messageId);
+        if (!message) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: `Message with id "${messageId}" not found or not a draft`,
+          });
         }
-
-        // update message status to pending
-        await ctx.db.message.update({
-          where: { id: messageId },
-          data: { sendAt: new Date(), status: "pending" },
-        });
-
-        // format recipients
-        const recipientsContacts = message.recipients
-          .filter((r) => r.isRecipient)
-          .map((r) => r.member.contact);
 
         const user = await getUserConfig(userId, ctx.db);
 
-        await sendMessage({
-          message: { ...message, recipients: recipientsContacts },
-          user,
-        });
+        await sendMessage({ message, user }, ctx.db);
 
         return message;
       } catch (err) {
@@ -312,20 +272,10 @@ export const messageRouter = createTRPCRouter({
           },
         });
 
-        // format recipients
-        const recipientsContacts = message.recipients
-          .filter((r) => r.isRecipient)
-          .map((r) => r.member.contact);
-
         const user = await getUserConfig(userId, ctx.db);
 
-        // if message is scheduled, send it now
-        await sendOnce({
-          body: {
-            message: { ...message, recipients: recipientsContacts },
-            user,
-          },
-        });
+        // TODO wrong - needs to do send message // if message is scheduled, send it now
+        await sendOnce({ body: { message, user } });
 
         // if any reminders, remove
         await ctx.db.reminder.deleteMany({
@@ -339,6 +289,19 @@ export const messageRouter = createTRPCRouter({
           if (reminderId) await qstashClient.messages.delete(reminderId);
           await upstash.del(reminderKey);
         }
+      } catch (err) {
+        throw handleError(err);
+      }
+    }),
+  retryFailedSend: protectedProcedure
+    .input(z.object({ messageId: z.string() }))
+    .mutation(async ({ ctx, input: { messageId } }) => {
+      const userId = ctx.session.user.id;
+
+      try {
+        await useRateLimit(userId);
+
+        log(`Retrying failed send for message ${messageId}`);
       } catch (err) {
         throw handleError(err);
       }
@@ -448,9 +411,9 @@ async function updateRecipients({
   recipients: Record<string, boolean>;
   isExistingMessage: boolean;
   saveRecipientState: boolean;
-}): Promise<Contact[]> {
+}): Promise<RecipientOnlyContact[]> {
   const operations = [];
-  const messageRecipients: Contact[] = [];
+  const messageRecipients: RecipientOnlyContact[] = [];
 
   for (const [snapshotId, isRecipient] of Object.entries(recipients)) {
     const operation = (async () => {
@@ -465,7 +428,7 @@ async function updateRecipients({
           select: { member: { select: { contact: true, id: true } } },
         });
         memberId = snapshot.member.id;
-        if (isRecipient) messageRecipients.push(snapshot.member.contact);
+        if (isRecipient) messageRecipients.push(snapshot);
       } else {
         const snapshot = await prisma.memberSnapshot.update({
           where: { id: snapshotId },
@@ -473,7 +436,7 @@ async function updateRecipients({
           select: { member: { select: { contact: true, id: true } } },
         });
         memberId = snapshot.member.id;
-        if (isRecipient) messageRecipients.push(snapshot.member.contact);
+        if (isRecipient) messageRecipients.push(snapshot);
       }
 
       if (saveRecipientState) {
@@ -568,7 +531,11 @@ const updateReminders = async ({
   }
 };
 
-export async function sendMessage(body: SendMessageBody) {
+// made sendMessage non breaking if invalid input -> just ignore and change send at
+export async function sendMessage(
+  body: SendMessageBody,
+  db: PrismaClient | Prisma.TransactionClient,
+) {
   const { isRecurring, isScheduled } = body.message;
 
   // not recurring or scheduled
@@ -578,16 +545,36 @@ export async function sendMessage(body: SendMessageBody) {
   if (isScheduled && !isRecurring) {
     const { reminders } = body.message;
 
-    const scheduledDate = validateScheduleDate(body.message.scheduledDate);
+    const sendAt = validateScheduleDate(body.message.scheduledDate);
 
+    if (sendAt !== body.message.scheduledDate) {
+      await db.message.update({
+        where: { id: body.message.id },
+        data: { sendAt: sendAt },
+      });
+    }
+
+    const remindersToBeIgnored = [];
     for (const reminder of reminders) {
-      const reminderDate = getReminderDate(reminder, scheduledDate);
+      const reminderDate = getReminderDate(reminder, sendAt);
+      // if reminder date is in the past = false -> to be ignored
+      if (!reminderDate) {
+        remindersToBeIgnored.push(reminder.id);
+        continue;
+      }
+
       const reminderDelay = getDelayInSec(reminderDate);
 
       await sendOnce({ body, delay: reminderDelay, reminderId: reminder.id });
     }
 
-    const messageDelay = getDelayInSec(scheduledDate);
+    // mark reminder as ignored
+    await db.reminder.updateMany({
+      where: { id: { in: remindersToBeIgnored } },
+      data: { isIgnored: true },
+    });
+
+    const messageDelay = getDelayInSec(sendAt);
 
     return await sendOnce({ body, delay: messageDelay });
   }
@@ -606,10 +593,25 @@ export async function sendMessage(body: SendMessageBody) {
     const { recurringNum, recurringPeriod, scheduledDate } = body.message;
 
     const startDate = validateScheduleDate(scheduledDate);
+
+    // TODO check right?
+    if (startDate !== body.message.scheduledDate) {
+      await db.message.update({
+        where: { id: body.message.id },
+        data: { sendAt: startDate },
+      });
+    }
+
     const recurData = validateRecurringData({ recurringNum, recurringPeriod });
 
+    const remindersToBeIgnored = [];
     for (const reminder of body.message.reminders) {
       const reminderDate = getReminderDate(reminder, startDate);
+      // if reminder date is in the past = false -> to be ignored
+      if (!reminderDate) {
+        remindersToBeIgnored.push(reminder.id);
+        continue;
+      }
 
       await createRecurringMessage({
         body,
@@ -618,6 +620,12 @@ export async function sendMessage(body: SendMessageBody) {
         recurData,
       });
     }
+
+    // mark reminder as ignored
+    await db.reminder.updateMany({
+      where: { id: { in: remindersToBeIgnored } },
+      data: { isIgnored: true },
+    });
 
     return await createRecurringMessage({ body, startDate, recurData });
   }
@@ -716,6 +724,8 @@ function generateCronExpression({
   }
 }
 
+// TODO maybe change to sendAt? if send now -> sendAt is changed but scheduledDate is not
+// 4/20/2024 13:20 -> where returning false was throwing error but want to just ignore invalid reminders
 function getReminderDate(reminder: Reminder, scheduledDate: Date | null) {
   if (!scheduledDate) {
     throw new TRPCError({
@@ -732,26 +742,50 @@ function getReminderDate(reminder: Reminder, scheduledDate: Date | null) {
   }
 
   const isScheduledDatePast = scheduledDate < new Date();
-  if (isScheduledDatePast) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Scheduled date must be in the future",
-    });
-  }
+  if (isScheduledDatePast) return false;
 
   const reminderDiff = reminder.num * getPeriodMillis(reminder.period);
 
   const reminderDate = new Date(scheduledDate.getTime() - reminderDiff);
 
   const isReminderDatePast = reminderDate < new Date();
-  if (isReminderDatePast) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Reminder date must be in the future",
-    });
-  }
+  if (isReminderDatePast) return false;
 
   return reminderDate;
+}
+
+async function removeScheduledFromQStash(
+  messageId: string,
+  reminders: Reminder[],
+) {
+  const messageKey = getMessageKey(messageId);
+
+  const qStashId = await upstash.get<string>(messageKey);
+  if (qStashId) await qstashClient.messages.delete(qStashId);
+
+  for (const reminder of reminders) {
+    const reminderKey = getMessageKey(messageId, reminder.id);
+
+    const reminderId = await upstash.get<string>(reminderKey);
+    if (reminderId) await qstashClient.messages.delete(reminderId);
+  }
+}
+
+async function removeRecurringFromQStash(
+  messageId: string,
+  reminders: Reminder[],
+) {
+  const messageKey = getMessageKey(messageId);
+
+  const qStashId = await upstash.get<string>(messageKey);
+  if (qStashId) await qstashClient.schedules.delete(qStashId);
+
+  for (const reminder of reminders) {
+    const reminderKey = getMessageKey(messageId, reminder.id);
+
+    const reminderId = await upstash.get<string>(reminderKey);
+    if (reminderId) await qstashClient.schedules.delete(reminderId);
+  }
 }
 
 function messageNotFoundError(messageId: string) {

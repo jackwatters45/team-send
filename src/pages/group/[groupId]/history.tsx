@@ -80,7 +80,7 @@ export default function GroupHistory({
     deleteMessage({ messageId });
   };
 
-  const { mutate: sendMessage } = api.message.sendById.useMutation({
+  const { mutate: sendMessage } = api.message.sendDraft.useMutation({
     onSuccess: (data) => {
       void ctx.group.getGroupHistoryById.invalidate();
       toast({

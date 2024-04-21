@@ -8,7 +8,6 @@ import debug from "debug";
 import { verifySignature } from "@upstash/qstash/dist/nextjs";
 import Pusher from "pusher";
 import type {
-  Contact,
   EmailConfig,
   GroupMeConfig,
   Message,
@@ -18,7 +17,10 @@ import type {
 import { handleError } from "@/server/helpers/handleError";
 import { db } from "@/server/db";
 import { env } from "@/env";
-import type { PopulatedMessageWithGroupName } from "@/server/api/routers/message";
+import type {
+  PopulatedMessageWithGroupName,
+  RecipientOnlyContact,
+} from "@/server/api/routers/message";
 
 const log = debug("team-send:pages:api:sendMessage");
 
@@ -121,7 +123,7 @@ export async function sendEmail({
   message,
 }: {
   emailConfig: EmailConfig;
-  recipients: Contact[];
+  recipients: RecipientOnlyContact[];
   message: Message;
 }) {
   const { accessToken, refreshToken, email } = emailConfig;
@@ -146,7 +148,7 @@ export async function sendEmail({
 
   try {
     for (const recipient of recipients) {
-      const recipientEmail = recipient.email;
+      const recipientEmail = recipient.member.contact.email;
       if (!recipientEmail) return false;
 
       await transporter.sendMail({
@@ -168,7 +170,7 @@ export async function sendSMS({
   message,
 }: {
   smsConfig: SmsConfig;
-  recipients: Contact[];
+  recipients: RecipientOnlyContact[];
   message: Message;
 }) {
   const { accountSid, authToken, phoneNumber } = smsConfig;
@@ -176,7 +178,7 @@ export async function sendSMS({
 
   try {
     for (const recipient of recipients) {
-      const recipientPhone = recipient.phone;
+      const recipientPhone = recipient.member.contact.phone;
       if (!recipientPhone) return false;
 
       await client.messages.create({
@@ -197,7 +199,7 @@ export async function sendGroupMe({
   message,
 }: {
   groupMeConfig: GroupMeConfig;
-  recipients: Contact[];
+  recipients: RecipientOnlyContact[];
   message: Message;
 }) {
   console.log("sendGroupMe");
