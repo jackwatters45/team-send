@@ -211,28 +211,34 @@ export const messageRouter = createTRPCRouter({
       try {
         await useRateLimit(userId);
 
-        const message = await ctx.db.message.update({
-          where: { id: messageId, createdById: userId, status: "draft" },
-          data: { status: "pending" },
-          include: {
-            recipients: { include: { member: { select: { contact: true } } } },
-            reminders: true,
-            group: { select: { name: true } },
-          },
+        const result = await ctx.db.$transaction(async (prisma) => {
+          const message = await prisma.message.update({
+            where: { id: messageId, createdById: userId, status: "draft" },
+            data: { status: "pending" },
+            include: {
+              recipients: {
+                include: { member: { select: { contact: true } } },
+              },
+              reminders: true,
+              group: { select: { name: true } },
+            },
+          });
+
+          if (!message) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: `Message with id "${messageId}" not found or not a draft`,
+            });
+          }
+
+          const user = await getUserConfig(userId, prisma);
+
+          await sendMessage({ message, user }, ctx.db);
+
+          return message;
         });
 
-        if (!message) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: `Message with id "${messageId}" not found or not a draft`,
-          });
-        }
-
-        const user = await getUserConfig(userId, ctx.db);
-
-        await sendMessage({ message, user }, ctx.db);
-
-        return message;
+        return result;
       } catch (err) {
         throw handleError(err);
       }
@@ -309,7 +315,39 @@ export const messageRouter = createTRPCRouter({
       try {
         await useRateLimit(userId);
 
-        log(`Retrying failed send for message ${messageId}`);
+        const result = await ctx.db.$transaction(async (prisma) => {
+          const message = await prisma.message.update({
+            where: {
+              id: messageId,
+              createdById: userId,
+              status: "failed",
+              hasRetried: false,
+            },
+            data: { status: "pending", hasRetried: true },
+            include: {
+              recipients: {
+                include: { member: { select: { contact: true } } },
+              },
+              reminders: true,
+              group: { select: { name: true } },
+            },
+          });
+
+          if (!message) {
+            throw new TRPCError({
+              code: "NOT_FOUND",
+              message: `Message with id "${messageId}" was either not found, already retried, or not a failed message`,
+            });
+          }
+
+          const user = await getUserConfig(userId, prisma);
+
+          await sendMessage({ message, user }, prisma);
+
+          return message;
+        });
+
+        return result;
       } catch (err) {
         throw handleError(err);
       }

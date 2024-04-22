@@ -23,10 +23,14 @@ export const userRouter = createTRPCRouter({
 
     await useRateLimit(userId);
 
-    return await ctx.db.user.findUnique({
+    const user = await ctx.db.user.findUnique({
       where: { id: userId },
       include: { emailConfig: true, smsConfig: true, groupMeConfig: true },
     });
+
+    if (!user) return null;
+
+    return user;
   }),
   getExportData: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
@@ -76,6 +80,7 @@ export const userRouter = createTRPCRouter({
         const updatedUser = await ctx.db.user.update({
           where: { id: ctx.session.user.id },
           data: input,
+          select: { id: true },
         });
 
         if (!updatedUser) {
@@ -122,10 +127,19 @@ export const userRouter = createTRPCRouter({
     try {
       await useRateLimit(userId);
 
-      return await ctx.db.user.findUnique({
+      const user = await ctx.db.user.findUnique({
         where: { id: userId },
       });
 
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: `User with id ${userId} not found`,
+        });
+      }
+
+      return user;
+      // TODO
       // await ctx.db.user.update({
       // where: { id: userId },
       // data: { isArchived: true },
@@ -142,7 +156,7 @@ export const userRouter = createTRPCRouter({
 
       const user = await ctx.db.user.findUnique({
         where: { id: userId },
-        include: { account: true, emailConfig: true },
+        select: { account: true, emailConfig: true },
       });
 
       if (!user) {
@@ -216,7 +230,7 @@ export const userRouter = createTRPCRouter({
 
         const user = await ctx.db.user.findUnique({
           where: { id: userId },
-          include: { smsConfig: true },
+          select: { smsConfig: true },
         });
 
         if (!user) {
@@ -253,7 +267,7 @@ export const userRouter = createTRPCRouter({
 
       const user = await ctx.db.user.findUnique({
         where: { id: userId },
-        include: { smsConfig: true },
+        select: { smsConfig: true },
       });
 
       if (!user) {
