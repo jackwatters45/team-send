@@ -3,7 +3,7 @@ import Layout from "@/layouts/Layout";
 export default function TernsOfService() {
   return (
     <Layout>
-      <div className="mx-auto max-w-screen-md space-y-8 py-8 leading-relaxed md:py-12 xl:py-16">
+      <div className="mx-auto max-w-screen-md space-y-8 px-8 py-8 leading-relaxed sm:px-16 md:py-12 xl:py-16">
         <h1 className="lg:leading-tighter pb-2 text-center text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem]">
           Terms of Service
         </h1>

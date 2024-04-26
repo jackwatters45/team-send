@@ -1,5 +1,5 @@
-import Error from "@/components/error/ErrorComponent";
+import ErrorComponent from "@/components/error/ErrorComponent";
 
 export default function ErrorPage() {
-  return <Error />;
+  return <ErrorComponent />;
 }

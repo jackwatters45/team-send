@@ -7,7 +7,7 @@ import type { DefaultErrorShape } from "@trpc/server";
 import { Button } from "../ui/button";
 import Layout from "@/layouts/Layout";
 
-export default function Error<T extends DefaultErrorShape>({
+export default function ErrorComponent<T extends DefaultErrorShape>({
   error,
 }: {
   error?: TRPCClientErrorBase<T>;
@@ -17,7 +17,7 @@ export default function Error<T extends DefaultErrorShape>({
 
   return (
     <Layout>
-      <div className="flex flex-col items-center justify-center space-y-4 py-16 text-center md:py-28 lg:py-36">
+      <div className="flex flex-col items-center justify-center space-y-4 px-8 py-16 text-center sm:px-16 md:py-28 lg:py-36">
         <div className="space-y-2">
           <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
             Server Error
