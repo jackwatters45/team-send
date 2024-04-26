@@ -1,14 +1,23 @@
 import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 
 import { Button } from "../ui/button";
+import { cn } from "@/lib/utils";
 
-export default function SearchButton() {
+interface SearchButtonProps extends React.ComponentProps<typeof Button> {}
+export default function SearchButton({
+  className,
+  ...props
+}: React.ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <Button
       type="button"
       aria-label="Search"
       variant={"secondary"}
-      className="flex h-auto items-center gap-3 px-3 py-[6px] hover:bg-stone-200/50"
+      className={cn(
+        "flex h-auto items-center gap-3 px-3 py-[6px] hover:bg-stone-200/50",
+        className,
+      )}
+      {...props}
     >
       <span className="flex items-center gap-3">
         <MagnifyingGlassIcon className="h-5 w-5" />

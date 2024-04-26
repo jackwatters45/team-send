@@ -9,6 +9,7 @@ import {
 } from "../ui/navigation-menu";
 import { useSession } from "next-auth/react";
 import { ButtonLink } from "../ui/button";
+import HamburgerMenu from "./HamburgerMenu";
 
 export default function Nav() {
   const userId = useSession().data?.user?.id;
@@ -27,11 +28,11 @@ export default function Nav() {
             <span>Team Send</span>
           </NavigationMenuLink>
         </NavigationMenuItem>
-        <div className="flex items-center gap-4">
+        <div className="hidden items-center gap-4 md:flex">
           <NavigationMenuItem className="pr-2">
             <NavigationMenuLink
-              href="https://github.com/Yats-co/team-send"
               className="text-sm text-stone-400 hover:text-stone-500 dark:text-stone-400 hover:dark:text-stone-300"
+              href="https://github.com/jackwatters45/team-send"
               target="_blank"
               rel="noopener noreferrer"
             >
@@ -56,9 +57,9 @@ export default function Nav() {
               Create Group
             </NavigationMenuLink>
           </NavigationMenuItem>
-          <NavigationMenuItem>
-            <SearchButton />
-          </NavigationMenuItem>
+          {/* <NavigationMenuItem>
+						<SearchButton />
+					</NavigationMenuItem> */}
           {userId ? (
             <NavigationMenuItem style={{ lineHeight: "0" }}>
               <UserNav />
@@ -68,6 +69,9 @@ export default function Nav() {
               Login
             </ButtonLink>
           )}
+        </div>
+        <div className="block md:hidden">
+          <HamburgerMenu />
         </div>
       </div>
     </NavigationMenu>
