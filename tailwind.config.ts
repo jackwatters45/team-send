@@ -1,6 +1,8 @@
 import type { Config } from "tailwindcss";
 import { withUt } from "uploadthing/tw";
 
+const defaultTheme = require("tailwindcss/defaultTheme");
+
 const config = withUt({
   content: [
     "./pages/**/*.{ts,tsx}",
@@ -10,6 +12,10 @@ const config = withUt({
   ],
   prefix: "",
   theme: {
+    screens: {
+      xs: "475px",
+      ...defaultTheme.screens,
+    },
     fontFamily: {
       inter: ["Inter", "sans-serif"],
       geist: ["Geist", "sans-serif"],

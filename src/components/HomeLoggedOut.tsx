@@ -6,46 +6,46 @@ import Layout from "@/layouts/Layout";
 export default function HomeLoggedOut() {
   return (
     <Layout>
-      <section className="w-full border-b py-12 md:pt-24 lg:py-32 dark:border-stone-500 dark:border-opacity-20">
-        <div className="space-y-12 px-4 md:px-6 xl:space-y-20">
-          <div className="mx-auto grid max-w-[1300px] gap-4 px-4 sm:px-6 md:grid-cols-2 md:gap-16 md:px-10">
-            <div>
-              <h1 className="lg:leading-tighter text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl xl:text-[3.4rem] 2xl:text-[3.75rem]">
-                All your informal communication in one place.
-              </h1>
-            </div>
-            <div className="flex flex-col items-start space-y-4">
-              <p className="mx-auto max-w-[700px] text-stone-500 md:text-xl dark:text-stone-400">
+      <section className="mx-auto w-full max-w-screen-lg border-b py-16 xs:px-4 sm:px-0 md:pt-24 lg:py-32 dark:border-stone-500 dark:border-opacity-20">
+        <div className="space-y-12 md:px-6 xl:space-y-20 ">
+          <div className="mx-auto grid max-w-[1300px] gap-6 sm:px-6 xl:px-10">
+            <h1 className="lg:leading-tighter text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-[3.4rem] 2xl:text-[3.75rem]">
+              All your informal communication in one place.
+            </h1>
+            <div className="flex flex-col items-start space-y-6">
+              <p className="mx-auto text-stone-500 md:text-xl dark:text-stone-400">
                 Coordinate emails, SMS, and GroupMe messages effortlessly from a
                 single interface. Stay connected across all platforms with Team
                 Send. Effortless coordination, seamless connection with all your
                 informal teams
               </p>
-              <div className="flex w-full justify-end pr-4">
-                <ButtonLink href="/login">Get Started</ButtonLink>
+              <div className="flex w-full justify-end xs:w-fit xs:pr-4">
+                <ButtonLink href="/login" className="w-full px-8 xs:w-fit">
+                  Get Started
+                </ButtonLink>
               </div>
             </div>
           </div>
           <Image
             alt="Hero"
-            className="mx-auto aspect-[2/1] overflow-hidden rounded-xl object-cover"
+            className="mx-auto  hidden overflow-hidden rounded-xl object-cover sm:block"
             height="400"
             src="https://res.cloudinary.com/drheg5d7j/image/upload/v1713928258/Screenshot_2024-04-23_at_8.07.19_PM_2_uut2mq.webp"
             width="1270"
           />
         </div>
       </section>
-      <section className="w-full py-12 md:py-24 lg:py-32">
-        <div className="container space-y-16 px-4 md:px-6">
+      <section className="mx-auto w-full max-w-screen-lg py-16 xs:px-4 md:py-24 lg:py-32">
+        <div className="space-y-12 md:space-y-16 md:px-6">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
               <div className="inline-block rounded-lg bg-stone-100 px-3 py-1 text-sm dark:bg-stone-800">
                 New Features
               </div>
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl">
+              <h2 className="text-left text-3xl font-bold tracking-tighter xs:text-center sm:text-5xl">
                 Connect your communication channels.
               </h2>
-              <p className="max-w-[900px] text-stone-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-stone-400">
+              <p className="text-left text-stone-500 xs:text-center md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-stone-400">
                 Team Send is the only platform that allows you to connect all
                 your informal communication channels in one place. Coordinate
                 with your team across all platforms.
@@ -88,8 +88,10 @@ export default function HomeLoggedOut() {
               </p>
             </div>
           </div>
-          <div className="flex flex-col items-start justify-center gap-4 sm:flex-row">
-            <ButtonLink href="/login">See for yourself</ButtonLink>
+          <div className="flex w-full flex-col items-center justify-center gap-4">
+            <ButtonLink href="/login" className="w-full px-8 xs:w-fit">
+              See for yourself
+            </ButtonLink>
           </div>
         </div>
       </section>

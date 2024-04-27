@@ -1,7 +1,6 @@
 import Image from "next/image";
 
 import UserNav from "./UserNav";
-import SearchButton from "./SearchButton";
 import {
   NavigationMenu,
   NavigationMenuItem,
@@ -12,7 +11,7 @@ import { ButtonLink } from "../ui/button";
 import HamburgerMenu from "./HamburgerMenu";
 
 export default function Nav() {
-  const userId = useSession().data?.user?.id;
+  const session = useSession();
 
   return (
     <NavigationMenu className="max-w-screen fixed z-50 flex  h-14 w-screen justify-center border-b bg-stone-50 bg-opacity-90 px-8 dark:border-stone-500 dark:border-opacity-20 dark:bg-stone-950 dark:bg-opacity-80">
@@ -60,7 +59,7 @@ export default function Nav() {
           {/* <NavigationMenuItem>
 						<SearchButton />
 					</NavigationMenuItem> */}
-          {userId ? (
+          {session.status !== "unauthenticated" ? (
             <NavigationMenuItem style={{ lineHeight: "0" }}>
               <UserNav />
             </NavigationMenuItem>

@@ -12,11 +12,7 @@ import { Button } from "../ui/button";
 import { Separator } from "../ui/separator";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import Link from "next/link";
-import SearchButton from "./SearchButton";
 
-// TODO - colors in sheet + accordion
-// TODO - content
-// TODO - colors here
 export default function HamburgerMenu() {
   const userId = useSession().data?.user?.id;
 

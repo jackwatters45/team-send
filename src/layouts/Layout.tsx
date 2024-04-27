@@ -23,7 +23,7 @@ export default function Layout({
       <div className="font-sans flex min-h-screen flex-col items-center gap-4">
         <Nav />
         <main className="w-full max-w-screen-xl flex-1 pt-14 2xl:max-w-screen-2xl">
-          <div className="xs:px-12 px-6 py-6 sm:px-24">{children}</div>
+          <div className="px-6 py-6 xs:px-12 sm:px-16">{children}</div>
         </main>
         <Footer />
       </div>
