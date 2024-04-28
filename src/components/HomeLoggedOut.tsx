@@ -4,18 +4,23 @@ import { ButtonLink } from "@/components/ui/button";
 import Layout from "@/layouts/Layout";
 import { useState, useEffect } from "react";
 import MailingForm from "./forms/MailingForm";
+import { Skeleton } from "./ui/skeleton";
 
 export default function HomeLoggedOut() {
   // TODO - when add dark mode  toggle, use that instead of this
-  const [prefersDarkMode, setPrefersDarkMode] = useState(false);
+  const [prefersDarkMode, setPrefersDarkMode] = useState<boolean | undefined>(
+    undefined,
+  );
 
   useEffect(() => {
     const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
     setPrefersDarkMode(darkModeQuery.matches);
 
-    const updatePrefersDarkMode = (e: MediaQueryListEvent) => {
+    const updatePrefersDarkMode = (e: MediaQueryListEvent | MediaQueryList) => {
       setPrefersDarkMode(e.matches);
     };
+
+    updatePrefersDarkMode(darkModeQuery);
 
     darkModeQuery.addEventListener("change", updatePrefersDarkMode);
 
@@ -46,17 +51,21 @@ export default function HomeLoggedOut() {
               </div>
             </div>
           </div>
-          <Image
-            alt="Hero"
-            className="mx-auto  hidden overflow-hidden rounded-xl object-cover sm:block sm:shadow-2xl"
-            height="400"
-            src={
-              prefersDarkMode
-                ? "https://res.cloudinary.com/drheg5d7j/image/upload/v1714271048/ts-groups-dark_wn3y0b.webp"
-                : "https://res.cloudinary.com/drheg5d7j/image/upload/v1714271048/ts-groups-light_dtmve3.webp"
-            }
-            width="1270"
-          />
+          {prefersDarkMode === undefined ? (
+            <Skeleton className="hidden aspect-[3/2] w-full rounded-xl bg-white shadow-2xl sm:block sm:shadow-2xl dark:bg-stone-950" />
+          ) : (
+            <Image
+              alt="Hero"
+              className="mx-auto hidden aspect-[3/2] overflow-hidden rounded-xl object-cover sm:block sm:shadow-2xl"
+              height="400"
+              src={
+                prefersDarkMode
+                  ? "https://res.cloudinary.com/drheg5d7j/image/upload/v1714271048/ts-groups-dark_wn3y0b.webp"
+                  : "https://res.cloudinary.com/drheg5d7j/image/upload/v1714271048/ts-groups-light_dtmve3.webp"
+              }
+              width="1270"
+            />
+          )}
         </div>
       </section>
       <section className="mx-auto w-full max-w-screen-lg space-y-12 border-b py-16 xs:px-4 md:py-24 lg:py-32 xl:space-y-20 dark:border-stone-500/20">
@@ -113,17 +122,21 @@ export default function HomeLoggedOut() {
             </div>
           </div>
         </div>
-        <Image
-          alt="Hero"
-          className="mx-auto  hidden overflow-hidden rounded-xl object-cover sm:block sm:shadow-2xl"
-          height="400"
-          src={
-            prefersDarkMode
-              ? "https://res.cloudinary.com/drheg5d7j/image/upload/v1714271048/ts-group-send-dark_loyysm.webp"
-              : "https://res.cloudinary.com/drheg5d7j/image/upload/v1714271048/ts-group-send-light_zxtoqq.webp"
-          }
-          width="1270"
-        />
+        {prefersDarkMode === undefined ? (
+          <Skeleton className="hidden aspect-[10/7] w-full rounded-xl bg-white shadow-2xl sm:block sm:shadow-2xl dark:bg-stone-950" />
+        ) : (
+          <Image
+            alt="Hero"
+            className="mx-auto hidden aspect-[10/7] overflow-hidden rounded-xl object-cover sm:block sm:shadow-2xl"
+            height="400"
+            src={
+              prefersDarkMode
+                ? "https://res.cloudinary.com/drheg5d7j/image/upload/v1714271048/ts-group-send-dark_loyysm.webp"
+                : "https://res.cloudinary.com/drheg5d7j/image/upload/v1714271048/ts-group-send-light_zxtoqq.webp"
+            }
+            width="1270"
+          />
+        )}
       </section>
       <section>
         <MailingForm />
