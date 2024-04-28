@@ -52,8 +52,8 @@ export default function HomeLoggedOut() {
             height="400"
             src={
               prefersDarkMode
-                ? "https://res.cloudinary.com/drheg5d7j/image/upload/v1714179639/teams-send-groups-dark_cxwusq.webp"
-                : "https://res.cloudinary.com/drheg5d7j/image/upload/v1714179497/team-send-groups_gbmaqv.webp"
+                ? "https://res.cloudinary.com/drheg5d7j/image/upload/v1714271048/ts-groups-dark_wn3y0b.webp"
+                : "https://res.cloudinary.com/drheg5d7j/image/upload/v1714271048/ts-groups-light_dtmve3.webp"
             }
             width="1270"
           />
@@ -119,8 +119,8 @@ export default function HomeLoggedOut() {
           height="400"
           src={
             prefersDarkMode
-              ? "https://res.cloudinary.com/drheg5d7j/image/upload/v1714179639/teams-send-groups-dark_cxwusq.webp"
-              : "https://res.cloudinary.com/drheg5d7j/image/upload/v1714179497/team-send-groups_gbmaqv.webp"
+              ? "https://res.cloudinary.com/drheg5d7j/image/upload/v1714271048/ts-group-send-dark_loyysm.webp"
+              : "https://res.cloudinary.com/drheg5d7j/image/upload/v1714271048/ts-group-send-light_zxtoqq.webp"
           }
           width="1270"
         />
