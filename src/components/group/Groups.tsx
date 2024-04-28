@@ -15,9 +15,6 @@ import {
 } from "@/components/ui/data-table";
 import {
   DateHoverableCell,
-  HoverCard,
-  HoverCardContent,
-  HoverCardTrigger,
   HoverableCell,
   MembersHoverableCell,
 } from "@/components/ui/hover-card";
@@ -34,12 +31,6 @@ import {
 import { ConfirmDeleteDialog } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
 import { renderErrorComponent } from "@/components/error/renderErrorComponent";
-import { formatRelativeDateAndTime } from "@/lib/utils";
-
-import dayjs from "dayjs";
-import calendar from "dayjs/plugin/calendar";
-
-dayjs.extend(calendar);
 
 export default function Groups() {
   const { data, error } = api.group.getAll.useQuery();
@@ -165,16 +156,7 @@ const getGroupColumns = (
 
       if (!date) return null;
 
-      return dayjs(date).calendar();
-
-      // return (
-      //   <HoverCard>
-      //     <HoverCardTrigger>{date.toLocaleString()}</HoverCardTrigger>
-      //     <HoverCardContent className="text-xs">
-      //       {date.toLocaleString()}
-      //     </HoverCardContent>
-      //   </HoverCard>
-      // );
+      return <DateHoverableCell date={date} />;
     },
   },
   {

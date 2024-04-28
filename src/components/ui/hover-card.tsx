@@ -10,6 +10,13 @@ import { ScrollArea } from "./scroll-area";
 import type { MemberWithContact } from "@/server/api/routers/member";
 import Link from "next/link";
 
+import dayjs from "dayjs";
+import calendar from "dayjs/plugin/calendar";
+import LocalizedFormat from "dayjs/plugin/localizedFormat";
+
+dayjs.extend(LocalizedFormat);
+dayjs.extend(calendar);
+
 const HoverCard = HoverCardPrimitive.Root;
 
 const HoverCardTrigger = HoverCardPrimitive.Trigger;
@@ -125,17 +132,19 @@ function MembersHoverableCell({ members }: MemberHoverableCellProps) {
 }
 
 interface DateHoverableCellProps {
-  date: string;
-  time: string;
+  date: Date;
 }
-function DateHoverableCell({ date, time }: DateHoverableCellProps) {
-  if (!date || !time) return null;
+function DateHoverableCell({ date }: DateHoverableCellProps) {
+  if (!date) return null;
 
+  const formattedDate = dayjs(date);
   return (
     <HoverCard>
-      <HoverCardTrigger>{`${date} ${time}`}</HoverCardTrigger>
-      <HoverCardContent className="text-xs">
-        {date.toLocaleString()}
+      <HoverCardTrigger suppressHydrationWarning>
+        {formattedDate.calendar()}
+      </HoverCardTrigger>
+      <HoverCardContent className="text-xs" suppressHydrationWarning>
+        {formattedDate.format("LLLL")}
       </HoverCardContent>
     </HoverCard>
   );
