@@ -158,7 +158,7 @@ const getGroupColumns = (
     cell: ({ row }) => {
       const date = row.original.lastMessageTime;
 
-      return null;
+      return date;
 
       // return (
       //   <HoverCard>
