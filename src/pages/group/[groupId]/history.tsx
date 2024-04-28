@@ -311,9 +311,9 @@ function getHistoryTableColumns({
       header: ({ column }) => (
         <DataTableColumnHeader column={column} title="Send Time" />
       ),
-      cell: ({ row }) => {
-        return <DateHoverableCell dateInput={row.original.sendAt} />;
-      },
+      // cell: ({ row }) => {
+      //   return <DateHoverableCell dateInput={row.original.sendAt} />;
+      // },
     },
     {
       accessorKey: "sentBy",

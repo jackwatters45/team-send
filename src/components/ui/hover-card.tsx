@@ -2,12 +2,7 @@ import * as React from "react";
 import * as HoverCardPrimitive from "@radix-ui/react-hover-card";
 import type { User } from "@prisma/client";
 
-import {
-  cn,
-  extractInitials,
-  formatRelativeDateAndTime,
-  truncateText,
-} from "@/lib/utils";
+import { cn, extractInitials, truncateText } from "@/lib/utils";
 import { Avatar, AvatarFallback, AvatarImage } from "./avatar";
 import { parsePhoneNumber } from "libphonenumber-js";
 import { Separator } from "./separator";
@@ -130,17 +125,15 @@ function MembersHoverableCell({ members }: MemberHoverableCellProps) {
 }
 
 interface DateHoverableCellProps {
-  dateInput: string | Date | null | undefined;
+  date: string;
+  time: string;
 }
-function DateHoverableCell({ dateInput }: DateHoverableCellProps) {
-  if (!dateInput) return null;
-
-  const date = new Date(dateInput);
-  const dateTime = formatRelativeDateAndTime(date);
+function DateHoverableCell({ date, time }: DateHoverableCellProps) {
+  if (!date || !time) return null;
 
   return (
     <HoverCard>
-      <HoverCardTrigger>{`${dateTime?.date} ${dateTime?.time}`}</HoverCardTrigger>
+      <HoverCardTrigger>{`${date} ${time}`}</HoverCardTrigger>
       <HoverCardContent className="text-xs">
         {date.toLocaleString()}
       </HoverCardContent>

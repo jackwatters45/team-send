@@ -31,6 +31,7 @@ import {
 import { ConfirmDeleteDialog } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
 import { renderErrorComponent } from "@/components/error/renderErrorComponent";
+import { formatRelativeDateAndTime } from "@/lib/utils";
 
 export default function Groups() {
   const { data, error } = api.group.getAll.useQuery();
@@ -151,9 +152,13 @@ const getGroupColumns = (
         <DataTableColumnHeader column={column} title="Last Message Time" />
       );
     },
-    // cell: ({ row }) => {
-    //   return <DateHoverableCell dateInput={row.original.lastMessageTime} />;
-    // },
+    cell: ({ row }) => {
+      const dateTime = formatRelativeDateAndTime(row.original.lastMessageTime);
+
+      if (!dateTime) return null;
+
+      return <DateHoverableCell date={dateTime.date} time={dateTime.time} />;
+    },
   },
   {
     accessorKey: "members",
