@@ -151,9 +151,9 @@ const getGroupColumns = (
         <DataTableColumnHeader column={column} title="Last Message Time" />
       );
     },
-    cell: ({ row }) => {
-      return <DateHoverableCell dateInput={row.original.lastMessageTime} />;
-    },
+    // cell: ({ row }) => {
+    //   return <DateHoverableCell dateInput={row.original.lastMessageTime} />;
+    // },
   },
   {
     accessorKey: "members",
