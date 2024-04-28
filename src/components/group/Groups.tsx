@@ -15,6 +15,9 @@ import {
 } from "@/components/ui/data-table";
 import {
   DateHoverableCell,
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
   HoverableCell,
   MembersHoverableCell,
 } from "@/components/ui/hover-card";
@@ -153,11 +156,18 @@ const getGroupColumns = (
       );
     },
     cell: ({ row }) => {
-      const dateTime = formatRelativeDateAndTime(row.original.lastMessageTime);
+      const date = row.original.lastMessageTime;
 
-      if (!dateTime) return null;
+      if (!date) return null;
 
-      return <DateHoverableCell date={dateTime.date} time={dateTime.time} />;
+      return (
+        <HoverCard>
+          <HoverCardTrigger>{date.toLocaleString()}</HoverCardTrigger>
+          <HoverCardContent className="text-xs">
+            {date.toLocaleString()}
+          </HoverCardContent>
+        </HoverCard>
+      );
     },
   },
   {
