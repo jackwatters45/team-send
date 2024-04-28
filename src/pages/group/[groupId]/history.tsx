@@ -312,12 +312,7 @@ function getHistoryTableColumns({
         <DataTableColumnHeader column={column} title="Send Time" />
       ),
       cell: ({ row }) => {
-        return (
-          <DateHoverableCell
-            date={row.original.sendAt}
-            suppressHydrationWarning
-          />
-        );
+        return <DateHoverableCell date={row.original.sendAt} />;
       },
     },
     {

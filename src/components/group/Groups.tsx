@@ -18,6 +18,13 @@ import {
   HoverableCell,
   MembersHoverableCell,
 } from "@/components/ui/hover-card";
+
+import dynamic from "next/dynamic";
+const DateHoverableCellNoSSR = dynamic(
+  () => import("@/components/ui/data-table"),
+  { ssr: false },
+);
+
 import {
   DataTableColumnHeader,
   DataTableRowActions,
@@ -156,7 +163,7 @@ const getGroupColumns = (
 
       if (!date) return null;
 
-      return <DateHoverableCell date={date} />;
+      return <DateHoverableCellNoSSR date={date} />;
     },
   },
   {
