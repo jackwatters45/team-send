@@ -35,6 +35,7 @@ import { ConfirmDeleteDialog } from "@/components/ui/alert-dialog";
 import { toast } from "@/components/ui/use-toast";
 import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 import { formatRelativeDateAndTime } from "@/lib/utils";
+import dayjs from "dayjs";
 
 export default function Groups() {
   const { data, error } = api.group.getAll.useQuery();
@@ -158,7 +159,9 @@ const getGroupColumns = (
     cell: ({ row }) => {
       const date = row.original.lastMessageTime;
 
-      return JSON.stringify(date);
+      if (!date) return null;
+
+      return dayjs(date);
 
       // return (
       //   <HoverCard>

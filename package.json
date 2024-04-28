@@ -62,6 +62,7 @@
     "@vercel/speed-insights": "^1.0.10",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
+    "dayjs": "^1.11.11",
     "debug": "^4.3.4",
     "googleapis": "^134.0.0",
     "libphonenumber-js": "^1.10.58",
