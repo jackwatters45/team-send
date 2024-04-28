@@ -64,7 +64,7 @@ export default function HomeLoggedOut() {
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
               <div className="inline-block rounded-lg bg-stone-100 px-3 py-1 text-sm dark:bg-stone-800">
-                New Features
+                Features
               </div>
               <h2 className="text-left text-3xl font-bold tracking-tighter xs:text-center sm:text-5xl">
                 Connect your communication channels.
