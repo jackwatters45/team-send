@@ -213,6 +213,8 @@ model User {
 
   membersCreated     Member[] @relation(name: "CreatedBy")
   membersLastUpdated Member[] @relation(name: "LastUpdatedBy")
+
+  mailingList MailingListRecipient[]
 }
 
 model VerificationToken {
@@ -268,4 +270,19 @@ model GroupMeConfig {
   userId String
 
   @@unique([userId])
+}
+
+enum MailingListStatus {
+  active
+  inactive
+}
+
+model MailingListRecipient {
+  id       String            @id @default(cuid())
+  name     String
+  email    String            @unique
+  added_at DateTime          @default(now())
+  status   MailingListStatus @default(active)
+  user     User?             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId   String?
 }

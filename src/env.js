@@ -7,7 +7,8 @@ export const env = createEnv({
    *
    */
   server: {
-    BASE_URL: z.string(),
+    BASE_URL_DEV: z.string(),
+    BASE_URL_PROD: z.string(),
     DATABASE_URL: z
       .string()
       .url()
@@ -68,6 +69,8 @@ export const env = createEnv({
     PUSHER_KEY: z.string(),
     PUSHER_SECRET: z.string(),
     PUSHER_CLUSTER: z.string(),
+
+    RESEND_API_KEY: z.string(),
   },
 
   /**
@@ -84,8 +87,6 @@ export const env = createEnv({
         message:
           "Redirect URI should start with https://oauth.groupme.com/oauth/authorize?client_id=",
       }),
-    NEXT_PUBLIC_API_BASE_URL: z.string().url(),
-    NEXT_PUBLIC_API_BASE_URL_DEV: z.string().url(),
 
     NEXT_PUBLIC_PUSHER_KEY: z.string(),
     NEXT_PUBLIC_PUSHER_CLUSTER: z.string(),
@@ -96,7 +97,8 @@ export const env = createEnv({
    * middlewares) or client-side so we need to destruct manually.
    */
   runtimeEnv: {
-    BASE_URL: process.env.BASE_URL,
+    BASE_URL_DEV: process.env.BASE_URL_DEV,
+    BASE_URL_PROD: process.env.BASE_URL_PROD,
     DATABASE_URL: process.env.DATABASE_URL,
     NODE_ENV: process.env.NODE_ENV,
     NEXTAUTH_SECRET: process.env.NEXTAUTH_SECRET,
@@ -131,8 +133,6 @@ export const env = createEnv({
     NEXT_PUBLIC_GROUPME_REDIRECT_URI:
       process.env.NEXT_PUBLIC_GROUPME_REDIRECT_URI,
 
-    NEXT_PUBLIC_API_BASE_URL: process.env.NEXT_PUBLIC_API_BASE_URL,
-    NEXT_PUBLIC_API_BASE_URL_DEV: process.env.NEXT_PUBLIC_API_BASE_URL_DEV,
     NGROK_URL: process.env.NGROK_URL,
 
     UPLOADTHING_SECRET: process.env.UPLOADTHING_SECRET,
@@ -144,6 +144,8 @@ export const env = createEnv({
     PUSHER_CLUSTER: process.env.PUSHER_CLUSTER,
     NEXT_PUBLIC_PUSHER_KEY: process.env.NEXT_PUBLIC_PUSHER_KEY,
     NEXT_PUBLIC_PUSHER_CLUSTER: process.env.NEXT_PUBLIC_PUSHER_CLUSTER,
+
+    RESEND_API_KEY: process.env.RESEND_API_KEY,
   },
   /**
    * Run `build` or `dev` with `SKIP_ENV_VALIDATION` to skip env validation. This is especially

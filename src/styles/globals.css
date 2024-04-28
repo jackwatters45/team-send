@@ -3,5 +3,33 @@
 @tailwind utilities;
 
 body {
-  @apply bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-white list-none overscroll-none;
+  @apply list-none overscroll-none bg-stone-50 text-stone-900 dark:bg-stone-950 dark:text-white;
+}
+
+.loading-text span {
+  opacity: 0;
+  animation: dotFlashing 2s infinite linear both;
+}
+
+@keyframes dotFlashing {
+  0%,
+  100% {
+    opacity: 0;
+  }
+
+  50% {
+    opacity: 1;
+  }
+}
+
+.loading-text span:nth-child(2) {
+  animation-delay: 0.2s;
+}
+
+.loading-text span:nth-child(3) {
+  animation-delay: 0.4s;
+}
+
+.loading-text span:nth-child(4) {
+  animation-delay: 0.6s;
 }

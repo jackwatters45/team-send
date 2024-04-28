@@ -2,12 +2,32 @@ import Image from "next/image";
 
 import { ButtonLink } from "@/components/ui/button";
 import Layout from "@/layouts/Layout";
+import { useState, useEffect } from "react";
+import MailingForm from "./forms/MailingForm";
 
 export default function HomeLoggedOut() {
+  // TODO - when add dark mode  toggle, use that instead of this
+  const [prefersDarkMode, setPrefersDarkMode] = useState(false);
+
+  useEffect(() => {
+    const darkModeQuery = window.matchMedia("(prefers-color-scheme: dark)");
+    setPrefersDarkMode(darkModeQuery.matches);
+
+    const updatePrefersDarkMode = (e: MediaQueryListEvent) => {
+      setPrefersDarkMode(e.matches);
+    };
+
+    darkModeQuery.addEventListener("change", updatePrefersDarkMode);
+
+    return () => {
+      darkModeQuery.removeEventListener("change", updatePrefersDarkMode);
+    };
+  }, []);
+
   return (
     <Layout>
-      <section className="mx-auto w-full max-w-screen-lg border-b py-16 xs:px-4 sm:px-0 md:pt-24 lg:py-32 dark:border-stone-500 dark:border-opacity-20">
-        <div className="space-y-12 md:px-6 xl:space-y-20 ">
+      <section className="mx-auto w-full max-w-screen-lg  border-b py-16 xs:px-4 sm:px-0 md:pt-24 lg:py-32 dark:border-stone-500/20">
+        <div className="space-y-12 md:px-6 xl:space-y-20">
           <div className="mx-auto grid max-w-[1300px] gap-6 sm:px-6 xl:px-10">
             <h1 className="lg:leading-tighter text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-[3.4rem] 2xl:text-[3.75rem]">
               All your informal communication in one place.
@@ -28,14 +48,18 @@ export default function HomeLoggedOut() {
           </div>
           <Image
             alt="Hero"
-            className="mx-auto  hidden overflow-hidden rounded-xl object-cover sm:block"
+            className="mx-auto  hidden overflow-hidden rounded-xl object-cover sm:block sm:shadow-2xl"
             height="400"
-            src="https://res.cloudinary.com/drheg5d7j/image/upload/v1713928258/Screenshot_2024-04-23_at_8.07.19_PM_2_uut2mq.webp"
+            src={
+              prefersDarkMode
+                ? "https://res.cloudinary.com/drheg5d7j/image/upload/v1714179639/teams-send-groups-dark_cxwusq.webp"
+                : "https://res.cloudinary.com/drheg5d7j/image/upload/v1714179497/team-send-groups_gbmaqv.webp"
+            }
             width="1270"
           />
         </div>
       </section>
-      <section className="mx-auto w-full max-w-screen-lg py-16 xs:px-4 md:py-24 lg:py-32">
+      <section className="mx-auto w-full max-w-screen-lg space-y-12 border-b py-16 xs:px-4 md:py-24 lg:py-32 xl:space-y-20 dark:border-stone-500/20">
         <div className="space-y-12 md:space-y-16 md:px-6">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
@@ -88,12 +112,21 @@ export default function HomeLoggedOut() {
               </p>
             </div>
           </div>
-          <div className="flex w-full flex-col items-center justify-center gap-4">
-            <ButtonLink href="/login" className="w-full px-8 xs:w-fit">
-              See for yourself
-            </ButtonLink>
-          </div>
         </div>
+        <Image
+          alt="Hero"
+          className="mx-auto  hidden overflow-hidden rounded-xl object-cover sm:block sm:shadow-2xl"
+          height="400"
+          src={
+            prefersDarkMode
+              ? "https://res.cloudinary.com/drheg5d7j/image/upload/v1714179639/teams-send-groups-dark_cxwusq.webp"
+              : "https://res.cloudinary.com/drheg5d7j/image/upload/v1714179497/team-send-groups_gbmaqv.webp"
+          }
+          width="1270"
+        />
+      </section>
+      <section>
+        <MailingForm />
       </section>
     </Layout>
   );

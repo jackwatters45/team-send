@@ -3,7 +3,6 @@ import { MagnifyingGlassIcon } from "@radix-ui/react-icons";
 import { Button } from "../ui/button";
 import { cn } from "@/lib/utils";
 
-interface SearchButtonProps extends React.ComponentProps<typeof Button> {}
 export default function SearchButton({
   className,
   ...props

@@ -1,6 +1,5 @@
 import { HamburgerMenuIcon } from "@radix-ui/react-icons";
 import { signOut, useSession } from "next-auth/react";
-import type { ReactNode } from "react";
 
 import {
   Accordion,
@@ -86,12 +85,12 @@ export default function HamburgerMenu() {
                 </AccordionContent>
               </AccordionItem>
             ) : (
-              <a
+              <Link
                 href="/login"
                 className="flex flex-1 items-center justify-between py-4 font-medium transition-all hover:underline"
               >
                 Login
-              </a>
+              </Link>
             )}
           </Accordion>
           {/* <div className="self-end">
@@ -100,34 +99,5 @@ export default function HamburgerMenu() {
         </div>
       </SheetContent>
     </Sheet>
-  );
-}
-
-function HamburgerDropdownItem({
-  title,
-  description,
-  href,
-  Icon,
-}: {
-  title: string;
-  description: string;
-  href: string;
-  Icon: ReactNode;
-}) {
-  return (
-    <li className="dark:hover:bg-muted-dark/5 row-span-3 h-fit rounded-md py-0 hover:bg-stone-50/10">
-      <a
-        className="flex h-full w-full select-none items-center gap-3 rounded-md p-6 px-4 py-4 no-underline outline-none focus:shadow-md"
-        href={href}
-      >
-        <div className="max-w-10">{Icon}</div>
-        <div>
-          <div className="text-base">{title}</div>
-          <p className="dark:text-mate-muted-light text-xs leading-tight text-stone-50">
-            {description}
-          </p>
-        </div>
-      </a>
-    </li>
   );
 }

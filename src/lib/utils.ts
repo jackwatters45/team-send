@@ -15,6 +15,7 @@ import type {
   NewMember,
 } from "@/server/api/routers/member";
 import { ms } from "@/constants/milliseconds";
+import { env } from "@/env";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -233,3 +234,6 @@ export async function getUserConfig(
 
   return user;
 }
+
+export const getBaseURL = () =>
+  env.NODE_ENV === "production" ? env.BASE_URL_PROD : env.BASE_URL_DEV;
