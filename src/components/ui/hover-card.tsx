@@ -135,7 +135,7 @@ function DateHoverableCell({ date, time }: DateHoverableCellProps) {
     <HoverCard>
       <HoverCardTrigger>{`${date} ${time}`}</HoverCardTrigger>
       <HoverCardContent className="text-xs">
-        {date.toLocaleString()}
+        {"date.toLocaleString()"}
       </HoverCardContent>
     </HoverCard>
   );
