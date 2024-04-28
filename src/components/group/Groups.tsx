@@ -158,16 +158,16 @@ const getGroupColumns = (
     cell: ({ row }) => {
       const date = row.original.lastMessageTime;
 
-      if (!date) return null;
+      return null;
 
-      return (
-        <HoverCard>
-          <HoverCardTrigger>{date.toLocaleString()}</HoverCardTrigger>
-          <HoverCardContent className="text-xs">
-            {date.toLocaleString()}
-          </HoverCardContent>
-        </HoverCard>
-      );
+      // return (
+      //   <HoverCard>
+      //     <HoverCardTrigger>{date.toLocaleString()}</HoverCardTrigger>
+      //     <HoverCardContent className="text-xs">
+      //       {date.toLocaleString()}
+      //     </HoverCardContent>
+      //   </HoverCard>
+      // );
     },
   },
   {
