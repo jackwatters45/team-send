@@ -32,6 +32,29 @@ export const userRouter = createTRPCRouter({
 
     return user;
   }),
+  getUserConnections: protectedProcedure.query(async ({ ctx }) => {
+    const userId = ctx.session.user.id;
+
+    try {
+      await useRateLimit(userId);
+
+      const emailConfig = await ctx.db.emailConfig.findUnique({
+        where: { userId },
+      });
+
+      const smsConfig = await ctx.db.smsConfig.findUnique({
+        where: { userId },
+      });
+
+      const groupMeConfig = await ctx.db.groupMeConfig.findUnique({
+        where: { userId },
+      });
+
+      return { emailConfig, smsConfig, groupMeConfig };
+    } catch (error) {
+      throw handleError(error);
+    }
+  }),
   getExportData: protectedProcedure.query(async ({ ctx }) => {
     const userId = ctx.session.user.id;
 

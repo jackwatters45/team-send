@@ -2,7 +2,6 @@ import { type UseFormReturn, useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useAutoAnimate } from "@formkit/auto-animate/react";
 import { TRPCClientError } from "@trpc/client";
-import { useState } from "react";
 import Link from "next/link";
 import { parsePhoneNumber } from "libphonenumber-js";
 import type {
@@ -99,10 +98,8 @@ export default function GroupSendMessage({
     mode: "onBlur",
   });
 
-  const [isTableDirty, setIsTableDirty] = useState(false);
   const columns = getMemberRecipientsColumns({
     form,
-    setIsTableDirty,
     handleDeleteMember,
   });
   const { table } = useDataTable({
@@ -143,7 +140,10 @@ export default function GroupSendMessage({
   });
 
   const onSubmit = (formData: MessageFormType) => {
-    const data = validateMessageForm(formData);
+    const initialRecipients = form.formState.defaultValues
+      ?.recipients as Record<string, boolean>;
+
+    const data = validateMessageForm(formData, initialRecipients);
 
     const title = data.isScheduled
       ? "Scheduling Message"
@@ -207,22 +207,11 @@ export default function GroupSendMessage({
                 type="submit"
                 variant="outline"
                 onClick={() => form.setValue("status", "draft")}
-                disabled={
-                  !(isTableDirty || form.formState.isDirty) ||
-                  !form.formState.isValid ||
-                  isSending
-                }
+                disabled={isSending}
               >
                 Save as Draft
               </Button>
-              <Button
-                type="submit"
-                disabled={
-                  !(isTableDirty || form.formState.isDirty) ||
-                  !form.formState.isValid ||
-                  isSending
-                }
-              >
+              <Button type="submit" disabled={isSending}>
                 {form.watch("isScheduled") === "yes"
                   ? "Schedule Message"
                   : "Send Message"}
@@ -291,11 +280,10 @@ export const getServerSideProps = async (
 
 const getMemberRecipientsColumns = ({
   form,
-  setIsTableDirty,
   handleDeleteMember,
 }: {
   form: UseFormReturn<MessageFormType>;
-  setIsTableDirty: React.Dispatch<React.SetStateAction<boolean>>;
+
   handleDeleteMember: (memberId: string) => void;
 }): ColumnDef<MemberWithContact>[] => {
   return [
@@ -316,7 +304,6 @@ const getMemberRecipientsColumns = ({
                 {},
               ),
             );
-            setIsTableDirty(true);
           }}
           aria-label="Select all"
           name="select-all"
@@ -333,7 +320,6 @@ const getMemberRecipientsColumns = ({
                 ...form.getValues("recipients"),
                 [row.original.id]: !!value,
               });
-              setIsTableDirty(true);
             }}
             aria-label="Select row"
             name="select-row"

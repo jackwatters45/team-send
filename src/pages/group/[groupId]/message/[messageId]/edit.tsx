@@ -67,6 +67,12 @@ export default function EditMessage({
   groupId,
   messageId,
 }: MessageDetailsProps) {
+  const { data: connections } = api.group.getGroupConnectionsById.useQuery({
+    groupId,
+  });
+  const isActiveConnections =
+    connections?.useSMS ?? connections?.useEmail ?? connections?.useGroupMe;
+
   const { data, error } = api.message.getMessageById.useQuery({ messageId });
 
   const ctx = api.useUtils();
@@ -103,7 +109,7 @@ export default function EditMessage({
       isScheduled: data?.isScheduled ? "yes" : "no",
       scheduledDate: utcToLocalDateTimeString(data?.scheduledDate),
       isRecurring: data?.isRecurring ? "yes" : "no",
-      recurringNum: data?.recurringNum,
+      recurringNum: data?.recurringNum ?? 1,
       recurringPeriod: data?.recurringPeriod ?? "weeks",
       isReminders: data?.isReminders ? "yes" : "no",
       reminders: (data?.reminders?.length
@@ -114,10 +120,8 @@ export default function EditMessage({
     },
   });
 
-  const [isTableDirty, setIsTableDirty] = React.useState(false);
   const columns = getSnapshotRecipientsColumns({
     form,
-    setIsTableDirty,
     handleDeleteMember,
   });
   const { table } = useDataTable({
@@ -135,7 +139,7 @@ export default function EditMessage({
   });
 
   const router = useRouter();
-  const { mutate } = api.message.send.useMutation({
+  const { mutate, isLoading: isSending } = api.message.send.useMutation({
     onSuccess: async (data) => {
       await router.push(`/group/${groupId}/message/${messageId}`);
       if (data?.status === "sent") {
@@ -164,7 +168,10 @@ export default function EditMessage({
   });
 
   const onSubmit = (formData: MessageFormType) => {
-    const data = validateMessageForm(formData);
+    const initialRecipients = form.formState.defaultValues
+      ?.recipients as Record<string, boolean>;
+
+    const data = validateMessageForm(formData, initialRecipients);
 
     toast({
       title: "Updating Message",
@@ -227,17 +234,35 @@ export default function EditMessage({
             placeholder="Enter a message"
             required={true}
           />
-          <Button
-            type="submit"
-            disabled={
-              !(isTableDirty || form.formState.isDirty) ||
-              !form.formState.isValid
-            }
-          >
-            {form.watch("isScheduled") === "yes"
-              ? "Schedule Message"
-              : "Send Message"}
-          </Button>
+          {isActiveConnections ? (
+            <div className="flex justify-between">
+              <Button
+                type="submit"
+                variant="outline"
+                onClick={() => form.setValue("status", "draft")}
+                disabled={isSending}
+              >
+                Save as Draft
+              </Button>
+              <Button type="submit" disabled={isSending}>
+                {form.watch("isScheduled") === "yes"
+                  ? "Schedule Message"
+                  : "Send Message"}
+              </Button>
+            </div>
+          ) : (
+            <Link href="settings">
+              <Button
+                type="button"
+                onClick={(e) => e.preventDefault()}
+                variant={"destructive"}
+                disabled={true}
+                className="w-full"
+              >
+                You must have at least one active connection to send a message.
+              </Button>
+            </Link>
+          )}
           <div className="border-b dark:border-stone-500 dark:border-opacity-20" />
           <div>
             <div>
@@ -316,6 +341,7 @@ export const getServerSideProps = async (
 
   const helpers = genSSRHelpers(session);
   await helpers.message.getMessageById.prefetch({ messageId });
+  await helpers.group.getGroupConnectionsById.prefetch({ groupId });
 
   return {
     props: {
@@ -332,11 +358,9 @@ type MessageDetailsProps = InferGetServerSidePropsType<
 
 export const getSnapshotRecipientsColumns = ({
   form,
-  setIsTableDirty,
   handleDeleteMember,
 }: {
   form: UseFormReturn<MessageFormType>;
-  setIsTableDirty: React.Dispatch<React.SetStateAction<boolean>>;
   handleDeleteMember: (memberId: string) => void;
 }): ColumnDef<MemberSnapshotWithContact>[] => {
   return [
@@ -357,7 +381,6 @@ export const getSnapshotRecipientsColumns = ({
                 {},
               ),
             );
-            setIsTableDirty(true);
           }}
           aria-label="Select all"
           name="select-all"
@@ -374,7 +397,6 @@ export const getSnapshotRecipientsColumns = ({
                 ...form.getValues("recipients"),
                 [row.original.id]: !!value,
               });
-              setIsTableDirty(true);
             }}
             aria-label="Select row"
             name="select-row"
