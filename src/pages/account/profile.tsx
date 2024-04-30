@@ -135,11 +135,7 @@ export default function AccountProfile() {
             placeholder="Add your phone number"
           />
           <div className="py-4">
-            <Button
-              type="submit"
-              className="w-full"
-              disabled={!form.formState.isDirty || !form.formState.isValid}
-            >
+            <Button type="submit" className="w-full">
               Save
             </Button>
           </div>

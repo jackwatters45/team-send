@@ -18,7 +18,6 @@ const config = withUt({
     },
     fontFamily: {
       inter: ["Inter", "sans-serif"],
-      geist: ["Geist", "sans-serif"],
     },
     container: {
       center: true,

@@ -464,7 +464,9 @@ async function updateRecipients({
             message: { connect: { id: messageId } },
             member: { connect: { id: snapshotId } },
           },
-          select: { member: { select: { contact: true, id: true } } },
+          select: {
+            member: { select: { contact: true, id: true, isRecipient: true } },
+          },
         });
         memberId = snapshot.member.id;
         if (isRecipient) messageRecipients.push(snapshot);
@@ -472,7 +474,9 @@ async function updateRecipients({
         const snapshot = await prisma.memberSnapshot.update({
           where: { id: snapshotId },
           data: { isRecipient },
-          select: { member: { select: { contact: true, id: true } } },
+          select: {
+            member: { select: { contact: true, id: true, isRecipient: true } },
+          },
         });
         memberId = snapshot.member.id;
         if (isRecipient) messageRecipients.push(snapshot);

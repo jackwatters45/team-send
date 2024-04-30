@@ -69,6 +69,7 @@ export function validateRecurringData({
 
 export function validateMessageForm(
   formData: MessageFormType,
+  initialRecipients: Record<string, boolean>,
 ): MessageInputType {
   if (formData.isScheduled === "yes" && !formData.scheduledDate) {
     formData.isScheduled = "no";
@@ -103,6 +104,16 @@ export function validateMessageForm(
   }
 
   formData.type = getMessageTypeFromForm(formData);
+
+  const dirtyRecipients: Record<string, boolean> = {};
+
+  const newRecipients = formData.recipients;
+  for (const key in newRecipients) {
+    if (initialRecipients?.[key] === newRecipients?.[key]) continue;
+    dirtyRecipients[key] = newRecipients[key]!;
+  }
+
+  formData.recipients = dirtyRecipients;
 
   const formattedOtherFields = formatFormFieldsForBackend(formData);
 

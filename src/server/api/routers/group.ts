@@ -84,6 +84,26 @@ export const groupRouter = createTRPCRouter({
         throw handleError(err);
       }
     }),
+  getGroupConnectionsById: protectedProcedure
+    .input(z.object({ groupId: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const userId = ctx.session.user.id;
+
+      try {
+        await useRateLimit(userId);
+
+        const group = await ctx.db.group.findUnique({
+          where: { id: input.groupId, createdBy: { id: userId } },
+          select: { useEmail: true, useSMS: true, useGroupMe: true },
+        });
+
+        if (!group) throw throwGroupNotFoundError(input.groupId);
+
+        return group;
+      } catch (err) {
+        throw handleError(err);
+      }
+    }),
   getGroupById: protectedProcedure
     .input(z.object({ groupId: z.string() }))
     .query(async ({ ctx, input }) => {

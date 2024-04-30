@@ -43,12 +43,7 @@ export default function GroupMembersFormContent({
       <GroupMemberHeader title={title} />
       <GroupMemberList form={form} />
       <GroupMembersRecents form={form} />
-      <Button
-        type="submit"
-        // disabled={!form.formState.isDirty || !form.formState.isValid}
-      >
-        {submitText}
-      </Button>
+      <Button type="submit">{submitText}</Button>
     </>
   );
 }
