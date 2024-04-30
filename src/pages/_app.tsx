@@ -1,6 +1,8 @@
 import { SessionProvider, useSession } from "next-auth/react";
 import { Inter } from "next/font/google";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
+
 import { type Session } from "next-auth";
 import { type AppType } from "next/app";
 import { useEffect } from "react";
@@ -36,6 +38,7 @@ const MyApp: AppType<{ session: Session | null }> = ({
           <Toaster />
         </div>
         <SpeedInsights />
+        <Analytics />
       </PusherProvider>
     </SessionProvider>
   );
