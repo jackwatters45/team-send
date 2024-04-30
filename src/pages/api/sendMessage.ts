@@ -84,10 +84,9 @@ async function handler(req: NextApiRequest, res: NextApiResponse) {
 
     await db.message.update({
       where: { id: message.id },
-      data: { status },
+      data: { status, sendAt: new Date() },
     });
 
-    log(`user-${userId}`, "message-status");
     await pusher.trigger(`user-${userId}`, "message-status", {
       status,
       messageId: message.id,
@@ -153,8 +152,7 @@ export async function sendEmail({
 
       await transporter.sendMail({
         from: email,
-        to: "jack.watters@me.com",
-        // TODO to: recipientEmail,
+        to: recipientEmail,
         subject: message.subject ? message.subject : undefined,
         text: message.content,
       });
@@ -183,8 +181,7 @@ export async function sendSMS({
 
       await client.messages.create({
         from: phoneNumber,
-        to: "+19544949167",
-        // TODO to: recipientPhone,
+        to: recipientPhone,
         body: message.content,
       });
     }

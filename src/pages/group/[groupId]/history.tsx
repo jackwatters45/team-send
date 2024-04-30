@@ -80,19 +80,15 @@ export default function GroupHistory({
     deleteMessage({ messageId });
   };
 
-  const { mutate: sendMessage } = api.message.sendDraft.useMutation({
-    onSuccess: (data) => {
+  const { mutate: sendDraft } = api.message.sendDraft.useMutation({
+    onSuccess: () => {
       void ctx.group.getGroupHistoryById.invalidate();
-      toast({
-        title: "Message Sent",
-        description: `Message "${data?.id}" has been sent.`,
-      });
     },
     onError: (error) => {
       // TODO need to offer some details on why it failed + what to do
       const errorMessage = error.data?.zodError?.fieldErrors?.content;
       toast({
-        title: "Retry Send Message Failed",
+        title: "Send Message Failed",
         description:
           errorMessage?.[0] ??
           error.message ??
@@ -101,13 +97,65 @@ export default function GroupHistory({
       });
     },
   });
-  const handleSend = (messageId: string) => {
+  const handleSendDraft = (messageId: string) => {
     toast({
       title: "Sending Message",
       description: "Please wait while we send your message.",
     });
 
-    sendMessage({ messageId });
+    sendDraft({ messageId });
+  };
+
+  const { mutate: sendScheduled } = api.message.sendNow.useMutation({
+    onSuccess: () => {
+      void ctx.group.getGroupHistoryById.invalidate();
+    },
+    onError: (error) => {
+      // TODO need to offer some details on why it failed + what to do
+      const errorMessage = error.data?.zodError?.fieldErrors?.content;
+      toast({
+        title: "Send Message Failed",
+        description:
+          errorMessage?.[0] ??
+          error.message ??
+          "An error occurred while trying to send the message.",
+        variant: "destructive",
+      });
+    },
+  });
+  const handleSendScheduled = (messageId: string) => {
+    toast({
+      title: "Sending Message",
+      description: "Please wait while we send your message.",
+    });
+
+    sendScheduled({ messageId });
+  };
+
+  const { mutate: retrySend } = api.message.retryFailedSend.useMutation({
+    onSuccess: () => {
+      void ctx.group.getGroupHistoryById.invalidate();
+    },
+    onError: (error) => {
+      // TODO need to offer some details on why it failed + what to do
+      const errorMessage = error.data?.zodError?.fieldErrors?.content;
+      toast({
+        title: "Send Message Failed",
+        description:
+          errorMessage?.[0] ??
+          error.message ??
+          "An error occurred while trying to send the message.",
+        variant: "destructive",
+      });
+    },
+  });
+  const handleRetrySend = (messageId: string) => {
+    toast({
+      title: "Retrying Message",
+      description: "Please wait while we retry sending your message.",
+    });
+
+    retrySend({ messageId });
   };
 
   const router = useRouter();
@@ -139,7 +187,9 @@ export default function GroupHistory({
   const historyTableColumns = getHistoryTableColumns({
     groupId,
     handleDelete,
-    handleSend,
+    handleSendDraft,
+    handleSendScheduled,
+    handleRetrySend,
     handleDuplicate,
   });
   const { table } = useDataTable({
@@ -219,12 +269,16 @@ export const getServerSideProps = async (
 function getHistoryTableColumns({
   groupId,
   handleDelete,
-  handleSend,
+  handleSendDraft,
+  handleSendScheduled,
+  handleRetrySend,
   handleDuplicate,
 }: {
   groupId: string;
   handleDelete: (messageId: string) => void;
-  handleSend: (messageId: string) => void;
+  handleSendDraft: (messageId: string) => void;
+  handleSendScheduled: (messageId: string) => void;
+  handleRetrySend: (messageId: string) => void;
   handleDuplicate: (messageId: string) => void;
 }): ColumnDef<
   RouterOutputs["group"]["getGroupHistoryById"]["messages"][number]
@@ -402,19 +456,23 @@ function getHistoryTableColumns({
             {row.getValue<string>("status") === "failed" &&
               !row.getValue<string>("hasRetried") && (
                 <DropdownMenuItem
-                  onClick={() => handleSend(row.getValue("id"))}
+                  onClick={() => handleRetrySend(row.getValue("id"))}
                 >
                   Retry send message
                 </DropdownMenuItem>
               )}
             {row.getValue<string>("status") === "draft" && (
-              <DropdownMenuItem onClick={() => handleSend(row.getValue("id"))}>
+              <DropdownMenuItem
+                onClick={() => handleSendDraft(row.getValue("id"))}
+              >
                 Send message
               </DropdownMenuItem>
             )}
             <DropdownMenuSeparator />
             {row.getValue<string>("status") === "pending" && (
-              <DropdownMenuItem onClick={() => handleSend(row.getValue("id"))}>
+              <DropdownMenuItem
+                onClick={() => handleSendScheduled(row.getValue("id"))}
+              >
                 Send message now
               </DropdownMenuItem>
             )}

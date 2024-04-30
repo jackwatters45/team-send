@@ -119,9 +119,15 @@ export default function GroupSendMessage({
 
   const { dismiss } = useToast();
   const { mutate: send, isLoading: isSending } = api.message.send.useMutation({
-    onSuccess: () => {
+    onSuccess: (data) => {
       form.reset();
       dismiss();
+      if (data.type === "scheduled" || data.isScheduled) {
+        toast({
+          title: "Message Scheduled",
+          description: "Your message has been scheduled",
+        });
+      }
     },
     onError: (err) => {
       const errorMessage = err.data?.zodError?.fieldErrors?.content;

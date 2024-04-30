@@ -17,7 +17,6 @@ const log = debug("team-send:pages:api:mailing-list");
 const ratelimit = new Ratelimit({
   redis: Redis.fromEnv(),
   limiter: Ratelimit.slidingWindow(50, "1 h"),
-  analytics: true,
 });
 
 const rateLimitNoKey = async () => {

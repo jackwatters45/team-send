@@ -211,7 +211,7 @@ export const messageRouter = createTRPCRouter({
       try {
         await useRateLimit(userId);
 
-        const result = await ctx.db.$transaction(async (prisma) => {
+        await ctx.db.$transaction(async (prisma) => {
           const message = await prisma.message.update({
             where: { id: messageId, createdById: userId, status: "draft" },
             data: { status: "pending" },
@@ -234,11 +234,7 @@ export const messageRouter = createTRPCRouter({
           const user = await getUserConfig(userId, prisma);
 
           await sendMessage({ message, user }, ctx.db);
-
-          return message;
         });
-
-        return result;
       } catch (err) {
         throw handleError(err);
       }
@@ -251,7 +247,7 @@ export const messageRouter = createTRPCRouter({
       try {
         await useRateLimit(userId);
 
-        const result = await ctx.db.$transaction(async (prisma) => {
+        await ctx.db.$transaction(async (prisma) => {
           // update message set sendAt to now, set isReminders/isScheduled to false
           const message = await prisma.message.update({
             where: {
@@ -264,6 +260,7 @@ export const messageRouter = createTRPCRouter({
               sendAt: new Date(),
               isReminders: false,
               isScheduled: false,
+              isSentEarly: false,
             },
             include: {
               recipients: {
@@ -298,11 +295,7 @@ export const messageRouter = createTRPCRouter({
 
           // send message now
           await sendOnce({ body: { message, user } });
-
-          return message;
         });
-
-        return result;
       } catch (err) {
         throw handleError(err);
       }
@@ -315,7 +308,7 @@ export const messageRouter = createTRPCRouter({
       try {
         await useRateLimit(userId);
 
-        const result = await ctx.db.$transaction(async (prisma) => {
+        await ctx.db.$transaction(async (prisma) => {
           const message = await prisma.message.update({
             where: {
               id: messageId,
@@ -343,11 +336,7 @@ export const messageRouter = createTRPCRouter({
           const user = await getUserConfig(userId, prisma);
 
           await sendMessage({ message, user }, prisma);
-
-          return message;
         });
-
-        return result;
       } catch (err) {
         throw handleError(err);
       }
@@ -425,7 +414,7 @@ async function updateMessageData({
     message = await prisma.message.create({
       data: {
         ...messageData,
-        status: "pending",
+        status: messageData.status === "draft" ? "draft" : "pending",
         sendAt: sendAt,
         group: { connect: { id: groupId } },
         sentBy: { connect: { id: userId } },
@@ -437,7 +426,11 @@ async function updateMessageData({
   } else {
     message = await prisma.message.update({
       where: { id: messageData.id, createdById: userId },
-      data: { ...messageData, status: "pending", sendAt: sendAt },
+      data: {
+        ...messageData,
+        status: messageData.status === "draft" ? "draft" : "pending",
+        sendAt: sendAt,
+      },
       include: { group: { select: { name: true } } },
     });
   }
@@ -577,6 +570,7 @@ const updateReminders = async ({
   }
 };
 
+// if not working in dev make sure ngrok is running + valid  env variable
 // made sendMessage non breaking if invalid input -> just ignore and change send at
 export async function sendMessage(
   body: SendMessageBody,
@@ -689,9 +683,8 @@ async function sendOnce({ body, delay, reminderId }: SendMessageInput) {
   }
 
   const message = await qstashClient.publishJSON({
-    url: `${env.NGROK_URL}/api/sendMessage`,
+    url: `${env.NODE_ENV === "production" ? env.BASE_URL_PROD : env.NGROK_URL}/api/sendMessage`,
     body: body,
-    deduplicationId: key,
     delay: delay,
   });
 
@@ -727,7 +720,7 @@ async function createRecurringMessage({
   const cron = generateCronExpression({ startDate, recurData });
 
   const schedule = await qstashClient.schedules.create({
-    destination: `${env.NGROK_URL}/api/sendMessage`,
+    destination: `${env.NODE_ENV === "production" ? env.BASE_URL_PROD : env.NGROK_URL}/api/sendMessage`,
     body: JSON.stringify(body),
     cron: cron,
   });

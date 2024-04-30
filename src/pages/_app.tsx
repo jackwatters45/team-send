@@ -46,6 +46,8 @@ export default api.withTRPC(MyApp);
 export function PusherProvider({ children }: { children: React.ReactNode }) {
   const { data: session } = useSession();
 
+  const ctx = api.useUtils();
+
   const userId = session?.user?.id;
   useEffect(() => {
     if (!userId) return;
@@ -56,12 +58,13 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
     channel.bind(
       "message-status",
       ({ status, messageId, groupName }: MessageStatusPush) => {
-        console.log("status");
         if (status === "sent") {
           toast({
             title: `Message ${messageId} sent`,
             description: `Message to group ${groupName} has been sent successfully`,
           });
+          void ctx.group.getGroupHistoryById.invalidate();
+          void ctx.message.getMessageById.invalidate();
         } else {
           toast({
             title: `Message ${messageId} failed to send`,
@@ -81,7 +84,7 @@ export function PusherProvider({ children }: { children: React.ReactNode }) {
         channel.unsubscribe();
       }
     };
-  }, [userId]);
+  }, [userId, ctx]);
 
   return <>{children}</>;
 }

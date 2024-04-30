@@ -9,7 +9,6 @@ const log = debug("team-send:helpers:rateLimit");
 export const ratelimit = new Ratelimit({
   redis: Redis.fromEnv(),
   limiter: Ratelimit.slidingWindow(10, "10 s"),
-  analytics: true,
 });
 
 export const useRateLimit = async (key: string) => {
