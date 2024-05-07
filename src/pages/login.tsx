@@ -105,6 +105,7 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
   }
 
   const providers = await getProviders();
+  console.log(providers);
   if (!providers) {
     throw new TRPCClientError("Incorrect NEXTAUTH_URL or no providers added");
   }
