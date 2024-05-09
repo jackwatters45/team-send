@@ -8,7 +8,9 @@ img src="<https://res.cloudinary.com/drheg5d7j/image/upload/v1714271048/ts-group
 
 ## Design
 
-The design was created using Tailwind CSS and is fully responsive. The design is simple and clean, with a focus on usability. The color scheme is dark mode, with a dark blue background and light blue accents. The font used is Inter, which is a modern and clean font that is easy to read.......
+Team Send was born out of the challenge of collecting rent from 30 college-age males in a frat house. Innitially a simple python script that read a csv and send an SMS message to each tenant with the amount due. The initial project nearly completely eliminated late rent payments and made my life as housing manager much easier.
+
+Fast forwards to today, Team Send is a full fledged web app that allows you to easily send targeted bulk SMS, email, and GroupMe messages to groups. It's made for unconventional teams that need to send messages to groups of people with different contact preferences. Users can create groups, add members, and send messages to the entire group or to specific members. Messages can be scheduled, users can set up to 3 reminders, and messages can be sent in recurring intervals.
 
 ### Tech
 
@@ -17,18 +19,17 @@ The design was created using Tailwind CSS and is fully responsive. The design is
 - [Next.js](https://nextjs.org/)
 - [tRPC](https://trpc.io/)
 - [Prisma](https://www.prisma.io/)
-- [PostgreSQL](https://www.postgresql.org/) (deployed on [Railway](https://railway.app/) in prod & using [Docker](https://www.docker.com/) in dev)
-- [Twilio](https://www.twilio.com/)
-
-### Optimizations
-
-You don't have to include this section but interviewers love that you can not only deliver a final product that looks great but also functions efficiently. Did you write something then refactor it later and the result was 5x faster than the original implementation? Did you cache your assets? Things that you write in this section are GREAT to bring up in interviews and you can use this section as reference when studying for technical interviews!
+- [PostgreSQL](https://www.postgresql.org/) 
 
 ### Usage
 
 Use this space to show useful examples of how a project can be used. Additional screenshots, code examples and demos work well in this space. You may also link to more resources.
 
 For more examples, please refer to the Documentation
+
+### Optimizations
+
+You don't have to include this section but interviewers love that you can not only deliver a final product that looks great but also functions efficiently. Did you write something then refactor it later and the result was 5x faster than the original implementation? Did you cache your assets? Things that you write in this section are GREAT to bring up in interviews and you can use this section as reference when studying for technical interviews!
 
 ## Roadmap
 
@@ -40,8 +41,6 @@ For more examples, please refer to the Documentation
  Chinese
  Spanish
 See the open issues for a full list of proposed features (and known issues).
-
-(back to top)
 
 ## Contributing
 
@@ -78,3 +77,5 @@ Use this space to list resources you find helpful and would like to give credit 
 - [Sentry](https://sentry.io/)
 - [Posthog](https://posthog.com/)
 - Deployed on [Vercel](https://vercel.com/)
+(deployed on [Railway](https://railway.app/) in prod & using [Docker](https://www.docker.com/) in dev)
+- [Twilio](https://www.twilio.com/)
