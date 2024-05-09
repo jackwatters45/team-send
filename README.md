@@ -54,28 +54,27 @@ If you have a suggestion that would make this better, please fork the repo and c
 4. Push to the Branch (git push origin feature/AmazingFeature)
 5. Open a Pull Request
 
-### License
+## License
 
 Distributed under the MIT License. See LICENSE for more information.
 
-Contact
+## Contact
+
 Jack Watters - @w0tters - <mailto:jackwattersdev@gmail.com>
 
-Project Link: <https://github.com/your_username/repo_name>
+## Acknowledgments
 
-(back to top)
-
-Acknowledgments
-Use this space to list resources you find helpful and would like to give credit to. I've included a few of my favorites to kick things off!
+A big thanks to the following services that made this project possible:
 
 - [Upstash](https://upstash.com/)
 - [Qstash](https://upstash.com/)
 - [Pusher](https://pusher.com/)
-- [Shadcn](https://shadcn.com/)
-- [Nodemialer](https://nodemailer.com/about/)
-- Scafolded with [create-t3-app]()
+- [Shadcn](https://ui.shadcn.com/)
+- [Nodemailer](https://nodemailer.com/)
+- [create-t3-app](https://create.t3.gg/)
 - [Sentry](https://sentry.io/)
 - [Posthog](https://posthog.com/)
-- Deployed on [Vercel](https://vercel.com/)
-(deployed on [Railway](https://railway.app/) in prod & using [Docker](https://www.docker.com/) in dev)
+- [Vercel](https://vercel.com/)
+- [Railway](https://railway.app/)
+- [Docker](https://www.docker.com/)
 - [Twilio](https://www.twilio.com/)
