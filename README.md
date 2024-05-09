@@ -4,7 +4,7 @@ Easily send targeted bulk SMS to groups. Made for unconventional teams.
 
 View live site: [Team Send](https://teamsend.yatusabes.co/group/clvj6cxg2000uujy8qo59yve1)
 
-img src="<https://res.cloudinary.com/drheg5d7j/image/upload/v1714271048/ts-group-send-dark_loyysm.webp>" alt="Send Message Example"></img>
+![Send Message Example](<https://res.cloudinary.com/drheg5d7j/image/upload/v1714271048/ts-group-send-dark_loyysm.webp>)
 
 ## Design
 
@@ -19,7 +19,7 @@ Fast forwards to today, Team Send is a full fledged web app that allows you to e
 - [Next.js](https://nextjs.org/)
 - [tRPC](https://trpc.io/)
 - [Prisma](https://www.prisma.io/)
-- [PostgreSQL](https://www.postgresql.org/) 
+- [PostgreSQL](https://www.postgresql.org/)
 
 ### Usage
 
