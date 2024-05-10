@@ -30,6 +30,8 @@ model Group {
   createdById String
 
   isArchived Boolean @default(false)
+
+  @@index([createdById])
 }
 
 model Contact {
@@ -46,6 +48,8 @@ model Contact {
   updatedAt DateTime @updatedAt
 
   members Member[]
+
+  @@index([createdById])
 }
 
 model Member {
@@ -68,6 +72,9 @@ model Member {
   updatedAt       DateTime @updatedAt
   lastUpdatedBy   User     @relation(name: "LastUpdatedBy", fields: [lastUpdatedById], references: [id])
   lastUpdatedById String
+
+  @@unique([id, groupId])
+  @@index([createdById, groupId])
 }
 
 model MemberSnapshot {
@@ -83,6 +90,7 @@ model MemberSnapshot {
   member   Member @relation(fields: [memberId], references: [id], onDelete: Cascade)
 
   @@unique([id, messageId])
+  @@index([memberId, messageId])
 }
 
 enum ReminderPeriod {
@@ -100,6 +108,8 @@ model Reminder {
   message   Message        @relation(fields: [messageId], references: [id], onDelete: Cascade)
   messageId String
   isIgnored Boolean        @default(false)
+
+  @@index([messageId])
 }
 
 enum ReccurPeriod {
@@ -156,6 +166,8 @@ model Message {
 
   hasRetried  Boolean @default(false)
   isSentEarly Boolean @default(false)
+
+  @@index([createdById, groupId])
 }
 
 // Necessary for Next auth
@@ -239,6 +251,7 @@ model EmailConfig {
   userId String
 
   @@unique([userId])
+  @@index([userId])
 }
 
 model SmsConfig {
@@ -256,6 +269,7 @@ model SmsConfig {
   userId String
 
   @@unique([userId])
+  @@index([userId])
 }
 
 model GroupMeConfig {
@@ -270,6 +284,7 @@ model GroupMeConfig {
   userId String
 
   @@unique([userId])
+  @@index([userId])
 }
 
 enum MailingListStatus {
