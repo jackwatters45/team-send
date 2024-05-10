@@ -58,7 +58,7 @@ Distributed under the MIT License. See LICENSE for more information.
 
 ## Contact
 
-Jack Watters - @w0tters - <mailto:jackwattersdev@gmail.com>
+Jack Watters - [LinkedIn](https://www.linkedin.com/in/john-watters/) - [twitter](https://twitter.com/w0tters) - <mailto:jackwattersdev@gmail.com>
 
 ## Acknowledgments
 
