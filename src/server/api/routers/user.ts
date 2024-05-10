@@ -16,372 +16,386 @@ const GoogleOAuth2 = google.auth.OAuth2;
 const log = debug("team-send:api:user");
 
 export const userRouter = createTRPCRouter({
-  getCurrentUser: publicProcedure.query(async ({ ctx }) => {
-    const userId = ctx.session?.user.id;
+	getCurrentUser: publicProcedure.query(async ({ ctx }) => {
+		const userId = ctx.session?.user.id;
 
-    if (!userId) return null;
+		if (!userId) return null;
 
-    await useRateLimit(userId);
+		await useRateLimit(userId);
 
-    const user = await ctx.db.user.findUnique({
-      where: { id: userId },
-      include: { emailConfig: true, smsConfig: true, groupMeConfig: true },
-    });
+		const user = await ctx.db.user.findUnique({
+			where: { id: userId },
+			include: { emailConfig: true, smsConfig: true, groupMeConfig: true },
+		});
 
-    if (!user) return null;
+		if (!user) return null;
 
-    return user;
-  }),
-  getUserConnections: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
+		return user;
+	}),
+	getIsUserConnections: protectedProcedure.query(async ({ ctx }) => {
+		const userId = ctx.session.user.id;
 
-    try {
-      await useRateLimit(userId);
+		try {
+			await useRateLimit(userId);
 
-      const emailConfig = await ctx.db.emailConfig.findUnique({
-        where: { userId },
-      });
+			const [emailConfig, smsConfig, groupMeConfig] = await Promise.all([
+				ctx.db.emailConfig.findUnique({ where: { userId }, select: { id: true } }),
+				ctx.db.smsConfig.findUnique({ where: { userId }, select: { id: true } }),
+				ctx.db.groupMeConfig.findUnique({
+					where: { userId },
+					select: { id: true },
+				}),
+			]);
 
-      const smsConfig = await ctx.db.smsConfig.findUnique({
-        where: { userId },
-      });
+			return { emailConfig, smsConfig, groupMeConfig };
+		} catch (error) {
+			throw handleError(error);
+		}
+	}),
+	getUserConnections: protectedProcedure.query(async ({ ctx }) => {
+		const userId = ctx.session.user.id;
 
-      const groupMeConfig = await ctx.db.groupMeConfig.findUnique({
-        where: { userId },
-      });
+		try {
+			await useRateLimit(userId);
 
-      return { emailConfig, smsConfig, groupMeConfig };
-    } catch (error) {
-      throw handleError(error);
-    }
-  }),
-  getExportData: protectedProcedure.query(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
+			const [emailConfig, smsConfig, groupMeConfig] = await Promise.all([
+				ctx.db.emailConfig.findUnique({ where: { userId } }),
+				ctx.db.smsConfig.findUnique({ where: { userId } }),
+				ctx.db.groupMeConfig.findUnique({ where: { userId } }),
+			]);
 
-    try {
-      await useRateLimit(userId);
+			return { emailConfig, smsConfig, groupMeConfig };
+		} catch (error) {
+			throw handleError(error);
+		}
+	}),
+	getExportData: protectedProcedure.query(async ({ ctx }) => {
+		const userId = ctx.session.user.id;
 
-      const user = await ctx.db.user.findUnique({
-        where: { id: userId },
-        include: {
-          groups: {
-            include: {
-              members: true,
-              messages: {
-                include: {
-                  reminders: true,
-                  recipients: true,
-                },
-              },
-            },
-          },
-          contacts: true,
-          account: true,
-        },
-      });
+		try {
+			await useRateLimit(userId);
 
-      if (!user) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `User with id ${userId} not found`,
-        });
-      }
+			const user = await ctx.db.user.findUnique({
+				where: { id: userId },
+				include: {
+					groups: {
+						include: {
+							members: true,
+							messages: {
+								include: {
+									reminders: true,
+									recipients: true,
+								},
+							},
+						},
+					},
+					contacts: true,
+					account: true,
+				},
+			});
 
-      return JSON.stringify(user);
-    } catch (error) {
-      throw handleError(error);
-    }
-  }),
-  updateProfile: protectedProcedure
-    .input(userSettingsSchema)
-    .mutation(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
+			if (!user) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: `User with id ${userId} not found`,
+				});
+			}
 
-      try {
-        await useRateLimit(userId);
+			return JSON.stringify(user);
+		} catch (error) {
+			throw handleError(error);
+		}
+	}),
+	updateProfile: protectedProcedure
+		.input(userSettingsSchema)
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
 
-        const updatedUser = await ctx.db.user.update({
-          where: { id: ctx.session.user.id },
-          data: input,
-          select: { id: true },
-        });
+			try {
+				await useRateLimit(userId);
 
-        if (!updatedUser) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: `User with id ${userId} not found`,
-          });
-        }
+				const updatedUser = await ctx.db.user.update({
+					where: { id: ctx.session.user.id },
+					data: input,
+					select: { id: true },
+				});
 
-        return updatedUser;
-      } catch (error) {
-        if (
-          error instanceof PrismaClientKnownRequestError &&
-          error.code === "P2002"
-        ) {
-          log("Username already taken: %O", error);
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `Username "${input.username}" is already taken. Please choose a different one.`,
-          });
-        }
+				if (!updatedUser) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: `User with id ${userId} not found`,
+					});
+				}
 
-        throw handleError(error);
-      }
-    }),
-  deleteAccount: protectedProcedure.mutation(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
+				return updatedUser;
+			} catch (error) {
+				if (
+					error instanceof PrismaClientKnownRequestError &&
+					error.code === "P2002"
+				) {
+					log("Username already taken: %O", error);
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: `Username "${input.username}" is already taken. Please choose a different one.`,
+					});
+				}
 
-    try {
-      await useRateLimit(userId);
+				throw handleError(error);
+			}
+		}),
+	deleteAccount: protectedProcedure.mutation(async ({ ctx }) => {
+		const userId = ctx.session.user.id;
 
-      await ctx.db.user.delete({
-        where: { id: userId },
-      });
+		try {
+			await useRateLimit(userId);
 
-      return true;
-    } catch (error) {
-      throw handleError(error);
-    }
-  }),
-  archiveAccount: protectedProcedure.mutation(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
+			await ctx.db.user.delete({
+				where: { id: userId },
+			});
 
-    try {
-      await useRateLimit(userId);
+			return true;
+		} catch (error) {
+			throw handleError(error);
+		}
+	}),
+	archiveAccount: protectedProcedure.mutation(async ({ ctx }) => {
+		const userId = ctx.session.user.id;
 
-      const user = await ctx.db.user.findUnique({
-        where: { id: userId },
-      });
+		try {
+			await useRateLimit(userId);
 
-      if (!user) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `User with id ${userId} not found`,
-        });
-      }
+			const user = await ctx.db.user.findUnique({
+				where: { id: userId },
+			});
 
-      return user;
-      // TODO
-      // await ctx.db.user.update({
-      // where: { id: userId },
-      // data: { isArchived: true },
-      // });
-    } catch (error) {
-      throw handleError(error);
-    }
-  }),
-  connectEmail: protectedProcedure.mutation(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
+			if (!user) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: `User with id ${userId} not found`,
+				});
+			}
 
-    try {
-      await useRateLimit(userId);
+			return user;
+			// TODO
+			// await ctx.db.user.update({
+			// where: { id: userId },
+			// data: { isArchived: true },
+			// });
+		} catch (error) {
+			throw handleError(error);
+		}
+	}),
+	connectEmail: protectedProcedure.mutation(async ({ ctx }) => {
+		const userId = ctx.session.user.id;
 
-      const user = await ctx.db.user.findUnique({
-        where: { id: userId },
-        select: { account: true, emailConfig: true },
-      });
+		try {
+			await useRateLimit(userId);
 
-      if (!user) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `User with id ${userId} not found`,
-        });
-      }
+			const user = await ctx.db.user.findUnique({
+				where: { id: userId },
+				select: { account: true, emailConfig: true },
+			});
 
-      if (!!user.emailConfig) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `Email is already connected`,
-        });
-      }
+			if (!user) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: `User with id ${userId} not found`,
+				});
+			}
 
-      const oauth2Client = new GoogleOAuth2(
-        env.GOOGLE_ID_DEV,
-        env.GOOGLE_SECRET_DEV,
-        "http://localhost:3000/account/settings",
-      );
+			if (!!user.emailConfig) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: `Email is already connected`,
+				});
+			}
 
-      const scopes = [
-        "https://www.googleapis.com/auth/userinfo.profile",
-        "https://www.googleapis.com/auth/userinfo.email",
-        "https://www.googleapis.com/auth/gmail.send",
-        "https://mail.google.com/",
-      ];
+			const oauth2Client = new GoogleOAuth2(
+				env.GOOGLE_ID_DEV,
+				env.GOOGLE_SECRET_DEV,
+				"http://localhost:3000/account/settings",
+			);
 
-      const authorizationUrl = oauth2Client.generateAuthUrl({
-        access_type: "offline",
-        scope: scopes,
-        prompt: "consent",
-        include_granted_scopes: true,
-      });
+			const scopes = [
+				"https://www.googleapis.com/auth/userinfo.profile",
+				"https://www.googleapis.com/auth/userinfo.email",
+				"https://www.googleapis.com/auth/gmail.send",
+				"https://mail.google.com/",
+			];
 
-      return authorizationUrl;
-    } catch (error) {
-      throw handleError(error);
-    }
-  }),
-  disconnectEmail: protectedProcedure.mutation(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
+			const authorizationUrl = oauth2Client.generateAuthUrl({
+				access_type: "offline",
+				scope: scopes,
+				prompt: "consent",
+				include_granted_scopes: true,
+			});
 
-    try {
-      await useRateLimit(userId);
+			return authorizationUrl;
+		} catch (error) {
+			throw handleError(error);
+		}
+	}),
+	disconnectEmail: protectedProcedure.mutation(async ({ ctx }) => {
+		const userId = ctx.session.user.id;
 
-      const result = await ctx.db.$transaction(async (prisma) => {
-        await prisma.group.updateMany({
-          where: { createdById: userId },
-          data: { useEmail: false },
-        });
+		try {
+			await useRateLimit(userId);
 
-        return await ctx.db.emailConfig.delete({
-          where: { userId: userId },
-        });
-      });
+			const result = await ctx.db.$transaction(async (prisma) => {
+				await prisma.group.updateMany({
+					where: { createdById: userId },
+					data: { useEmail: false },
+				});
 
-      return result;
-    } catch (error) {
-      throw handleError(error);
-    }
-  }),
-  connectSms: protectedProcedure
-    .input(smsFormSchema)
-    .mutation(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
+				return await ctx.db.emailConfig.delete({
+					where: { userId: userId },
+				});
+			});
 
-      try {
-        await useRateLimit(userId);
+			return result;
+		} catch (error) {
+			throw handleError(error);
+		}
+	}),
+	connectSms: protectedProcedure
+		.input(smsFormSchema)
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
 
-        const user = await ctx.db.user.findUnique({
-          where: { id: userId },
-          select: { smsConfig: true },
-        });
+			try {
+				await useRateLimit(userId);
 
-        if (!user) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: `User with id ${userId} not found`,
-          });
-        }
+				const user = await ctx.db.user.findUnique({
+					where: { id: userId },
+					select: { smsConfig: true },
+				});
 
-        if (!!user.smsConfig) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: `SMS already connected`,
-          });
-        }
+				if (!user) {
+					throw new TRPCError({
+						code: "NOT_FOUND",
+						message: `User with id ${userId} not found`,
+					});
+				}
 
-        return await ctx.db.smsConfig.create({
-          data: {
-            user: { connect: { id: userId } },
-            accountSid: input.accountSid,
-            authToken: input.authToken,
-            phoneNumber: input.phoneNumber,
-          },
-        });
-      } catch (error) {
-        throw handleError(error);
-      }
-    }),
-  connectSmsDefault: protectedProcedure.mutation(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
+				if (!!user.smsConfig) {
+					throw new TRPCError({
+						code: "BAD_REQUEST",
+						message: `SMS already connected`,
+					});
+				}
 
-    try {
-      await useRateLimit(userId);
+				return await ctx.db.smsConfig.create({
+					data: {
+						user: { connect: { id: userId } },
+						accountSid: input.accountSid,
+						authToken: input.authToken,
+						phoneNumber: input.phoneNumber,
+					},
+				});
+			} catch (error) {
+				throw handleError(error);
+			}
+		}),
+	connectSmsDefault: protectedProcedure.mutation(async ({ ctx }) => {
+		const userId = ctx.session.user.id;
 
-      const user = await ctx.db.user.findUnique({
-        where: { id: userId },
-        select: { smsConfig: true },
-      });
+		try {
+			await useRateLimit(userId);
 
-      if (!user) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: `User with id ${userId} not found`,
-        });
-      }
+			const user = await ctx.db.user.findUnique({
+				where: { id: userId },
+				select: { smsConfig: true },
+			});
 
-      if (!!user.smsConfig) {
-        throw new TRPCError({
-          code: "BAD_REQUEST",
-          message: `SMS already connected`,
-        });
-      }
+			if (!user) {
+				throw new TRPCError({
+					code: "NOT_FOUND",
+					message: `User with id ${userId} not found`,
+				});
+			}
 
-      return await ctx.db.smsConfig.create({
-        data: {
-          user: { connect: { id: userId } },
-          accountSid: env.TWILIO_ACCOUNT_SID,
-          authToken: env.TWILIO_AUTH_TOKEN,
-          phoneNumber: env.TWILIO_PHONE_NUMBER,
-          isDefault: true,
-        },
-      });
-    } catch (error) {
-      throw handleError(error);
-    }
-  }),
-  disconnectSms: protectedProcedure.mutation(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
+			if (!!user.smsConfig) {
+				throw new TRPCError({
+					code: "BAD_REQUEST",
+					message: `SMS already connected`,
+				});
+			}
 
-    try {
-      await useRateLimit(userId);
+			return await ctx.db.smsConfig.create({
+				data: {
+					user: { connect: { id: userId } },
+					accountSid: env.TWILIO_ACCOUNT_SID,
+					authToken: env.TWILIO_AUTH_TOKEN,
+					phoneNumber: env.TWILIO_PHONE_NUMBER,
+					isDefault: true,
+				},
+			});
+		} catch (error) {
+			throw handleError(error);
+		}
+	}),
+	disconnectSms: protectedProcedure.mutation(async ({ ctx }) => {
+		const userId = ctx.session.user.id;
 
-      const result = await ctx.db.$transaction(async (prisma) => {
-        await prisma.group.updateMany({
-          where: { createdById: userId },
-          data: { useSMS: false },
-        });
+		try {
+			await useRateLimit(userId);
 
-        return await ctx.db.smsConfig.delete({
-          where: { userId: userId },
-        });
-      });
+			const result = await ctx.db.$transaction(async (prisma) => {
+				await prisma.group.updateMany({
+					where: { createdById: userId },
+					data: { useSMS: false },
+				});
 
-      return result;
-    } catch (error) {
-      throw handleError(error);
-    }
-  }),
-  connectGroupMe: protectedProcedure
-    .input(z.object({ accessToken: z.string().min(1) }))
-    .mutation(async ({ ctx, input }) => {
-      const userId = ctx.session.user.id;
+				return await ctx.db.smsConfig.delete({
+					where: { userId: userId },
+				});
+			});
 
-      try {
-        await useRateLimit(userId);
+			return result;
+		} catch (error) {
+			throw handleError(error);
+		}
+	}),
+	connectGroupMe: protectedProcedure
+		.input(z.object({ accessToken: z.string().min(1) }))
+		.mutation(async ({ ctx, input }) => {
+			const userId = ctx.session.user.id;
 
-        return await ctx.db.groupMeConfig.upsert({
-          where: { userId },
-          update: { accessToken: input.accessToken },
-          create: {
-            accessToken: input.accessToken,
-            user: { connect: { id: userId } },
-          },
-        });
-      } catch (error) {
-        throw handleError(error);
-      }
-    }),
-  disconnectGroupMe: protectedProcedure.mutation(async ({ ctx }) => {
-    const userId = ctx.session.user.id;
+			try {
+				await useRateLimit(userId);
 
-    try {
-      await useRateLimit(userId);
+				return await ctx.db.groupMeConfig.upsert({
+					where: { userId },
+					update: { accessToken: input.accessToken },
+					create: {
+						accessToken: input.accessToken,
+						user: { connect: { id: userId } },
+					},
+				});
+			} catch (error) {
+				throw handleError(error);
+			}
+		}),
+	disconnectGroupMe: protectedProcedure.mutation(async ({ ctx }) => {
+		const userId = ctx.session.user.id;
 
-      const result = await ctx.db.$transaction(async (prisma) => {
-        await prisma.group.updateMany({
-          where: { createdById: userId },
-          data: { groupMeId: null, useGroupMe: false },
-        });
+		try {
+			await useRateLimit(userId);
 
-        return await prisma.groupMeConfig.delete({
-          where: { userId: userId },
-        });
-      });
+			const result = await ctx.db.$transaction(async (prisma) => {
+				await prisma.group.updateMany({
+					where: { createdById: userId },
+					data: { groupMeId: null, useGroupMe: false },
+				});
 
-      return result;
-    } catch (error) {
-      throw handleError(error);
-    }
-  }),
+				return await prisma.groupMeConfig.delete({
+					where: { userId: userId },
+				});
+			});
+
+			return result;
+		} catch (error) {
+			throw handleError(error);
+		}
+	}),
 });

@@ -12,13 +12,12 @@ import MailingForm from "@/components/forms/MailingForm";
 
 export default function Home() {
 	const session = useSession();
-	const userId = session?.data?.user?.id;
 
 	const { isLoading } = api.group.getAll.useQuery();
 
-	if (isLoading) return <LoadingPage />;
+	if (session.status === "unauthenticated") return <HomeLoggedOut />;
 
-	if (!userId) return <HomeLoggedOut />;
+	if (isLoading) return <LoadingPage />;
 
 	return <Groups />;
 }
