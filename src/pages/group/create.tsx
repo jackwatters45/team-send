@@ -27,6 +27,7 @@ import { CreateGroupAvatarUpload } from "@/components/ui/upload-input";
 import { getServerAuthSession } from "@/server/auth";
 import type { GetServerSidePropsContext } from "next";
 import { useRouter } from "next/router";
+import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 
 export default function CreateGroup() {
 	const router = useRouter();
@@ -185,7 +186,12 @@ export async function getServerSideProps(ctx: GetServerSidePropsContext) {
 		};
 	}
 
+	const helpers = genSSRHelpers(session);
+	await helpers.user.getIsUserConnections.prefetch();
+
 	return {
-		props: {},
+		props: {
+			trpcState: helpers.dehydrate(),
+		},
 	};
 }

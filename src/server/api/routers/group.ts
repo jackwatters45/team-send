@@ -35,7 +35,7 @@ export const groupRouter = createTRPCRouter({
 				where: { createdBy: { id: userId } },
 				include: {
 					members: {
-						include: { contact: true },
+						select: { contact: true },
 					},
 					messages: {
 						select: { sendAt: true, content: true },
@@ -51,6 +51,26 @@ export const groupRouter = createTRPCRouter({
 				lastMessage: messages[0]?.content,
 				lastMessageTime: messages[0]?.sendAt,
 			}));
+		} catch (err) {
+			throw handleError(err);
+		}
+	}),
+	getAllGroupsMembers: protectedProcedure.query(async ({ ctx }) => {
+		const userId = ctx.session.user.id;
+
+		try {
+			await useRateLimit(userId);
+
+			const groups = await ctx.db.group.findMany({
+				where: { createdBy: { id: userId } },
+				select: {
+					members: {
+						include: { contact: true },
+					},
+				},
+			});
+
+			return groups.map(({ members }) => members);
 		} catch (err) {
 			throw handleError(err);
 		}
