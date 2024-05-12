@@ -1,8 +1,6 @@
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { useRouter } from "next/router";
 import { useState } from "react";
-import { useSession } from "next-auth/react";
 
 import { api } from "@/utils/api";
 import { createNewMember, extractInitials } from "@/lib/utils";
@@ -26,12 +24,12 @@ import {
 	SkeletonConnection,
 } from "@/components/group/Connections";
 import { CreateGroupAvatarUpload } from "@/components/ui/upload-input";
+import { getServerAuthSession } from "@/server/auth";
+import type { GetServerSidePropsContext } from "next";
+import { useRouter } from "next/router";
 
 export default function CreateGroup() {
-	const session = useSession();
-
 	const router = useRouter();
-
 	const form = useForm<CreateGroupFormType>({
 		resolver: zodResolver(createGroupSchema),
 		defaultValues: {
@@ -82,8 +80,6 @@ export default function CreateGroup() {
 
 		mutate(data);
 	});
-
-	if (session.status === "unauthenticated") return router.push("/login");
 
 	return (
 		<PageLayout
@@ -179,4 +175,17 @@ function Connections({ form }: { form: GroupConnectionsFormReturn }) {
 			</div>
 		</section>
 	);
+}
+
+export async function getServerSideProps(ctx: GetServerSidePropsContext) {
+	const session = await getServerAuthSession(ctx);
+	if (!session) {
+		return {
+			redirect: { destination: "/login", permanent: false },
+		};
+	}
+
+	return {
+		props: {},
+	};
 }
