@@ -119,18 +119,14 @@ export default function CreateGroup() {
 							</Avatar>
 						)}
 					</section>
-					{session.status === "authenticated" && (
-						<>
-							<Connections form={form as unknown as GroupConnectionsFormReturn} />
-							<section className="flex flex-col gap-6">
-								<GroupMembersFormContent
-									title={"Add Members"}
-									form={form as unknown as GroupMembersFormReturn}
-									submitText={"Create Group"}
-								/>
-							</section>
-						</>
-					)}
+					<Connections form={form as unknown as GroupConnectionsFormReturn} />
+					<section className="flex flex-col gap-6">
+						<GroupMembersFormContent
+							title={"Add Members"}
+							form={form as unknown as GroupMembersFormReturn}
+							submitText={"Create Group"}
+						/>
+					</section>
 				</form>
 			</Form>
 		</PageLayout>
