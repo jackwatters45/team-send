@@ -1,8 +1,3 @@
-import Groups from "@/components/group/Groups";
-import { useSession } from "next-auth/react";
-import { api } from "@/utils/api";
-import { LoadingPage } from "@/components/ui/loading";
-
 import Image from "next/image";
 import { useState, useEffect } from "react";
 import { ButtonLink } from "@/components/ui/button";
@@ -11,18 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import MailingForm from "@/components/forms/MailingForm";
 
 export default function Home() {
-	const session = useSession();
-
-	const { isLoading } = api.group.getAll.useQuery();
-
-	if (session.status === "unauthenticated") return <HomeLoggedOut />;
-
-	if (isLoading) return <LoadingPage />;
-
-	return <Groups />;
-}
-
-function HomeLoggedOut() {
 	// TODO - when add dark mode  toggle, use that instead of this
 	const [prefersDarkMode, setPrefersDarkMode] = useState<boolean | undefined>(
 		undefined,
