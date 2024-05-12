@@ -4,11 +4,14 @@ import { getServerAuthSession } from "@/server/auth";
 import { genSSRHelpers } from "@/server/helpers/genSSRHelpers";
 import { api } from "@/utils/api";
 import type { GetServerSidePropsContext } from "next";
+import { renderErrorComponent } from "@/components/error/renderErrorComponent";
 
 export default function Dashboard() {
-	api.group.getAll.useQuery();
+	const { data, error } = api.group.getAll.useQuery();
 
-	return <Groups />;
+	if (!data) return renderErrorComponent(error);
+
+	return <Groups groups={data} />;
 }
 
 export async function getServerSideProps(context: GetServerSidePropsContext) {
@@ -18,7 +21,7 @@ export async function getServerSideProps(context: GetServerSidePropsContext) {
 	}
 
 	const helpers = genSSRHelpers(session);
-	await helpers.user.getCurrentUser.prefetch();
+	await helpers.group.getAll.prefetch();
 
 	return {
 		props: {
