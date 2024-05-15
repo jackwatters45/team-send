@@ -98,7 +98,6 @@ function getAuthError(error: string | string[]) {
 
 export async function getServerSideProps(ctx: GetServerSidePropsContext) {
 	const session = await getServerAuthSession(ctx);
-
 	if (session) {
 		return { redirect: { destination: "/dashboard" } };
 	}

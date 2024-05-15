@@ -50,7 +50,6 @@
     "@upstash/qstash": "^2.4.3",
     "@upstash/ratelimit": "^1.0.1",
     "@upstash/redis": "^1.28.4",
-    "@vercel/speed-insights": "^1.0.10",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "dayjs": "^1.11.11",
