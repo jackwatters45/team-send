@@ -68,6 +68,7 @@ A big thanks to the following services that made this project possible:
 - [Qstash](https://upstash.com/)
 - [Pusher](https://pusher.com/)
 - [Shadcn](https://ui.shadcn.com/)
+- [Auth.js](https://authjs.dev/)
 - [Nodemailer](https://nodemailer.com/)
 - [create-t3-app](https://create.t3.gg/)
 - [Sentry](https://sentry.io/)
